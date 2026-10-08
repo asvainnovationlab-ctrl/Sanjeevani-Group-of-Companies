@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sanjeevani Group | Progress with purpose",
+  title: "Sanjeevani Group of Companies | One horizon, many ambitions",
   description:
     "Discover Sanjeevani Group and its businesses across healthcare, education, agriculture, infrastructure, and more.",
 };
@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="font-body">{children}</body>
     </html>
   );
 }

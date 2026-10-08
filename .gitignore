@@ -1,5 +1,7 @@
 node_modules/
 .next/
+.next-dev/
+.next-build/
 out/
 dist/
 coverage/
@@ -7,3 +9,4 @@ coverage/
 .env.local
 .env.*.local
 npm-debug.log*
+/company
