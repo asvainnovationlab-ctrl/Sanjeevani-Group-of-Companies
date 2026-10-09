@@ -47,10 +47,7 @@ export default function GroupFooter() {
             <Link href="/sitemap">Sitemap</Link>
           </div>
         </div>
-        <div className="group-footer-bottom">
-          <span>Growing together, building for tomorrow.</span>
-          <a href="#top">Back to top ↑</a>
-        </div>
+        <div className="group-footer-bottom" />
       </section>
     </footer>
   );

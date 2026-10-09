@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { businesses as localBusinesses, type Business, type BusinessCategory } from "@/data/businesses";
 import GroupFooter from "@/components/GroupFooter";
+import GmailContactButton from "@/components/GmailContactButton";
 import GroupEmblem from "@/components/GroupEmblem";
 
 type DirectoryResponse = { data: Business[]; message?: string };
@@ -173,6 +174,8 @@ export default function HomePage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  const storyRuleRef = useRef<HTMLSpanElement>(null);
+  const [storyRuleVisible, setStoryRuleVisible] = useState(false);
   const [statsCounts, setStatsCounts] = useState([0, 0, 0]);
 
   useEffect(() => {
@@ -181,6 +184,11 @@ export default function HomePage() {
       document.body.style.overflow = "";
     };
   }, [hasEntered]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setHasEntered(true), 500);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     fetch("/api/businesses")
@@ -218,6 +226,24 @@ export default function HomePage() {
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);
+  }, []);
+
+  useEffect(() => {
+    const rule = storyRuleRef.current;
+    if (!rule) return;
+    if (!("IntersectionObserver" in window)) {
+      setStoryRuleVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setStoryRuleVisible(true);
+      observer.disconnect();
+    }, { threshold: 1 });
+
+    observer.observe(rule);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -317,17 +343,17 @@ export default function HomePage() {
       {!hasEntered && (
         <div className="welcome-screen">
           <div className="welcome-lockup">
-            <GroupEmblem />
+            <div className="welcome-emblem">
+              <GroupEmblem />
+            </div>
             <p className="welcome-name">Sanjeevani Group</p>
             <p className="welcome-subtitle">OF COMPANIES</p>
-            <button
-              className="welcome-enter"
-              type="button"
-              onClick={() => setHasEntered(true)}
-            >
-              ENTER
-            </button>
-            <span className="welcome-hint">PRESS ENTER TO EXPLORE</span>
+            <div className="welcome-progress" role="status" aria-label="Loading Sanjeevani Group">
+              <span className="welcome-progress-track" aria-hidden="true">
+                <span className="welcome-progress-fill" />
+              </span>
+              <span className="welcome-loading-label">WELCOME</span>
+            </div>
           </div>
         </div>
       )}
@@ -375,6 +401,7 @@ export default function HomePage() {
         <button type="button" aria-label="Day mode" aria-pressed={theme === "light"} onClick={() => setTheme("light")}><SunIcon /></button>
         <button type="button" aria-label="Night mode" aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}><MoonIcon /></button>
       </div>
+      <GmailContactButton />
 
       <nav className="section-progress" aria-label="Homepage section navigation">
         {homeSections.map((section) => (
@@ -432,17 +459,24 @@ export default function HomePage() {
           <div className="reference-wrap story-layout">
             <div className="story-intro">
               <p className="section-overline">WHO WE ARE</p>
-              <h2>One group,<br /><em>united by purpose.</em></h2>
+              <h2>Rooted in Nepal.<br /><em>Growing together.</em></h2>
+              <span ref={storyRuleRef} className={`story-heading-rule${storyRuleVisible ? " is-visible" : ""}`} aria-hidden="true" />
               <p className="section-lead">Sanjeevani Group is a family of independent businesses working across healthcare, education, agriculture, infrastructure, and more to create meaningful progress in the communities we serve.</p>
-              <Link className="story-about-link" href="/about-us">Our story <span aria-hidden="true">↗</span></Link>
+              <Link className="story-about-link" href="/about-us">Who we are <span aria-hidden="true">↗</span></Link>
             </div>
-            <div className="story-copy">
-              <p>Each company brings its own expertise and perspective, connected by a shared commitment to serve people and help Nepal move forward.</p>
-              <p>We believe lasting progress grows from responsible leadership, trusted relationships, and care for the communities around us.</p>
-              <div className="story-principles">
-                <div><span>01</span><strong>Lead with care</strong></div>
-                <div><span>02</span><strong>Build for tomorrow</strong></div>
-                <div><span>03</span><strong>Grow together</strong></div>
+            <div className="story-portrait">
+              <div className="story-portrait-frame">
+                <Image
+                  src="/khumaa.jpeg"
+                  alt="Portrait of C.A. Khuma Parsad Aryal"
+                  width={1024}
+                  height={1018}
+                  sizes="(max-width: 780px) 90vw, 48vw"
+                />
+              </div>
+              <div className="story-portrait-caption">
+                <span>CHAIRMAN</span>
+                <p>C.A. Khuma Parsad Aryal</p>
               </div>
             </div>
           </div>

@@ -3,6 +3,8 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { businesses as localBusinesses, type Business } from "@/data/businesses";
+import GroupEmblem from "@/components/GroupEmblem";
+import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
 
 const navigation = [
@@ -250,12 +252,7 @@ function Brand() {
   return (
     <Link className="reference-brand section-brand" href="/" aria-label="Sanjeevani Group home">
       <span className="brand-emblem-small" aria-hidden="true">
-        <svg className="group-emblem" viewBox="0 0 160 190">
-          <path d="M36 145C13 115 11 74 30 43M124 145c23-30 25-71 6-102" fill="none" stroke="currentColor" strokeWidth="5" />
-          <path d="M29 120c-12-1-20-7-22-17 11 0 19 5 22 17Zm-6-20C11 96 5 88 5 78c11 2 17 9 18 22Zm0-23C13 72 10 63 14 54c9 6 12 14 9 23Zm5-21c-8-7-10-16-5-25 8 7 10 16 5 25Zm8-19c-6-8-5-17 1-25 6 9 6 18-1 25ZM131 120c12-1 20-7 22-17-11 0-19 5-22 17Zm6-20c12-4 18-12 18-22-11 2-17 9-18 22Zm0-23c10-5 13-14 9-23-9 6-12 14-9 23Zm-5-21c8-7 10-16 5-25-8 7-10 16-5 25Zm-8-19c6-8 5-17-1-25-6 9-6 18 1 25Z" fill="currentColor" />
-          <path d="m44 47 17 11 18-34 20 34 17-11-7 29H50l-6-29ZM50 82h59v8H50z" fill="currentColor" />
-          <text x="80" y="146" textAnchor="middle" fill="currentColor" fontSize="76" fontFamily="Georgia">S</text>
-        </svg>
+        <GroupEmblem />
       </span>
       <span className="brand-wordmark">Sanjeevani<span>GROUP OF COMPANIES</span></span>
     </Link>
@@ -379,6 +376,8 @@ export default function SectionPage({ section }: { section: string }) {
           <button className="reference-menu" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
         </div>
       </header>
+
+      <GmailContactButton />
 
       <main className="section-page">
         <section className={`section-page-hero${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}`}>
