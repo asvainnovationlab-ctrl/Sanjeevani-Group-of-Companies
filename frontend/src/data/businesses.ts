@@ -4,6 +4,58 @@ export type BusinessCategory =
   | "agriculture"
   | "other";
 
+export type BusinessGroup =
+  | "healthcare"
+  | "medical-colleges"
+  | "education"
+  | "agriculture"
+  | "infrastructure"
+  | "business-services";
+
+export const businessGroups: {
+  label: string;
+  value: BusinessGroup;
+  detail: string;
+  matches: (business: Business) => boolean;
+}[] = [
+  {
+    label: "Healthcare",
+    value: "healthcare",
+    detail: "Hospitals and clinical care",
+    matches: (business) => business.category === "healthcare",
+  },
+  {
+    label: "Medical colleges",
+    value: "medical-colleges",
+    detail: "Higher medical education",
+    matches: (business) => business.name.toLowerCase().includes("medical college"),
+  },
+  {
+    label: "Education",
+    value: "education",
+    detail: "Schools and learning",
+    matches: (business) => business.category === "education" && !business.name.toLowerCase().includes("medical college"),
+  },
+  {
+    label: "Agriculture & food",
+    value: "agriculture",
+    detail: "Agriculture, feed and food",
+    matches: (business) => business.category === "agriculture",
+  },
+  {
+    label: "Infrastructure",
+    value: "infrastructure",
+    detail: "Construction and hydropower",
+    matches: (business) => ["construction", "hydropower"].includes(business.sector.toLowerCase()),
+  },
+  {
+    label: "Business services",
+    value: "business-services",
+    detail: "Suppliers, development and marketing",
+    matches: (business) => ["suppliers", "development", "marketing"].includes(business.sector.toLowerCase()),
+  },
+];
+
 export type Business = {
   _id: string;
   name: string;

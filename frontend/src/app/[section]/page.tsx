@@ -4,6 +4,8 @@ import SectionPage from "@/components/SectionPage";
 const sectionSlugs = [
   "our-story",
   "about-us",
+  "mission-vision-values",
+  "leadership",
   "businesses",
   "media",
   "investors",
@@ -25,6 +27,8 @@ export function generateMetadata({ params }: { params: { section: string } }) {
   const titles: Record<string, string> = {
     "our-story": "Our story",
     "about-us": "About us",
+    "mission-vision-values": "Mission, Vision & Values",
+    leadership: "Leadership",
     businesses: "Our businesses",
     media: "Media and updates",
     investors: "Investor information",

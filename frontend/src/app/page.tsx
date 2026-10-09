@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { businesses as localBusinesses, type Business, type BusinessCategory } from "@/data/businesses";
+import { businesses as localBusinesses, type Business } from "@/data/businesses";
 import GroupFooter from "@/components/GroupFooter";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupEmblem from "@/components/GroupEmblem";
+import BusinessNavMenu from "@/components/BusinessNavMenu";
+import AboutNavMenu from "@/components/AboutNavMenu";
+import SocialLinks from "@/components/SocialLinks";
 
 type DirectoryResponse = { data: Business[]; message?: string };
 
@@ -19,15 +22,12 @@ const slides = [
   { label: "HYDRO", theme: "hydro", image: "/hydro.jpg" },
 ];
 
-const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-
 const homeSections = [
   { id: "home", label: "Home" },
   { id: "story", label: "Who we are" },
   { id: "locations", label: "Locations" },
-  { id: "businesses", label: "Businesses" },
-  { id: "media", label: "Across the group" },
-  { id: "community", label: "Community" },
+  { id: "impact", label: "Our impact" },
+  { id: "group-film", label: "Group film" },
 ];
 
 const locationPins = [
@@ -81,100 +81,20 @@ function MoonIcon() {
   );
 }
 
-function BusinessArt({ business }: { business: Business }) {
-  const initial = business.name.trim().charAt(0).toUpperCase();
-  const colors: Record<BusinessCategory, string> = {
-    healthcare: "monogram-health",
-    education: "monogram-education",
-    agriculture: "monogram-agriculture",
-    other: "monogram-other",
-  };
-
-  return (
-    <div className="business-logo" aria-hidden="true">
-      <span className={`business-monogram ${colors[business.category]}`}>{initial}</span>
-      <span className="business-logo-caption">SANJEEVANI GROUP</span>
-    </div>
-  );
-}
-
-function BusinessCard({ business, index }: { business: Business; index: number }) {
-  const cardRef = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const website = business.website?.trim() ?? "";
-  const location = business.location?.trim() ?? "";
-  let websiteUrl: string | undefined;
-
-  if (website) {
-    try {
-      const parsedWebsite = new URL(/^[a-z][a-z\d+.-]*:/i.test(website) ? website : `https://${website}`);
-      if (parsedWebsite.protocol === "http:" || parsedWebsite.protocol === "https:") {
-        websiteUrl = parsedWebsite.href;
-      }
-    } catch {
-      websiteUrl = undefined;
-    }
-  }
-
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    if (!("IntersectionObserver" in window)) {
-      setIsVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.5 });
-    observer.observe(card);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <article
-      ref={cardRef}
-      className={`directory-card${isVisible ? " is-visible" : ""}`}
-      style={{ transitionDelay: `${Math.min(index * 65, 390)}ms` }}
-    >
-      <BusinessArt business={business} />
-      <span className="directory-card-sector">{business.sector}</span>
-      <h3>{business.name}</h3>
-      <dl className="directory-card-details">
-        <div>
-          <dt><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg></dt>
-          <dd title={location || "Location"}>{location || "Location"}</dd>
-        </div>
-        <div>
-          <dt><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" /></svg></dt>
-          <dd title={website || "Website"}>{websiteUrl
-            ? <a href={websiteUrl} target="_blank" rel="noreferrer">{website.replace(/^https?:\/\//i, "").replace(/\/$/, "")}</a>
-            : "Website"}
-          </dd>
-        </div>
-      </dl>
-    </article>
-  );
-}
-
 export default function HomePage() {
   const [hasEntered, setHasEntered] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [query, setQuery] = useState("");
-  const [directoryQuery, setDirectoryQuery] = useState("");
-  const [activeLetter, setActiveLetter] = useState("All");
-  const [showAllBusinesses, setShowAllBusinesses] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [activeHomeSection, setActiveHomeSection] = useState("home");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [groupFilmAutoplayBlocked, setGroupFilmAutoplayBlocked] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const storyRuleRef = useRef<HTMLSpanElement>(null);
+  const groupFilmVideoRef = useRef<HTMLVideoElement>(null);
   const [storyRuleVisible, setStoryRuleVisible] = useState(false);
   const [statsCounts, setStatsCounts] = useState([0, 0, 0]);
 
@@ -296,17 +216,39 @@ export default function HomePage() {
     };
   }, []);
 
-  const filteredBusinesses = useMemo(() => {
-    const normalizedQuery = directoryQuery.trim().toLowerCase();
-    return businesses.filter((business) => {
-      const matchesLetter = activeLetter === "All" || business.name.toUpperCase().startsWith(activeLetter);
-      const searchable = `${business.name} ${business.sector} ${business.description}`.toLowerCase();
-      return matchesLetter && (!normalizedQuery || searchable.includes(normalizedQuery));
-    });
-  }, [activeLetter, businesses, directoryQuery]);
-  const displayedBusinesses = showAllBusinesses
-    ? filteredBusinesses
-    : filteredBusinesses.slice(0, 12);
+  useEffect(() => {
+    const video = groupFilmVideoRef.current;
+    if (!video || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        if (video.ended) video.currentTime = 0;
+        video.play().catch(async (error: unknown) => {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          if (error instanceof DOMException && error.name === "NotAllowedError" && !video.muted) {
+            video.muted = true;
+            setGroupFilmAutoplayBlocked(true);
+            try {
+              await video.play();
+            } catch (mutedPlaybackError: unknown) {
+              if (mutedPlaybackError instanceof DOMException && mutedPlaybackError.name === "AbortError") return;
+              console.error("Could not autoplay the Sanjeevani Group video.", mutedPlaybackError);
+            }
+          } else {
+            console.error("Could not autoplay the Sanjeevani Group video.", error);
+          }
+        });
+      } else {
+        video.pause();
+      }
+    }, { threshold: 0.35 });
+
+    observer.observe(video);
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
+  }, []);
 
   const searchResults = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -315,7 +257,7 @@ export default function HomePage() {
       ...businesses
         .filter((business) => `${business.name} ${business.sector}`.toLowerCase().includes(normalizedQuery))
         .slice(0, 5)
-        .map((business) => ({ label: business.name, detail: business.sector, href: "#businesses" })),
+        .map((business) => ({ label: business.name, detail: business.sector, href: `/businesses?search=${encodeURIComponent(business.name)}` })),
       ...navigation
         .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(normalizedQuery))
         .slice(0, 4)
@@ -328,7 +270,6 @@ export default function HomePage() {
   }
 
   function selectSearchResult(href: string) {
-    if (href === "#businesses" && query.trim()) setDirectoryQuery(query.trim());
     setQuery("");
     setSearchOpen(false);
     if (href.startsWith("/")) {
@@ -336,6 +277,22 @@ export default function HomePage() {
       return;
     }
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function playGroupFilmWithSound() {
+    const video = groupFilmVideoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.play().then(() => {
+      setGroupFilmAutoplayBlocked(false);
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        setGroupFilmAutoplayBlocked(true);
+        return;
+      }
+      console.error("Could not start the Sanjeevani Group video.", error);
+    });
   }
 
   return (
@@ -361,9 +318,14 @@ export default function HomePage() {
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => (
+            {navigation.map((item) => item.label === "About us" ? (
+              <AboutNavMenu key={item.href} />
+            ) : item.label === "Businesses" ? (
+              <BusinessNavMenu businesses={businesses} key={item.href} />
+            ) : (
               <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
             ))}
+            <SocialLinks className="mobile-nav-social-links" />
           </nav>
           <div className="reference-search" role="search">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -393,6 +355,7 @@ export default function HomePage() {
               </ul>
             )}
           </div>
+          <SocialLinks className="header-social-links" />
           <button className="reference-menu" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
         </div>
       </header>
@@ -514,66 +477,82 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="reference-section directory-section" id="businesses">
+        <section className="impact-section" id="impact" aria-labelledby="impact-title">
           <div className="reference-wrap">
-            <p className="section-overline">THE GROUP</p>
-            <div className="directory-heading">
-              <div><h2>Our businesses</h2><p className="section-lead">Eighteen companies, each with a distinct role in our shared story. Explore the directory by name.</p></div>
-              <p className="directory-total"><strong>{businesses.length}</strong><span>companies<br />and counting</span></p>
-            </div>
-            <div className="directory-search">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-              <label className="visually-hidden" htmlFor="directory-search">Search companies</label>
-              <input id="directory-search" type="search" placeholder="Search companies by name or sector" value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setActiveLetter("All"); setShowAllBusinesses(false); }} />
-              <span>{filteredBusinesses.length} results</span>
-            </div>
-            <div className="directory-letters" role="toolbar" aria-label="Filter companies by first letter">
-              {alphabet.map((letter) => (
-                <button type="button" key={letter} disabled={letter !== "All" && !businesses.some((business) => business.name.toUpperCase().startsWith(letter))} className={activeLetter === letter ? "is-active" : ""} aria-pressed={activeLetter === letter} onClick={() => { setActiveLetter(letter); setDirectoryQuery(""); setShowAllBusinesses(false); }}>
-                  {letter === "All" ? "All" : letter}
-                </button>
-              ))}
-            </div>
-            <div className="directory-grid" aria-live="polite">
-              {displayedBusinesses.map((business, index) => (
-                <BusinessCard business={business} index={index} key={business._id} />
-              ))}
-              {filteredBusinesses.length === 0 && <p className="directory-empty">No companies match that search. Try another name or letter.</p>}
-            </div>
-            {filteredBusinesses.length > 12 && (
-              <div className="directory-expand">
-                <button
-                  className="directory-expand-button"
-                  type="button"
-                  aria-expanded={showAllBusinesses}
-                  onClick={() => setShowAllBusinesses((isShowingAll) => !isShowingAll)}
-                >
-                  {showAllBusinesses ? "Show fewer" : `Show all ${filteredBusinesses.length} businesses`}
-                  <span aria-hidden="true">{showAllBusinesses ? "↑" : "↓"}</span>
-                </button>
+            <div className="impact-heading">
+              <div>
+                <p className="section-overline">PURPOSE IN ACTION</p>
+                <h2 id="impact-title">Our impact.<br /><em>Our shared responsibility.</em></h2>
               </div>
-            )}
-          </div>
-        </section>
-
-        <section className="reference-section media-section" id="media">
-          <div className="reference-wrap">
-            <p className="section-overline">ACROSS THE GROUP</p>
-            <div className="media-heading"><h2>Many fields.<br /><em>One wider story.</em></h2><p className="section-lead">Discover the different areas of work represented across Sanjeevani Group.</p></div>
-            <div className="sector-grid">
-              <article className="sector-card sector-health"><span>01</span><div className="sector-art sector-art-health" aria-hidden="true"><i /><i /><i /></div><p>Care &amp; wellbeing</p><h3>Healthcare</h3><a href="#businesses">Explore businesses <span>↗</span></a></article>
-              <article className="sector-card sector-learning"><span>02</span><div className="sector-art sector-art-learning" aria-hidden="true"><i /><i /><i /></div><p>Ideas for tomorrow</p><h3>Education</h3><a href="#businesses">Explore businesses <span>↗</span></a></article>
-              <article className="sector-card sector-agri"><span>03</span><div className="sector-art sector-art-agri" aria-hidden="true"><i /><i /><i /></div><p>Rooted in growth</p><h3>Agriculture</h3><a href="#businesses">Explore businesses <span>↗</span></a></article>
+              <p className="section-lead">
+                From care and education to agriculture, our businesses work in the sectors that shape everyday life and help communities move forward.
+              </p>
+            </div>
+            <div className="impact-grid">
+              <Link className="impact-card impact-card-featured" href="/businesses?group=healthcare">
+                <Image src="/hospital.jpg" alt="Healthcare services within the Sanjeevani Group" fill sizes="(max-width: 780px) 100vw, 58vw" />
+                <span className="impact-card-shade" aria-hidden="true" />
+                <span className="impact-card-index">01 / CARE</span>
+                <span className="impact-card-copy">
+                  <strong>Care that brings us closer.</strong>
+                  <small>Healthcare and clinical services</small>
+                </span>
+                <span className="impact-card-arrow" aria-hidden="true">↗</span>
+              </Link>
+              <Link className="impact-card" href="/businesses?group=education">
+                <Image src="/education.jpg" alt="Learning and education across the group" fill sizes="(max-width: 780px) 100vw, 38vw" />
+                <span className="impact-card-shade" aria-hidden="true" />
+                <span className="impact-card-index">02 / LEARNING</span>
+                <span className="impact-card-copy">
+                  <strong>Opening doors through learning.</strong>
+                  <small>Education and opportunity</small>
+                </span>
+                <span className="impact-card-arrow" aria-hidden="true">↗</span>
+              </Link>
+              <Link className="impact-card" href="/businesses?group=agriculture">
+                <Image src="/agro.jpg" alt="Agriculture and food businesses" fill sizes="(max-width: 780px) 100vw, 38vw" />
+                <span className="impact-card-shade" aria-hidden="true" />
+                <span className="impact-card-index">03 / LIVELIHOODS</span>
+                <span className="impact-card-copy">
+                  <strong>Growing from the ground up.</strong>
+                  <small>Agriculture and food</small>
+                </span>
+                <span className="impact-card-arrow" aria-hidden="true">↗</span>
+              </Link>
+            </div>
+            <div className="impact-footer">
+              <span>Different sectors. One shared commitment to meaningful progress.</span>
+              <Link href="/businesses">Explore our businesses <span aria-hidden="true">↗</span></Link>
             </div>
           </div>
         </section>
 
-        <section className="reference-section community-section" id="community">
-          <div className="reference-wrap community-layout">
-            <div className="community-graphic" aria-hidden="true"><span className="community-sun" /><span className="community-mountain mountain-back" /><span className="community-mountain mountain-front" /><span className="community-art-text">GROWING<br />TOGETHER</span></div>
-            <div><p className="section-overline">COMMUNITY</p><h2>Rooted in people.<br /><em>Open to possibility.</em></h2><p className="section-lead">The communities around us are part of every business we build. We value the people, partners, and places that make progress possible.</p><div className="community-pill-list"><span>Healthcare</span><span>Education</span><span>Opportunity</span></div></div>
+        <section className="group-film-section" id="group-film" aria-label="Sanjeevani Group film">
+          <div className="reference-wrap group-film-layout">
+            <div className="group-film-frame">
+              <video
+                ref={groupFilmVideoRef}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label="Sanjeevani Group video"
+                onVolumeChange={(event) => {
+                  if (!event.currentTarget.muted) setGroupFilmAutoplayBlocked(false);
+                }}
+              >
+                <source src="/video.mp4" type="video/mp4" />
+                Your browser does not support embedded video.
+              </video>
+              {groupFilmAutoplayBlocked && (
+                <button className="group-film-play-prompt" type="button" onClick={playGroupFilmWithSound}>
+                  <span aria-hidden="true">◖))</span> Enable sound
+                </button>
+              )}
+              <span className="group-film-frame-label">20 SEC <i /> SANJEEVANI · NEPAL</span>
+            </div>
           </div>
         </section>
+
       </main>
 
       <GroupFooter />

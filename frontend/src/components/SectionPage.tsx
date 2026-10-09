@@ -2,10 +2,14 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { businesses as localBusinesses, type Business } from "@/data/businesses";
+import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
 import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
+import BusinessDirectoryCard from "@/components/BusinessDirectoryCard";
+import BusinessNavMenu from "@/components/BusinessNavMenu";
+import AboutNavMenu from "@/components/AboutNavMenu";
+import SocialLinks from "@/components/SocialLinks";
 
 const navigation = [
   { label: "About us", href: "/about-us", keywords: "our story about history values purpose" },
@@ -92,6 +96,30 @@ const pageContent: Record<string, {
     paragraphs: [
       "Sanjeevani Group brings together independent businesses working across healthcare, education, agriculture, construction, development, and more.",
       "Each business contributes its own expertise and perspective. Together, they reflect a shared commitment to care, opportunity, and meaningful progress for the communities around us.",
+    ],
+  },
+  "mission-vision-values": {
+    number: "12",
+    navLabel: "Mission, Vision & Values",
+    eyebrow: "SANJEEVANI GROUP / OUR PURPOSE",
+    title: "Guided by purpose.<br />Growing with care.",
+    intro: "The shared principles and long-term ambition that guide Sanjeevani Group and its businesses.",
+    lead: "Our mission, vision and values",
+    paragraphs: [
+      "Our mission is to bring independent businesses together to create meaningful progress and opportunity in the communities we serve.",
+      "Our vision is to grow responsibly as a trusted group, contributing to a stronger future for Nepal.",
+      "Our values are care, trust and growth: putting people first, building lasting relationships, and bringing different expertise together to create opportunity.",
+    ],
+  },
+  leadership: {
+    number: "14",
+    navLabel: "Leadership",
+    eyebrow: "SANJEEVANI GROUP / LEADERSHIP",
+    title: "Leadership with<br />a long-term view.",
+    intro: "Meet the leadership guiding Sanjeevani Group’s shared purpose and its family of businesses.",
+    lead: "Chairman",
+    paragraphs: [
+      "C.A. Khuma Parsad Aryal is the Chairman of Sanjeevani Group. The group brings together independent businesses working across healthcare, education, agriculture, infrastructure and more.",
     ],
   },
   businesses: {
@@ -260,20 +288,22 @@ function Brand() {
 }
 
 export default function SectionPage({ section }: { section: string }) {
-  const page = pageContent[section];
+  const page = pageContent[section === "our-story" ? "about-us" : section];
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [letter, setLetter] = useState("All");
+  const [businessCategory, setBusinessCategory] = useState<Business["category"] | "all">("all");
+  const [businessGroup, setBusinessGroup] = useState<BusinessGroup | "all">("all");
   const [contactNotice, setContactNotice] = useState("");
   const [careerSearch, setCareerSearch] = useState("");
   const [careerCompany, setCareerCompany] = useState("All companies");
   const [careerType, setCareerType] = useState("All areas");
 
   useEffect(() => {
-    if (section !== "businesses" && section !== "about-us" && section !== "careers") return;
+    if (section !== "businesses" && section !== "about-us" && section !== "our-story" && section !== "careers") return;
     fetch("/api/businesses")
       .then(async (response) => {
         const result = (await response.json()) as { data: Business[] };
@@ -285,11 +315,19 @@ export default function SectionPage({ section }: { section: string }) {
 
   useEffect(() => {
     if (section === "businesses") {
-      const savedSearch = window.sessionStorage.getItem("sanjeevani-business-search");
-      if (savedSearch) {
-        setDirectoryQuery(savedSearch);
-        window.sessionStorage.removeItem("sanjeevani-business-search");
+      const searchParams = new URLSearchParams(window.location.search);
+      const group = businessGroups.find((item) => item.value === searchParams.get("group"));
+      const category = searchParams.get("category");
+      setBusinessGroup(group?.value ?? "all");
+      if (category === "healthcare" || category === "education" || category === "agriculture" || category === "other") {
+        setBusinessCategory(category);
+      } else {
+        setBusinessCategory("all");
       }
+      const savedSearch = window.sessionStorage.getItem("sanjeevani-business-search");
+      const searchQuery = searchParams.get("search");
+      setDirectoryQuery(searchQuery || savedSearch || "");
+      if (savedSearch) window.sessionStorage.removeItem("sanjeevani-business-search");
     }
   }, [section]);
 
@@ -307,19 +345,18 @@ export default function SectionPage({ section }: { section: string }) {
     return [...businessMatches, ...pageMatches].slice(0, 7);
   }, [businesses, search]);
 
-  const alphabet = useMemo(() => {
-    const available = new Set(businesses.map((business) => business.name[0].toUpperCase()));
-    return ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").filter((value) => available.has(value))];
-  }, [businesses]);
+  const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
   const visibleBusinesses = useMemo(() => {
     const term = directoryQuery.trim().toLowerCase();
     return businesses.filter((business) => {
       const matchesLetter = letter === "All" || business.name.toUpperCase().startsWith(letter);
       const matchesSearch = !term || `${business.name} ${business.sector} ${business.description}`.toLowerCase().includes(term);
-      return matchesLetter && matchesSearch;
+      const matchesCategory = businessCategory === "all" || business.category === businessCategory;
+      const matchesGroup = businessGroup === "all" || businessGroups.find((item) => item.value === businessGroup)?.matches(business);
+      return matchesLetter && matchesSearch && matchesCategory && matchesGroup;
     });
-  }, [businesses, directoryQuery, letter]);
+  }, [businessCategory, businessGroup, businesses, directoryQuery, letter]);
 
   const visibleCareerAreas = useMemo(() => {
     const term = careerSearch.trim().toLowerCase();
@@ -363,9 +400,14 @@ export default function SectionPage({ section }: { section: string }) {
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => (
+            {navigation.map((item) => item.label === "About us" ? (
+              <AboutNavMenu key={item.href} isCurrent={section === "about-us" || section === "our-story"} />
+            ) : item.label === "Business" ? (
+              <BusinessNavMenu businesses={businesses} key={item.href} isCurrent={section === "businesses"} />
+            ) : (
               <Link className={item.href === `/${section}` ? "is-current" : ""} href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>
             ))}
+            <SocialLinks className="mobile-nav-social-links" />
           </nav>
           <div className="reference-search" role="search">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -373,6 +415,7 @@ export default function SectionPage({ section }: { section: string }) {
             <input id="section-search" type="search" placeholder="Search the group" value={search} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => { if (event.key === "Escape") setSearchOpen(false); if (event.key === "Enter" && searchResults[0]) followSearchResult(searchResults[0].href); }} />
             {searchOpen && search.trim() && <ul className="search-results">{searchResults.length ? searchResults.map((result) => <li key={`${result.href}-${result.label}`}><button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => followSearchResult(result.href)}>{result.label}<small>{result.detail}</small></button></li>) : <li className="search-no-results">No results found.</li>}</ul>}
           </div>
+          <SocialLinks className="header-social-links" />
           <button className="reference-menu" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
         </div>
       </header>
@@ -380,7 +423,7 @@ export default function SectionPage({ section }: { section: string }) {
       <GmailContactButton />
 
       <main className="section-page">
-        <section className={`section-page-hero${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "businesses", "media", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
           <div className="reference-wrap section-page-hero-content">
@@ -465,7 +508,7 @@ export default function SectionPage({ section }: { section: string }) {
               </form>
             </div>
           </section>
-        ) : section === "about-us" ? (
+        ) : section === "about-us" || section === "our-story" ? (
           <>
             <section className="about-history reference-section">
               <div className="reference-wrap">
@@ -511,13 +554,13 @@ export default function SectionPage({ section }: { section: string }) {
             </section>
           </>
         ) : section === "businesses" ? (
-          <section className="reference-section section-page-content">
+          <section className="reference-section directory-section section-page-content">
             <div className="reference-wrap">
-              <p className="section-overline">THE GROUP DIRECTORY</p>
-              <div className="directory-heading"><div><h2>Meet our businesses</h2><p className="section-lead">{page.paragraphs[0]}</p></div><p className="directory-total"><strong>{businesses.length}</strong><span>companies<br />in the group</span></p></div>
+              <p className="section-overline">THE GROUP</p>
+              <div className="directory-heading"><div><h2>{businessGroup !== "all" ? businessGroups.find((item) => item.value === businessGroup)?.label : businessCategory === "all" ? "Our businesses" : `${businessCategory[0].toUpperCase()}${businessCategory.slice(1)} businesses`}</h2><p className="section-lead">Eighteen companies, each with a distinct role in our shared story. Explore the directory by name.</p></div><p className="directory-total"><strong>{visibleBusinesses.length}</strong><span>{businessGroup === "all" && businessCategory === "all" ? "companies in the group" : "matching businesses"}</span></p></div>
               <div className="directory-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg><label className="visually-hidden" htmlFor="page-directory-search">Search companies</label><input id="page-directory-search" type="search" placeholder="Search companies by name or sector" value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setLetter("All"); }} /><span>{visibleBusinesses.length} results</span></div>
-              <div className="directory-letters" role="toolbar" aria-label="Filter businesses by first letter">{alphabet.map((value) => <button key={value} type="button" className={letter === value ? "is-active" : ""} aria-pressed={letter === value} onClick={() => { setLetter(value); setDirectoryQuery(""); }}>{value}</button>)}</div>
-              <div className="directory-grid" aria-live="polite">{visibleBusinesses.map((business) => <article className="directory-card" key={business._id}><span className="directory-card-sector">{business.sector}</span><h3>{business.name}</h3></article>)}{visibleBusinesses.length === 0 && <p className="directory-empty">No businesses match. Try another name or letter.</p>}</div>
+              <div className="directory-letters" role="toolbar" aria-label="Filter businesses by first letter">{alphabet.map((value) => <button key={value} type="button" disabled={value !== "All" && !businesses.some((business) => business.name.toUpperCase().startsWith(value))} className={letter === value ? "is-active" : ""} aria-pressed={letter === value} onClick={() => { setLetter(value); setDirectoryQuery(""); }}>{value}</button>)}</div>
+              <div className="directory-grid" aria-live="polite">{visibleBusinesses.map((business, index) => <BusinessDirectoryCard business={business} index={index} key={business._id} />)}{visibleBusinesses.length === 0 && <p className="directory-empty">No businesses match. Try another name or letter.</p>}</div>
             </div>
           </section>
         ) : (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import GroupEmblem from "@/components/GroupEmblem";
+import SocialLinks from "@/components/SocialLinks";
 
 export default function GroupFooter() {
   return (
@@ -14,12 +15,18 @@ export default function GroupFooter() {
           <span>Group of companies</span>
           <a href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>
         </div>
+        <div className="group-footer-social">
+          <SocialLinks />
+        </div>
         <Link className="group-footer-contact-button" href="/contact">Contact us <span>↗</span></Link>
         <small className="group-footer-copyright">© {new Date().getFullYear()} Sanjeevani Group of Companies.</small>
       </section>
 
       <section className="group-footer-navigation" aria-label="Footer navigation">
-        <span className="group-footer-orb" aria-hidden="true" />
+        <div className="group-footer-intro">
+          <span>EXPLORE SANJEEVANI</span>
+          <p>One horizon, <strong>many ambitions.</strong></p>
+        </div>
         <div className="group-footer-link-columns">
           <div>
             <h2>Company</h2>
@@ -47,7 +54,9 @@ export default function GroupFooter() {
             <Link href="/sitemap">Sitemap</Link>
           </div>
         </div>
-        <div className="group-footer-bottom" />
+        <div className="group-footer-bottom">
+          <span>Building a better tomorrow, together.</span>
+        </div>
       </section>
     </footer>
   );
