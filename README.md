@@ -10,6 +10,8 @@ This is a Next.js website with a MongoDB-backed business directory and a protect
 4. Open a terminal in `frontend` and run `npm install`.
 5. Run `npm run dev` and open `http://localhost:3000`.
 
+When this workspace is opened in VS Code, the **Sync GitHub updates** task checks the tracked branch every three minutes. It applies pushed commits automatically when the branch can be fast-forwarded and incoming commits do not touch locally edited or untracked files. Unrelated local work does not block an update. If incoming commits overlap local changes or the branch has diverged, it fetches updates but leaves them unapplied; commit/stash the overlapping changes or resolve the divergence to resume automatic updates. VS Code may ask you to allow the folder-open task the first time.
+
 The MongoDB database name is `Sanjeevani_group_of_companies`; spaces in MongoDB database namespaces are invalid, so underscores are used instead. Its `businesses` collection is initialized from `frontend/src/data/businesses.ts` when empty. The seed uses insert-only upserts, so it won't overwrite existing company details.
 
 Open `/admin` to sign in to the CMS. Admins can add, edit, publish, unpublish, and delete businesses. The admin password and signing secret are read only from server environment variables; sessions use a signed, HTTP-only, same-site cookie and expire after eight hours. Configure a strong password and secret before deploying.

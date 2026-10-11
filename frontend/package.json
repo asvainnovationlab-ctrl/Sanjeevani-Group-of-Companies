@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync:github": "node scripts/sync-from-origin.mjs"
   },
   "dependencies": {
     "mongoose": "^8.13.2",
