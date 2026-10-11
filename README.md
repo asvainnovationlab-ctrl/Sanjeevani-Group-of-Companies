@@ -19,3 +19,7 @@ Open `/admin` to sign in to the CMS. Admins can add, edit, publish, unpublish, a
 The main navigation links to dedicated pages for About Us, Businesses, Media, Investors, Community, and Careers. The Businesses page includes the searchable company directory and A–Z filters.
 
 The supplied business list contains 18 names, although the brief mentions 17; all 18 supplied names are included.
+
+## Contributing
+
+Contributions are welcome. Please open a pull request with a clear description of your changes.
