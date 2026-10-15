@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
 import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
@@ -9,16 +10,24 @@ import GroupFooter from "@/components/GroupFooter";
 import BusinessDirectoryCard from "@/components/BusinessDirectoryCard";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
+import MediaNavMenu from "@/components/MediaNavMenu";
 import SocialLinks from "@/components/SocialLinks";
+import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 const navigation = [
-  { label: "About us", href: "/about-us", keywords: "our story about history values purpose" },
+  { label: "About us", href: "/about-us", keywords: "our story about history values purpose leadership team" },
   { label: "Business", href: "/businesses", keywords: "companies healthcare education agriculture suppliers construction" },
   { label: "Media", href: "/media", keywords: "updates stories group" },
   { label: "Investors", href: "/investors", keywords: "growth long term contact" },
   { label: "Community", href: "/community", keywords: "people education health agriculture" },
   { label: "Careers", href: "/careers", keywords: "jobs work careers email" },
   { label: "Contact", href: "/contact", keywords: "contact email phone location enquiry message" },
+];
+const mediaPages = [
+  { label: "News", href: "/news" },
+  { label: "Events", href: "/events" },
+  { label: "Press Release", href: "/press-release" },
+  { label: "Newsletter", href: "/newsletter" },
 ];
 
 const careerAreas = [
@@ -122,6 +131,17 @@ const pageContent: Record<string, {
       "C.A. Khuma Parsad Aryal is the Chairman of Sanjeevani Group. The group brings together independent businesses working across healthcare, education, agriculture, infrastructure and more.",
     ],
   },
+  team: {
+    number: "15",
+    navLabel: "Team",
+    eyebrow: "SANJEEVANI GROUP / TEAM",
+    title: "The people behind<br />our shared purpose.",
+    intro: "Meet the people who contribute to Sanjeevani Group and its businesses.",
+    lead: "Our team",
+    paragraphs: [
+      "Team profiles will be added here as official information becomes available. For current enquiries, please contact Sanjeevani Group.",
+    ],
+  },
   businesses: {
     number: "02",
     navLabel: "Business",
@@ -142,6 +162,72 @@ const pageContent: Record<string, {
     lead: "News and updates",
     paragraphs: [
       "There are no verified media announcements to display yet. Group updates can be added here when they are ready to share.",
+    ],
+  },
+  news: {
+    number: "03A",
+    navLabel: "News",
+    eyebrow: "SANJEEVANI GROUP / NEWS",
+    title: "News from<br />across the group.",
+    intro: "Announcements and updates from Sanjeevani Group and its businesses.",
+    lead: "News",
+    paragraphs: [
+      "There are no verified news announcements to share at this time. Updates will be published here when confirmed.",
+    ],
+  },
+  events: {
+    number: "03B",
+    navLabel: "Events",
+    eyebrow: "SANJEEVANI GROUP / EVENTS",
+    title: "Events across<br />the group.",
+    intro: "Discover events and activities from Sanjeevani Group and its businesses.",
+    lead: "Events",
+    paragraphs: [
+      "There are no confirmed upcoming events to display at this time. Event details will be shared here when available.",
+    ],
+  },
+  "press-release": {
+    number: "03C",
+    navLabel: "Press Release",
+    eyebrow: "SANJEEVANI GROUP / PRESS RELEASE",
+    title: "Official updates<br />from the group.",
+    intro: "Official announcements and statements from Sanjeevani Group.",
+    lead: "Press Release",
+    paragraphs: [
+      "There are no approved press releases to display at this time. Official statements will be published here when available.",
+    ],
+  },
+  newsletter: {
+    number: "03D",
+    navLabel: "Newsletter",
+    eyebrow: "SANJEEVANI GROUP / NEWSLETTER",
+    title: "News from<br />across Sanjeevani.",
+    intro: "Read updates and highlights from Sanjeevani Group and its businesses.",
+    lead: "Newsletter",
+    paragraphs: [
+      "No newsletters are available yet. Group news and highlights will be shared here when editions are ready.",
+    ],
+  },
+  reviews: {
+    number: "03E",
+    navLabel: "Reviews",
+    eyebrow: "SANJEEVANI GROUP / REVIEWS",
+    title: "Experiences<br />across our group.",
+    intro: "Reviews and feedback about the services offered by Sanjeevani Group businesses.",
+    lead: "Reviews",
+    paragraphs: [
+      "Verified reviews are not available to display yet. For feedback about a specific service, please contact the relevant business directly.",
+    ],
+  },
+  gallery: {
+    number: "03E",
+    navLabel: "Gallery",
+    eyebrow: "SANJEEVANI GROUP / GALLERY",
+    title: "A closer look<br />at our work.",
+    intro: "Photos and moments from Sanjeevani Group and its businesses.",
+    lead: "Gallery",
+    paragraphs: [
+      "There are no approved gallery photos to display yet. Images will be added here as they become available.",
     ],
   },
   investors: {
@@ -263,7 +349,9 @@ const pageContent: Record<string, {
       { label: "About us", href: "/about-us" },
       { label: "Locations", href: "/#locations" },
       { label: "Businesses", href: "/businesses" },
+      { label: "Team", href: "/team" },
       { label: "Media", href: "/media" },
+      ...mediaPages,
       { label: "Investors", href: "/investors" },
       { label: "Community", href: "/community" },
       { label: "Careers", href: "/careers" },
@@ -297,6 +385,7 @@ export default function SectionPage({ section }: { section: string }) {
   const [letter, setLetter] = useState("All");
   const [businessCategory, setBusinessCategory] = useState<Business["category"] | "all">("all");
   const [businessGroup, setBusinessGroup] = useState<BusinessGroup | "all">("all");
+  const [businessDirectoryOpen, setBusinessDirectoryOpen] = useState(false);
   const [contactNotice, setContactNotice] = useState("");
   const [careerSearch, setCareerSearch] = useState("");
   const [careerCompany, setCareerCompany] = useState("All companies");
@@ -327,6 +416,7 @@ export default function SectionPage({ section }: { section: string }) {
       const savedSearch = window.sessionStorage.getItem("sanjeevani-business-search");
       const searchQuery = searchParams.get("search");
       setDirectoryQuery(searchQuery || savedSearch || "");
+      setBusinessDirectoryOpen(Boolean(group || searchQuery || savedSearch || category));
       if (savedSearch) window.sessionStorage.removeItem("sanjeevani-business-search");
     }
   }, [section]);
@@ -342,7 +432,10 @@ export default function SectionPage({ section }: { section: string }) {
       .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(term))
       .slice(0, 4)
       .map((item) => ({ label: item.label, detail: "Explore this page", href: item.href }));
-    return [...businessMatches, ...pageMatches].slice(0, 7);
+    const mediaMatches = mediaPages
+      .filter((item) => item.label.toLowerCase().includes(term))
+      .map((item) => ({ ...item, detail: "Explore this page" }));
+    return [...businessMatches, ...pageMatches, ...mediaMatches].slice(0, 7);
   }, [businesses, search]);
 
   const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
@@ -396,14 +489,16 @@ export default function SectionPage({ section }: { section: string }) {
 
   return (
     <>
-      <header className="reference-header">
+      <header className={`reference-header${section === "businesses" ? " businesses-site-header" : ""}`}>
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => item.label === "About us" ? (
-              <AboutNavMenu key={item.href} isCurrent={section === "about-us" || section === "our-story"} />
+            {navigation.map((item) => item.label === "Investors" ? null : item.label === "About us" ? (
+              <AboutNavMenu key={item.href} isCurrent={["about-us", "our-story", "mission-vision-values", "leadership", "team"].includes(section)} />
             ) : item.label === "Business" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} isCurrent={section === "businesses"} />
+            ) : item.label === "Media" ? (
+              <MediaNavMenu key={item.href} isCurrent={["media", "news", "events", "press-release", "newsletter"].includes(section)} onNavigate={() => setMenuOpen(false)} />
             ) : (
               <Link className={item.href === `/${section}` ? "is-current" : ""} href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>
             ))}
@@ -422,15 +517,53 @@ export default function SectionPage({ section }: { section: string }) {
 
       <GmailContactButton />
 
-      <main className="section-page">
-        <section className={`section-page-hero${["about-us", "our-story", "businesses", "media", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}`}>
+      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "newsletter", "reviews", "gallery", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
+          {section === "businesses" && <div className="businesses-hero-art" aria-hidden="true"><span>Together<br />for a better<br />tomorrow</span></div>}
+          {section === "careers" && <div className="career-hero-art" aria-hidden="true" />}
           <div className="reference-wrap section-page-hero-content">
-            <p className="section-overline">{page.eyebrow}</p>
-            <h1 dangerouslySetInnerHTML={{ __html: page.title }} />
-            <p>{page.intro}</p>
-            <div className="section-page-breadcrumb"><Link href="/">Home</Link><span>/</span><span>{page.navLabel}</span></div>
+            {section === "businesses" ? (
+              <div className="businesses-hero-copy">
+                <p className="section-overline">THE GROUP</p>
+                <h1>Our <em>Businesses</em></h1>
+                <p className="businesses-hero-description">Eighteen companies, each with a distinct role in our shared story.<br />Explore the directory by name.</p>
+                <label className="businesses-hero-search">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                  <span className="visually-hidden">Search companies by name or sector</span>
+                  <input id="page-directory-search" type="search" placeholder="Search companies by name or sector..." value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setLetter("All"); }} />
+                  <span className="businesses-hero-search-count" aria-live="polite">{visibleBusinesses.length}<small>results</small></span>
+                </label>
+                <div className="businesses-hero-stats">
+                  <div><strong>{businesses.length}</strong><span>Companies<br />in the group</span></div>
+                  <div><strong>{businessGroups.length}</strong><span>Diverse sectors<br />Healthcare · Education · More</span></div>
+                </div>
+              </div>
+            ) : section === "contact" ? (
+              <div className="contact-network-hero-content">
+                <div className="contact-network-hero-copy">
+                  <p className="section-overline">SANJEEVANI GROUP</p>
+                  <h1>Our <em>network</em></h1>
+                </div>
+                <NepalNetworkMap connected />
+                <p className="contact-network-hero-description">Sanjeevani Group brings together businesses represented across cities in Nepal. Select a location marker to view the city in Google Maps.</p>
+              </div>
+            ) : section === "careers" ? (
+              <div className="career-hero-copy">
+                <p className="section-overline">{page.eyebrow}</p>
+                <h1 dangerouslySetInnerHTML={{ __html: page.title }} />
+                <a className="career-hero-cta" href="#career-board-title">Explore career paths <span aria-hidden="true">↗</span></a>
+                <p className="career-hero-message">{page.intro}</p>
+              </div>
+            ) : (
+              <>
+                <p className="section-overline">{page.eyebrow}</p>
+                <h1 dangerouslySetInnerHTML={{ __html: page.title }} />
+                <p>{page.intro}</p>
+                <div className="section-page-breadcrumb"><Link href="/">Home</Link><span>/</span><span>{page.navLabel}</span></div>
+              </>
+            )}
           </div>
           <span className="section-page-number" aria-hidden="true">{page.number}</span>
         </section>
@@ -468,12 +601,22 @@ export default function SectionPage({ section }: { section: string }) {
                   <article className="career-area-card" key={area.title}>
                     <div className="career-area-details">
                       <h3>{area.title}</h3>
-                      <p className="career-area-companies">{area.companyNames.join(" · ")}</p>
-                      <div className="career-area-meta"><span>Nepal</span><span>{area.type}</span><span>Company-led recruitment</span></div>
+                      <p className="career-area-companies"><strong>{area.companyNames.join(" · ")} | Sanjeevani Group</strong></p>
+                      <div className="career-area-meta"><span><strong>Career area:</strong> {area.type}</span><span><strong>Location:</strong> Nepal</span></div>
+                      <p className="career-area-note"><em>For current openings and application details, please contact the relevant company to confirm availability.</em></p>
+                      <a className="career-area-cta" href={`mailto:info@sanjeevanigroup.com?subject=${encodeURIComponent(`Career enquiry: ${area.title}`)}&body=${encodeURIComponent(`Hello Sanjeevani Group,\n\nI would like to enquire about current opportunities in ${area.title}.\n\nPlease let me know which group company I should contact.\n`)}`}>
+                        Enquire about roles <span aria-hidden="true">↗</span>
+                      </a>
                     </div>
-                    <a className="career-area-cta" href={`mailto:info@sanjeevanigroup.com?subject=${encodeURIComponent(`Career enquiry: ${area.title}`)}&body=${encodeURIComponent(`Hello Sanjeevani Group,\n\nI would like to enquire about current opportunities in ${area.title}.\n\nPlease let me know which group company I should contact.\n`)}`}>
-                      Enquire about roles <span aria-hidden="true">↗</span>
-                    </a>
+                    <div className="career-area-poster">
+                      <Image
+                        src="/career hiring.png"
+                        alt="Nurse hiring poster for GMC Hospital, Nepal, repeated as a visual on career-area cards"
+                        width={1024}
+                        height={1536}
+                        sizes="(max-width: 760px) 80vw, 420px"
+                      />
+                    </div>
                   </article>
                 ))}
                 {visibleCareerAreas.length === 0 && <p className="career-empty">No career areas match those filters. Try a different search or company.</p>}
@@ -482,32 +625,57 @@ export default function SectionPage({ section }: { section: string }) {
             </div>
           </section>
         ) : section === "contact" ? (
-          <section className="contact-section">
-            <div className="reference-wrap contact-panel">
-              <div className="contact-map">
-                <iframe
-                  title="Google Maps search for Sanjeevani Group in Nepal"
-                  src="https://maps.google.com/maps?q=Sanjeevani%20Group%20Nepal&output=embed"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-                <p>Map search for Sanjeevani Group in Nepal. Please confirm the relevant company’s address before visiting.</p>
+          <>
+            <section className="contact-section">
+              <div className="reference-wrap contact-panel contact-form-panel">
+                <div className="contact-map">
+                  <iframe
+                    title="Google Maps search for Sanjeevani Group office locations in Nepal"
+                    src="https://maps.google.com/maps?q=Sanjeevani%20Group%20Nepal&output=embed"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <p>Google Maps search for Sanjeevani Group locations. Confirm the specific office address with the relevant company before visiting.</p>
+                </div>
+                <form className="contact-form" onSubmit={submitContactForm}>
+                  <h2>Send us an enquiry</h2>
+                  <label htmlFor="contact-name">Full name</label>
+                  <input id="contact-name" name="name" type="text" autoComplete="name" placeholder="Enter full name" maxLength={120} required />
+                  <label htmlFor="contact-email">Email address</label>
+                  <input id="contact-email" name="email" type="email" autoComplete="email" placeholder="Enter email" maxLength={254} required />
+                  <label htmlFor="contact-phone">Phone <span>(optional)</span></label>
+                  <input id="contact-phone" name="phone" type="tel" autoComplete="tel" placeholder="Enter phone" maxLength={40} />
+                  <label htmlFor="contact-message">How can we help?</label>
+                  <textarea id="contact-message" name="message" placeholder="Write your message here" maxLength={4000} required />
+                  <button className="contact-submit" type="submit">Send message <span aria-hidden="true">↗</span></button>
+                  {contactNotice && <p className="contact-notice" role="status">{contactNotice}</p>}
+                  <small>Your details are placed into an email draft and are not stored by this website.</small>
+                </form>
               </div>
-              <form className="contact-form" onSubmit={submitContactForm}>
-                <label htmlFor="contact-name">Full name</label>
-                <input id="contact-name" name="name" type="text" autoComplete="name" placeholder="Enter full name" maxLength={120} required />
-                <label htmlFor="contact-email">Email address</label>
-                <input id="contact-email" name="email" type="email" autoComplete="email" placeholder="Enter email" maxLength={254} required />
-                <label htmlFor="contact-phone">Phone <span>(optional)</span></label>
-                <input id="contact-phone" name="phone" type="tel" autoComplete="tel" placeholder="Enter phone" maxLength={40} />
-                <label htmlFor="contact-message">How can we help?</label>
-                <textarea id="contact-message" name="message" placeholder="Write your message here" maxLength={4000} required />
-                <button className="contact-submit" type="submit">Send message <span aria-hidden="true">↗</span></button>
-                {contactNotice && <p className="contact-notice" role="status">{contactNotice}</p>}
-                <small>Your details are placed into an email draft and are not stored by this website.</small>
-              </form>
-            </div>
-          </section>
+            </section>
+            <section className="contact-details" aria-labelledby="contact-details-title">
+              <div className="reference-wrap">
+                <h2 id="contact-details-title">Contact &amp; support</h2>
+                <div className="contact-details-grid">
+                  <a href="/#locations" className="contact-detail">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                    <h3>Group locations</h3>
+                    <p>Explore Sanjeevani Group locations across Nepal.</p>
+                  </a>
+                  <a href="mailto:info@sanjeevanigroup.com" className="contact-detail">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1" /><path d="m4 7 8 6 8-6" /></svg>
+                    <h3>Email</h3>
+                    <p>info@sanjeevanigroup.com</p>
+                  </a>
+                  <div className="contact-detail">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.8 10 7.5 8.3 9.2a14.5 14.5 0 0 0 6.5 6.5l1.7-1.7 3.7 2.8-.7 3.5c-.1.6-.7 1-1.3 1C10.4 20.6 3.4 13.6 2.7 5.8c-.1-.6.4-1.2 1-1.3l3.5-.7Z" /></svg>
+                    <h3>Phone</h3>
+                    <p>Any time.<br />9846****** · 9827******</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
         ) : section === "about-us" || section === "our-story" ? (
           <>
             <section className="about-history reference-section">
@@ -554,13 +722,60 @@ export default function SectionPage({ section }: { section: string }) {
             </section>
           </>
         ) : section === "businesses" ? (
-          <section className="reference-section directory-section section-page-content">
+          <section className="reference-section directory-section business-directory-section section-page-content">
             <div className="reference-wrap">
-              <p className="section-overline">THE GROUP</p>
-              <div className="directory-heading"><div><h2>{businessGroup !== "all" ? businessGroups.find((item) => item.value === businessGroup)?.label : businessCategory === "all" ? "Our businesses" : `${businessCategory[0].toUpperCase()}${businessCategory.slice(1)} businesses`}</h2><p className="section-lead">Eighteen companies, each with a distinct role in our shared story. Explore the directory by name.</p></div><p className="directory-total"><strong>{visibleBusinesses.length}</strong><span>{businessGroup === "all" && businessCategory === "all" ? "companies in the group" : "matching businesses"}</span></p></div>
-              <div className="directory-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg><label className="visually-hidden" htmlFor="page-directory-search">Search companies</label><input id="page-directory-search" type="search" placeholder="Search companies by name or sector" value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setLetter("All"); }} /><span>{visibleBusinesses.length} results</span></div>
-              <div className="directory-letters" role="toolbar" aria-label="Filter businesses by first letter">{alphabet.map((value) => <button key={value} type="button" disabled={value !== "All" && !businesses.some((business) => business.name.toUpperCase().startsWith(value))} className={letter === value ? "is-active" : ""} aria-pressed={letter === value} onClick={() => { setLetter(value); setDirectoryQuery(""); }}>{value}</button>)}</div>
-              <div className="directory-grid" aria-live="polite">{visibleBusinesses.map((business, index) => <BusinessDirectoryCard business={business} index={index} key={business._id} />)}{visibleBusinesses.length === 0 && <p className="directory-empty">No businesses match. Try another name or letter.</p>}</div>
+              <div className="business-category-selector">
+                <div className="business-category-column">
+                  {businessGroups.slice(0, 3).map((group) => (
+                    <button className={`business-category-tile business-category-tile-${group.value}`} type="button" key={group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); setBusinessDirectoryOpen(true); }}>
+                      <span className="business-category-art" aria-hidden="true" />
+                      <strong>{group.label}</strong>
+                      <span className="business-category-arrow" aria-hidden="true">↗</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="business-category-center">
+                  <span className="business-category-emblem"><GroupEmblem /></span>
+                  <span className="business-category-center-label">SANJEEVANI GROUP</span>
+                  <h2>Many businesses.<br /><em>One shared purpose.</em></h2>
+                  <p>Choose an area to explore the companies in our group.</p>
+                  <button type="button" className="business-category-all" onClick={() => { setBusinessGroup("all"); setBusinessCategory("all"); setLetter("All"); setDirectoryQuery(""); setBusinessDirectoryOpen(true); }}>View all businesses <span aria-hidden="true">↓</span></button>
+                </div>
+                <div className="business-category-column">
+                  {businessGroups.slice(3).map((group) => (
+                    <button className={`business-category-tile business-category-tile-${group.value}`} type="button" key={group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); setBusinessDirectoryOpen(true); }}>
+                      <span className="business-category-art" aria-hidden="true" />
+                      <strong>{group.label}</strong>
+                      <span className="business-category-arrow" aria-hidden="true">↗</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {businessDirectoryOpen && (
+                <div className="business-directory-panel" id="business-directory-results">
+                  <div className="business-directory-results-heading">
+                    <div>
+                      <span>BUSINESS DIRECTORY</span>
+                      <h2>{businessGroup === "all" ? "All businesses" : businessGroups.find((item) => item.value === businessGroup)?.label}</h2>
+                    </div>
+                    <button type="button" onClick={() => setBusinessDirectoryOpen(false)}>Back to categories <span aria-hidden="true">↑</span></button>
+                  </div>
+                  <div className="business-directory-toolbar">
+                    <div className="business-directory-filters" role="group" aria-label="Filter businesses by sector">
+                      <button type="button" className={businessGroup === "all" && businessCategory === "all" ? "is-active" : ""} aria-pressed={businessGroup === "all" && businessCategory === "all"} onClick={() => { setBusinessGroup("all"); setBusinessCategory("all"); }}>All</button>
+                      {businessGroups.map((group) => <button type="button" key={group.value} className={businessGroup === group.value ? "is-active" : ""} aria-pressed={businessGroup === group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); }}>{group.label}</button>)}
+                    </div>
+                    <label className="business-directory-letter-filter">
+                      <span>Sort by first letter</span>
+                      <select value={letter} onChange={(event) => { setLetter(event.target.value); setDirectoryQuery(""); }}>
+                        {alphabet.map((value) => <option key={value} value={value}>{value === "All" ? "All companies" : value}</option>)}
+                      </select>
+                    </label>
+                    <span className="business-directory-result-count">{visibleBusinesses.length} results</span>
+                  </div>
+                  <div className="directory-grid" aria-live="polite">{visibleBusinesses.map((business, index) => <BusinessDirectoryCard business={business} index={index} key={business._id} />)}{visibleBusinesses.length === 0 && <p className="directory-empty">No businesses match. Try another name or letter.</p>}</div>
+                </div>
+              )}
             </div>
           </section>
         ) : (
@@ -595,7 +810,21 @@ export default function SectionPage({ section }: { section: string }) {
         )}
       </main>
 
-      <GroupFooter />
+      {section === "businesses" ? (
+        <>
+          <section className="business-page-motto" aria-label="Our motto">
+            <div className="business-page-motto-content">
+              <span className="business-page-motto-emblem"><GroupEmblem /></span>
+              <p>One horizon, <em>many ambitions.</em></p>
+            </div>
+          </section>
+          <div className="business-page-footer"><GroupFooter /></div>
+        </>
+      ) : section === "contact" ? (
+        <div className="contact-page-footer"><GroupFooter /></div>
+      ) : section === "careers" ? (
+        <div className="career-page-footer"><GroupFooter /></div>
+      ) : <GroupFooter />}
     </>
   );
 }

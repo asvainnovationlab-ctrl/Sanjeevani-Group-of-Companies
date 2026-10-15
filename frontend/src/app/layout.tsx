@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 export const metadata: Metadata = {
   title: "Sanjeevani Group of Companies | One horizon, many ambitions",
   description:
     "Discover Sanjeevani Group and its businesses across healthcare, education, agriculture, infrastructure, and more.",
+  icons: {
+    icon: "/slogo.png",
+    shortcut: "/slogo.png",
+    apple: "/slogo.png",
+  },
 };
 
 export default function RootLayout({
@@ -14,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-body">{children}</body>
+      <body className="font-body">
+        <ThemeSwitcher />
+        {children}
+      </body>
     </html>
   );
 }

@@ -9,7 +9,9 @@ import GmailContactButton from "@/components/GmailContactButton";
 import GroupEmblem from "@/components/GroupEmblem";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
+import MediaNavMenu from "@/components/MediaNavMenu";
 import SocialLinks from "@/components/SocialLinks";
+import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 type DirectoryResponse = { data: Business[]; message?: string };
 
@@ -30,27 +32,20 @@ const homeSections = [
   { id: "group-film", label: "Group film" },
 ];
 
-const locationPins = [
-  { city: "Nepalgunj", x: 31.4, y: 57.9, delay: "0s", label: "left" },
-  { city: "Kohalpur", x: 33.3, y: 54.3, delay: ".5s", label: "above" },
-  { city: "Bhairahawa", x: 45.1, y: 70.2, delay: "1s", label: "above" },
-  { city: "Pokhara", x: 49.1, y: 54.3, delay: "1.5s", label: "above" },
-  { city: "Ghorahi", x: 37.9, y: 58.1, delay: "0s", label: "below" },
-  { city: "Kathmandu", x: 59.2, y: 65.4, delay: ".5s", label: "left" },
-  { city: "Bhaktapur", x: 60, y: 66.4, delay: "1s", label: "right" },
-  { city: "Hetauda", x: 57, y: 71.9, delay: "1.5s", label: "left" },
-  { city: "Janakpur", x: 63.7, y: 87.5, delay: "0s", label: "above" },
-  { city: "Syangja", x: 48.3, y: 57, delay: ".5s", label: "below" },
-];
-
 const navigation = [
-  { label: "About us", href: "/about-us", keywords: "our story about history values purpose" },
+  { label: "About us", href: "/about-us", keywords: "our story about history values purpose leadership team" },
   { label: "Businesses", href: "/businesses", keywords: "companies healthcare education agriculture suppliers construction hydro power" },
   { label: "Media", href: "/media", keywords: "updates stories group" },
   { label: "Investors", href: "/investors", keywords: "growth long term contact" },
   { label: "Community", href: "/community", keywords: "people education health agriculture" },
   { label: "Careers", href: "/careers", keywords: "jobs work careers email" },
   { label: "Contact", href: "/contact", keywords: "contact email location enquiry message" },
+];
+const mediaPages = [
+  { label: "News", href: "/news" },
+  { label: "Events", href: "/events" },
+  { label: "Press Release", href: "/press-release" },
+  { label: "Newsletter", href: "/newsletter" },
 ];
 
 const localLocations = new Map(localBusinesses.map((business) => [business.name, business.location]));
@@ -64,30 +59,12 @@ function Brand() {
   );
 }
 
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8m10.6 10.6 1.8 1.8M2 12h2.5m15 0H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-    </svg>
-  );
-}
-
 export default function HomePage() {
   const [hasEntered, setHasEntered] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [query, setQuery] = useState("");
   const [slideIndex, setSlideIndex] = useState(0);
   const [activeHomeSection, setActiveHomeSection] = useState("home");
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -134,10 +111,6 @@ export default function HomePage() {
     }, 2000);
     return () => window.clearInterval(interval);
   }, [hasEntered]);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
 
   useEffect(() => {
     function updateHeader() {
@@ -262,6 +235,9 @@ export default function HomePage() {
         .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(normalizedQuery))
         .slice(0, 4)
         .map((item) => ({ label: item.label, detail: "Explore this section", href: item.href })),
+      ...mediaPages
+        .filter((item) => item.label.toLowerCase().includes(normalizedQuery))
+        .map((item) => ({ ...item, detail: "Explore this section" })),
     ].slice(0, 7);
   }, [businesses, query]);
 
@@ -318,10 +294,12 @@ export default function HomePage() {
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => item.label === "About us" ? (
+            {navigation.map((item) => item.label === "Investors" ? null : item.label === "About us" ? (
               <AboutNavMenu key={item.href} />
             ) : item.label === "Businesses" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} />
+            ) : item.label === "Media" ? (
+              <MediaNavMenu key={item.href} />
             ) : (
               <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
             ))}
@@ -360,10 +338,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="theme-switcher" role="group" aria-label="Colour theme">
-        <button type="button" aria-label="Day mode" aria-pressed={theme === "light"} onClick={() => setTheme("light")}><SunIcon /></button>
-        <button type="button" aria-label="Night mode" aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}><MoonIcon /></button>
-      </div>
       <GmailContactButton />
 
       <nav className="section-progress" aria-label="Homepage section navigation">
@@ -456,24 +430,7 @@ export default function HomePage() {
               </a>
               <small>Select a city marker to view its location in Google Maps.</small>
             </div>
-            <div className="nepal-map" role="group" aria-label="Example locations in Nepal. Select a city to open it in Google Maps.">
-              <Image className="nepal-map-shape" src="/nepal-outline.svg" alt="" width={700} height={300} />
-              {locationPins.map((pin) => (
-                <a
-                  key={pin.city}
-                  className="nepal-map-pin"
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pin.city}, Nepal`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Open ${pin.city}, Nepal in Google Maps`}
-                  style={{ left: `${pin.x}%`, top: `${pin.y}%`, animationDelay: pin.delay }}
-                  data-label-position={pin.label}
-                >
-                  <span className="nepal-map-pin-dot" aria-hidden="true" />
-                  <span className="nepal-map-pin-label">{pin.city}</span>
-                </a>
-              ))}
-            </div>
+            <NepalNetworkMap />
           </div>
         </section>
 
