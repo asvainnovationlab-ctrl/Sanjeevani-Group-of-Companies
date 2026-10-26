@@ -2,62 +2,85 @@ import Link from "next/link";
 import GroupEmblem from "@/components/GroupEmblem";
 import SocialLinks from "@/components/SocialLinks";
 
+const footerColumns = [
+  {
+    title: "Company",
+    links: [
+      { label: "About us", href: "/about-us" },
+      { label: "Our story", href: "/our-story" },
+      { label: "Businesses", href: "/businesses" },
+      { label: "Community", href: "/community" },
+    ],
+  },
+  {
+    title: "Investors",
+    links: [
+      { label: "Investor information", href: "/investors" },
+      { label: "Investor enquiries", href: "mailto:info@sanjeevanigroup.com?subject=Investor%20enquiry" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Careers", href: "/careers" },
+      { label: "Media", href: "/media" },
+      { label: "Contact", href: "/contact" },
+      { label: "Frequently asked questions", href: "/faq" },
+    ],
+  },
+  {
+    title: "Policies",
+    links: [
+      { label: "Privacy policy", href: "/privacy-policy" },
+      { label: "Terms of use", href: "/terms-of-use" },
+      { label: "Accessibility", href: "/accessibility" },
+      { label: "Sitemap", href: "/sitemap" },
+    ],
+  },
+];
+
 export default function GroupFooter() {
   return (
-    <footer className="group-footer">
-      <section className="group-footer-contact" aria-label="Contact Sanjeevani Group">
-        <Link className="group-footer-brand" href="/" aria-label="Sanjeevani Group home">
-          <span className="group-footer-emblem"><GroupEmblem /></span>
-          <span>Sanjeevani<small>GROUP OF COMPANIES</small></span>
-        </Link>
-        <div className="group-footer-address">
-          <strong>Sanjeevani Group</strong>
-          <span>Group of companies</span>
-          <a href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>
-        </div>
-        <div className="group-footer-social">
-          <SocialLinks />
-        </div>
-        <Link className="group-footer-contact-button" href="/contact">Contact us <span>↗</span></Link>
-        <small className="group-footer-copyright">© {new Date().getFullYear()} Sanjeevani Group of Companies.</small>
-      </section>
+    <footer className="group-footer site-footer">
+      <span className="site-footer-watermark" aria-hidden="true"><GroupEmblem /></span>
+      <div className="reference-wrap">
+        <section className="site-footer-cta" aria-label="Contact Sanjeevani Group">
+          <div>
+            <span className="site-footer-eyebrow">Let&apos;s work together</span>
+            <p>Building a better tomorrow, <strong>together.</strong></p>
+          </div>
+          <div className="site-footer-cta-actions">
+            <Link className="site-footer-button" href="/contact">Contact us <span aria-hidden="true">↗</span></Link>
+            <a className="site-footer-email" href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>
+          </div>
+        </section>
 
-      <section className="group-footer-navigation" aria-label="Footer navigation">
-        <div className="group-footer-intro">
-          <span>EXPLORE SANJEEVANI</span>
-          <p>One horizon, <strong>many ambitions.</strong></p>
+        <section className="site-footer-main" aria-label="Footer navigation">
+          <div className="site-footer-brand-column">
+            <Link className="site-footer-brand" href="/" aria-label="Sanjeevani Group home">
+              <span className="site-footer-emblem"><GroupEmblem /></span>
+              <span>Sanjeevani<small>Group of Companies</small></span>
+            </Link>
+            <p className="site-footer-tagline">One horizon, <strong>many ambitions.</strong></p>
+            <p className="site-footer-description">A family of independent businesses across healthcare, education, agriculture, construction and hydropower, growing together with Nepal.</p>
+            <SocialLinks className="site-footer-social" />
+          </div>
+          {footerColumns.map((column) => (
+            <div className="site-footer-column" key={column.title}>
+              <h2>{column.title}</h2>
+              {column.links.map((link) => link.href.startsWith("mailto:") ? (
+                <a href={link.href} key={link.label}>{link.label}</a>
+              ) : (
+                <Link href={link.href} key={link.label}>{link.label}</Link>
+              ))}
+            </div>
+          ))}
+        </section>
+
+        <div className="site-footer-bottom">
+          <small>© {new Date().getFullYear()} Sanjeevani Group of Companies. All rights reserved.</small>
         </div>
-        <div className="group-footer-link-columns">
-          <div>
-            <h2>Company</h2>
-            <Link href="/about-us">About us</Link>
-            <Link href="/businesses">Businesses</Link>
-            <Link href="/community">Community</Link>
-          </div>
-          <div>
-            <h2>Investors</h2>
-            <Link href="/investors">Investor information</Link>
-            <a href="mailto:info@sanjeevanigroup.com?subject=Investor%20enquiry">Investor enquiries</a>
-          </div>
-          <div>
-            <h2>Resources</h2>
-            <Link href="/careers">Careers</Link>
-            <Link href="/media">Media</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/faq">Frequently asked questions</Link>
-          </div>
-          <div>
-            <h2>Policies</h2>
-            <Link href="/privacy-policy">Privacy policy</Link>
-            <Link href="/terms-of-use">Terms of use</Link>
-            <Link href="/accessibility">Accessibility</Link>
-            <Link href="/sitemap">Sitemap</Link>
-          </div>
-        </div>
-        <div className="group-footer-bottom">
-          <span>Building a better tomorrow, together.</span>
-        </div>
-      </section>
+      </div>
     </footer>
   );
 }

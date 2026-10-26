@@ -7,9 +7,9 @@ export const metadata: Metadata = {
   description:
     "Discover Sanjeevani Group and its businesses across healthcare, education, agriculture, infrastructure, and more.",
   icons: {
-    icon: "/slogo.png",
-    shortcut: "/slogo.png",
-    apple: "/slogo.png",
+    icon: "/logo-emblem.png",
+    shortcut: "/logo-emblem.png",
+    apple: "/logo-emblem.png",
   },
 };
 

@@ -26,13 +26,6 @@ const aboutLinks = [
     image: "/khumaa.jpeg",
     imageAlt: "Sanjeevani Group chairman",
   },
-  {
-    label: "Team",
-    description: "Learn about the people behind the group.",
-    href: "/team",
-    image: "/slogo.png",
-    imageAlt: "Sanjeevani Group emblem",
-  },
 ];
 
 export default function AboutNavMenu({ isCurrent = false }: { isCurrent?: boolean }) {

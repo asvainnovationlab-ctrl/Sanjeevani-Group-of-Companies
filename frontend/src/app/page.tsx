@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { businesses as localBusinesses, type Business } from "@/data/businesses";
@@ -16,37 +16,131 @@ import NepalNetworkMap from "@/components/NepalNetworkMap";
 type DirectoryResponse = { data: Business[]; message?: string };
 
 const slides = [
-  { label: "HOSPITAL", theme: "hospital", image: "/hospital.jpg" },
-  { label: "MEDICAL COLLEGE", theme: "medical-college", image: "/medical%20college.jpg" },
-  { label: "EDUCATION", theme: "education", image: "/education.jpg" },
-  { label: "AGRO", theme: "agro", image: "/agro.jpg" },
-  { label: "CONSTRUCTION", theme: "construction", image: "/construction.jpg" },
-  { label: "HYDRO", theme: "hydro", image: "/hydro.jpg" },
+  { label: "Hospital", theme: "hospital", image: "/hospital.jpg" },
+  { label: "Medical College", theme: "medical-college", image: "/medical%20college.jpg" },
+  { label: "Education", theme: "education", image: "/education.jpg" },
+  { label: "Agro", theme: "agro", image: "/agro.jpg" },
+  { label: "Construction", theme: "construction", image: "/construction.jpg" },
+  { label: "Hydro", theme: "hydro", image: "/hydro.jpg" },
 ];
+const slideDuration = 3000;
 
 const homeSections = [
   { id: "home", label: "Home" },
   { id: "story", label: "Who we are" },
   { id: "locations", label: "Locations" },
   { id: "impact", label: "Our impact" },
-  { id: "group-film", label: "Group film" },
 ];
 
 const navigation = [
-  { label: "About us", href: "/about-us", keywords: "our story about history values purpose leadership team" },
-  { label: "Businesses", href: "/businesses", keywords: "companies healthcare education agriculture suppliers construction hydro power" },
-  { label: "Media", href: "/media", keywords: "updates stories group" },
-  { label: "Investors", href: "/investors", keywords: "growth long term contact" },
-  { label: "Community", href: "/community", keywords: "people education health agriculture" },
-  { label: "Careers", href: "/careers", keywords: "jobs work careers email" },
-  { label: "Contact", href: "/contact", keywords: "contact email location enquiry message" },
+  { label: "About us", href: "/about-us" },
+  { label: "Businesses", href: "/businesses" },
+  { label: "Media", href: "/media" },
+  { label: "Investors", href: "/investors" },
+  { label: "Community", href: "/community" },
+  { label: "Careers", href: "/careers" },
+  { label: "Contact", href: "/contact" },
 ];
-const mediaPages = [
-  { label: "News", href: "/news" },
-  { label: "Events", href: "/events" },
-  { label: "Press Release", href: "/press-release" },
-  { label: "Newsletter", href: "/newsletter" },
+const introImages = [
+  { src: "/medical%20college.jpg", alt: "Sanjeevani medical college campus" },
+  { src: "/hospital.jpg", alt: "Sanjeevani hospital" },
+  { src: "/education.jpg", alt: "Students learning at a Sanjeevani school" },
+  { src: "/agro.jpg", alt: "Sanjeevani agriculture project" },
+  { src: "/hydro.jpg", alt: "Sanjeevani hydropower project" },
 ];
+
+const keySectors = [
+  {
+    title: "Healthcare",
+    detail: "Hospitals and clinical care",
+    image: "/hospital.jpg",
+    href: "/businesses?group=healthcare",
+    icon: <><path d="M4 21V8l8-5 8 5v13" /><path d="M9 21v-5h6v5" /><path d="M12 7.5v5M9.5 10h5" /></>,
+  },
+  {
+    title: "Medical Education",
+    detail: "Medical colleges and training",
+    image: "/medical%20college.jpg",
+    href: "/businesses?group=medical-colleges",
+    icon: <><path d="M2 9l10-5 10 5-10 5L2 9Z" /><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" /><path d="M22 9v6" /></>,
+  },
+  {
+    title: "Education",
+    detail: "Schools and learning",
+    image: "/education.jpg",
+    href: "/businesses?group=education",
+    icon: <><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2Z" /><path d="M12 6v14" /></>,
+  },
+  {
+    title: "Agriculture",
+    detail: "Farming and food",
+    image: "/agro.jpg",
+    href: "/businesses?group=agriculture",
+    icon: <><path d="M12 21V11" /><path d="M12 11C12 6 8 3 3 3c0 5 4 8 9 8Z" /><path d="M12 14c0-4 3-7 8-7 0 4-3 7-8 7Z" /></>,
+  },
+  {
+    title: "Construction",
+    detail: "Building and infrastructure",
+    image: "/construction.jpg",
+    href: "/businesses?group=infrastructure",
+    icon: <><path d="M3 21h18" /><path d="M5 21V10h6v11" /><path d="M11 4h10M14 4v6h4V4" /><path d="M8 13v.01M8 16v.01" /></>,
+  },
+  {
+    title: "Hydropower",
+    detail: "Clean energy for Nepal",
+    image: "/hydro.jpg",
+    href: "/businesses?group=infrastructure",
+    icon: <><path d="M12 3s-5 5.5-5 9a5 5 0 0 0 10 0c0-3.5-5-9-5-9Z" /><path d="M12.5 9.5 10.5 13h3l-2 3.5" /></>,
+  },
+];
+
+const pillars = [
+  {
+    tab: "Sustainability",
+    title: "Responsible Growth",
+    image: "/hydro.jpg",
+    imageAlt: "Sanjeevani hydropower project",
+    paragraphs: [
+      "Our growth is guided by a simple belief: businesses should leave the communities and environment around them better than they found them. Across healthcare, education, agriculture, construction and hydropower, we aim to create long-term value while caring for our people and our planet.",
+      "From clean hydropower that strengthens Nepal’s energy future to farming that respects the land, our companies work to grow responsibly, use resources carefully and build for the generations to come.",
+    ],
+  },
+  {
+    tab: "Innovation",
+    title: "Ideas That Move Nepal Forward",
+    image: "/medical%20college.jpg",
+    imageAlt: "Sanjeevani medical college campus",
+    paragraphs: [
+      "Innovation at Sanjeevani Group means finding better ways to serve people. Our businesses keep looking for new approaches in patient care, medical training, classroom learning, agriculture and infrastructure.",
+      "By sharing knowledge across sectors and embracing modern technology, we work to make quality services more accessible, efficient and dependable for the communities we serve.",
+    ],
+  },
+  {
+    tab: "Our Impact",
+    title: "Progress We Share",
+    image: "/agro.jpg",
+    imageAlt: "Sanjeevani agriculture project",
+    paragraphs: [
+      "Our impact is measured by the lives we touch: patients who receive care closer to home, students who gain the skills to shape their futures, farmers who grow with confidence and communities connected by stronger infrastructure.",
+      "With 18 businesses across six areas of work, Sanjeevani Group remains committed to meaningful, lasting progress for Nepal and its people.",
+    ],
+  },
+];
+
+const newsImages = [
+  { src: "/hospital.jpg", alt: "Sanjeevani hospital" },
+  { src: "/medical%20college.jpg", alt: "Sanjeevani medical college campus" },
+  { src: "/hydro.jpg", alt: "Sanjeevani hydropower project" },
+];
+
+const groupFacts = [
+  "Sanjeevani Group brings together 18 businesses under one shared purpose.",
+  "Our companies work across six areas: healthcare, medical education, education, agriculture, construction and hydropower.",
+  "Sanjeevani Group is led by Chairman C.A. Khuma Parsad Aryal.",
+  "Our network spans cities across Nepal, from Nepalgunj in the west to Janakpur in the east.",
+];
+
+const refreshIcon = <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" /></svg>;
 
 const localLocations = new Map(localBusinesses.map((business) => [business.name, business.location]));
 
@@ -62,16 +156,19 @@ function Brand() {
 export default function HomePage() {
   const [hasEntered, setHasEntered] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
-  const [query, setQuery] = useState("");
   const [slideIndex, setSlideIndex] = useState(0);
+  const [introIndex, setIntroIndex] = useState(0);
+  const [pillarIndex, setPillarIndex] = useState(0);
+  const [newsSlide, setNewsSlide] = useState(0);
+  const [companyIndex, setCompanyIndex] = useState(0);
+  const [factIndex, setFactIndex] = useState(0);
   const [activeHomeSection, setActiveHomeSection] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
-  const [groupFilmAutoplayBlocked, setGroupFilmAutoplayBlocked] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const storyRuleRef = useRef<HTMLSpanElement>(null);
-  const groupFilmVideoRef = useRef<HTMLVideoElement>(null);
+  const sectorTrackRef = useRef<HTMLDivElement>(null);
+  const sectorPauseUntil = useRef(0);
   const [storyRuleVisible, setStoryRuleVisible] = useState(false);
   const [statsCounts, setStatsCounts] = useState([0, 0, 0]);
 
@@ -108,9 +205,33 @@ export default function HomePage() {
     if (!hasEntered) return;
     const interval = window.setInterval(() => {
       setSlideIndex((current) => (current + 1) % slides.length);
+    }, slideDuration);
+    return () => window.clearInterval(interval);
+  }, [hasEntered, slideIndex]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setIntroIndex((current) => (current + 1) % introImages.length);
     }, 2000);
     return () => window.clearInterval(interval);
-  }, [hasEntered]);
+  }, []);
+
+  useEffect(() => {
+    const items = Array.from(document.querySelectorAll<HTMLElement>(".home-main [data-reveal]"));
+    if (!("IntersectionObserver" in window)) {
+      items.forEach((item) => item.classList.add("is-revealed"));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-revealed");
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
+    items.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     function updateHeader() {
@@ -147,9 +268,10 @@ export default function HomePage() {
 
     const observer = new IntersectionObserver((entries) => {
       const visible = entries
-        .filter((entry) => entry.isIntersecting)
+        .filter((entry) => entry.isIntersecting && entry.target.id !== "home")
         .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0];
       if (visible) setActiveHomeSection(visible.target.id);
+      else if (window.scrollY < window.innerHeight * 0.5) setActiveHomeSection("home");
     }, { rootMargin: "-44% 0px -44% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] });
 
     sectionElements.forEach((section) => observer.observe(section));
@@ -161,7 +283,7 @@ export default function HomePage() {
     if (!stats) return;
 
     let frameId = 0;
-    const targets = [18, 4, 1];
+    const targets = [18, 6, 1];
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       observer.disconnect();
@@ -190,85 +312,80 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const video = groupFilmVideoRef.current;
-    if (!video || !("IntersectionObserver" in window)) return;
+    const track = sectorTrackRef.current;
+    if (!track) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let setWidth = track.scrollWidth / 3;
+    let position = setWidth;
+    let inView = false;
+    let hovered = false;
+    let frameId = 0;
+    track.scrollLeft = position;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        if (video.ended) video.currentTime = 0;
-        video.play().catch(async (error: unknown) => {
-          if (error instanceof DOMException && error.name === "AbortError") return;
-          if (error instanceof DOMException && error.name === "NotAllowedError" && !video.muted) {
-            video.muted = true;
-            setGroupFilmAutoplayBlocked(true);
-            try {
-              await video.play();
-            } catch (mutedPlaybackError: unknown) {
-              if (mutedPlaybackError instanceof DOMException && mutedPlaybackError.name === "AbortError") return;
-              console.error("Could not autoplay the Sanjeevani Group video.", mutedPlaybackError);
-            }
-          } else {
-            console.error("Could not autoplay the Sanjeevani Group video.", error);
-          }
-        });
-      } else {
-        video.pause();
+    function wrap() {
+      if (!track) return;
+      if (track.scrollLeft <= setWidth * 0.5) track.scrollLeft += setWidth;
+      else if (track.scrollLeft >= setWidth * 2) track.scrollLeft -= setWidth;
+    }
+
+    function drift() {
+      if (track && inView && !hovered && Date.now() > sectorPauseUntil.current) {
+        if (Math.abs(track.scrollLeft - position) > 2) position = track.scrollLeft;
+        position += 0.6;
+        if (position >= setWidth * 2) position -= setWidth;
+        track.scrollLeft = position;
+      } else if (track) {
+        position = track.scrollLeft;
       }
-    }, { threshold: 0.35 });
+      frameId = window.requestAnimationFrame(drift);
+    }
 
-    observer.observe(video);
+    function resize() {
+      if (!track) return;
+      const offset = track.scrollLeft % setWidth;
+      setWidth = track.scrollWidth / 3;
+      track.scrollLeft = setWidth + offset;
+      position = track.scrollLeft;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; }, { threshold: 0.3 });
+    const pause = () => { hovered = true; };
+    const resume = () => { hovered = false; };
+    const touchPause = () => { sectorPauseUntil.current = Date.now() + 2500; };
+    observer.observe(track);
+    track.addEventListener("scroll", wrap, { passive: true });
+    track.addEventListener("pointerenter", pause);
+    track.addEventListener("pointerleave", resume);
+    track.addEventListener("touchstart", touchPause, { passive: true });
+    track.addEventListener("touchend", touchPause, { passive: true });
+    window.addEventListener("resize", resize);
+    if (!reduceMotion) frameId = window.requestAnimationFrame(drift);
+
     return () => {
       observer.disconnect();
-      video.pause();
+      window.cancelAnimationFrame(frameId);
+      track.removeEventListener("scroll", wrap);
+      track.removeEventListener("pointerenter", pause);
+      track.removeEventListener("pointerleave", resume);
+      track.removeEventListener("touchstart", touchPause);
+      track.removeEventListener("touchend", touchPause);
+      window.removeEventListener("resize", resize);
     };
   }, []);
 
-  const searchResults = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return [];
-    return [
-      ...businesses
-        .filter((business) => `${business.name} ${business.sector}`.toLowerCase().includes(normalizedQuery))
-        .slice(0, 5)
-        .map((business) => ({ label: business.name, detail: business.sector, href: `/businesses?search=${encodeURIComponent(business.name)}` })),
-      ...navigation
-        .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(normalizedQuery))
-        .slice(0, 4)
-        .map((item) => ({ label: item.label, detail: "Explore this section", href: item.href })),
-      ...mediaPages
-        .filter((item) => item.label.toLowerCase().includes(normalizedQuery))
-        .map((item) => ({ ...item, detail: "Explore this section" })),
-    ].slice(0, 7);
-  }, [businesses, query]);
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNewsSlide((current) => (current + 1) % newsImages.length);
+    }, 4000);
+    return () => window.clearInterval(interval);
+  }, []);
 
-  function moveSlide(direction: number) {
-    setSlideIndex((current) => (current + direction + slides.length) % slides.length);
-  }
-
-  function selectSearchResult(href: string) {
-    setQuery("");
-    setSearchOpen(false);
-    if (href.startsWith("/")) {
-      window.location.assign(href);
-      return;
-    }
-    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-  }
-
-  function playGroupFilmWithSound() {
-    const video = groupFilmVideoRef.current;
-    if (!video) return;
-    video.muted = false;
-    video.play().then(() => {
-      setGroupFilmAutoplayBlocked(false);
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      if (error instanceof DOMException && error.name === "NotAllowedError") {
-        setGroupFilmAutoplayBlocked(true);
-        return;
-      }
-      console.error("Could not start the Sanjeevani Group video.", error);
-    });
+  function scrollSectors(direction: number) {
+    const track = sectorTrackRef.current;
+    const card = track?.querySelector<HTMLElement>(".key-sector-card");
+    if (!track || !card) return;
+    sectorPauseUntil.current = Date.now() + 1500;
+    track.scrollBy({ left: direction * (card.offsetWidth + 24), behavior: "smooth" });
   }
 
   return (
@@ -305,34 +422,6 @@ export default function HomePage() {
             ))}
             <SocialLinks className="mobile-nav-social-links" />
           </nav>
-          <div className="reference-search" role="search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <label className="visually-hidden" htmlFor="group-search">Search the group</label>
-            <input
-              id="group-search"
-              type="search"
-              placeholder="Search the group"
-              autoComplete="off"
-              value={query}
-              onFocus={() => setSearchOpen(true)}
-              onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") setSearchOpen(false);
-                if (event.key === "Enter" && searchResults[0]) selectSearchResult(searchResults[0].href);
-              }}
-            />
-            {searchOpen && query.trim() && (
-              <ul className="search-results">
-                {searchResults.length ? searchResults.map((result) => (
-                  <li key={`${result.href}-${result.label}`}>
-                    <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectSearchResult(result.href)}>
-                      {result.label}<small>{result.detail}</small>
-                    </button>
-                  </li>
-                )) : <li className="search-no-results">No results for “{query}”</li>}
-              </ul>
-            )}
-          </div>
           <SocialLinks className="header-social-links" />
           <button className="reference-menu" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
         </div>
@@ -356,8 +445,8 @@ export default function HomePage() {
         ))}
       </nav>
 
-      <main id="top">
-        <section id="home" className={`reference-hero hero-category-${slides[slideIndex].theme}`} aria-roledescription="carousel" aria-label="Sanjeevani Group business categories">
+      <main id="top" className="home-main">
+        <section id="home" className={`reference-hero home-hero hero-category-${slides[slideIndex].theme}`} aria-roledescription="carousel" aria-label="Sanjeevani Group business categories">
           <div
             key={slides[slideIndex].theme}
             className="hero-category-photo"
@@ -368,40 +457,59 @@ export default function HomePage() {
             <h1>
               <span>SANJEEVANI GROUP</span>
               <i aria-hidden="true">|</i>
-              <strong key={slideIndex}>{slides[slideIndex].label}</strong>
+              <strong key={slideIndex}>{slides[slideIndex].label.toUpperCase()}</strong>
             </h1>
           </div>
-          <div className="hero-controls">
-            <button type="button" aria-label="Previous slide" onClick={() => moveSlide(-1)}>←</button>
-            <div className="hero-dots" aria-label="Choose a featured slide">
-              {slides.map((slide, index) => (
-                <button key={slide.theme} className={slideIndex === index ? "is-active" : ""} type="button" aria-label={`Show ${slide.label.toLowerCase()} slide`} aria-pressed={slideIndex === index} onClick={() => setSlideIndex(index)} />
-              ))}
-            </div>
-            <button type="button" aria-label="Next slide" onClick={() => moveSlide(1)}>→</button>
+          <div className="reference-wrap home-hero-tabs" aria-label="Choose a featured business">
+            {slides.map((slide, index) => (
+              <button
+                key={slide.theme}
+                type="button"
+                className={slideIndex === index ? "is-active" : ""}
+                aria-label={`Show ${slide.label}`}
+                aria-pressed={slideIndex === index}
+                onClick={() => setSlideIndex(index)}
+              >
+                <span className="home-hero-tab-bar" aria-hidden="true">{slideIndex === index && <i key={slideIndex} style={{ animationDuration: `${slideDuration}ms` }} />}</span>
+              </button>
+            ))}
           </div>
-          <div className="hero-progress hero-progress-fast" aria-hidden="true"><span key={slideIndex} /></div>
         </section>
 
-        <div className="reference-wrap">
-          <div className="reference-stats" ref={statsRef} aria-label="Sanjeevani Group at a glance">
-            <div><strong>{statsCounts[0]}</strong><span>Businesses in the group</span></div>
-            <div><strong>{statsCounts[1]}</strong><span>Areas of work</span></div>
-            <div><strong>{statsCounts[2]}</strong><span>Shared purpose</span></div>
-            <div><strong>Nepal</strong><span>Rooted in community</span></div>
+        <section className="group-intro-section" aria-labelledby="group-intro-title">
+          <div className="reference-wrap group-intro-card" data-reveal>
+            <div className="group-intro-copy">
+              <div className="group-intro-logo">
+                <span className="group-intro-emblem"><GroupEmblem /></span>
+                <h2 id="group-intro-title">Sanjeevani<span>Group of Companies</span></h2>
+              </div>
+              <p>
+                Sanjeevani Group is a family of independent businesses rooted in Nepal. Led by Chairman C.A. Khuma Parsad Aryal,
+                the group works across healthcare, medical education, schooling, agriculture, construction and hydropower,
+                bringing quality services closer to the communities it serves and building long-term progress for the nation.
+              </p>
+              <Link className="group-intro-link" href="/our-story">read more <span aria-hidden="true">→</span></Link>
+            </div>
+            <Link className="group-intro-gallery" href="/our-story" aria-label="Open our story">
+              {introImages.map((image, index) => (
+                <span className={`group-intro-image${introIndex === index ? " is-active" : ""}`} key={image.src} aria-hidden={introIndex !== index}>
+                  <Image src={image.src} alt={image.alt} fill sizes="(max-width: 780px) 100vw, 66vw" />
+                </span>
+              ))}
+            </Link>
           </div>
-        </div>
+        </section>
 
         <section className="reference-section story-section" id="story">
           <div className="reference-wrap story-layout">
-            <div className="story-intro">
+            <div className="story-intro" data-reveal>
               <p className="section-overline">WHO WE ARE</p>
               <h2>Rooted in Nepal.<br /><em>Growing together.</em></h2>
               <span ref={storyRuleRef} className={`story-heading-rule${storyRuleVisible ? " is-visible" : ""}`} aria-hidden="true" />
               <p className="section-lead">Sanjeevani Group is a family of independent businesses working across healthcare, education, agriculture, infrastructure, and more to create meaningful progress in the communities we serve.</p>
               <Link className="story-about-link" href="/about-us">Who we are <span aria-hidden="true">↗</span></Link>
             </div>
-            <div className="story-portrait">
+            <div className="story-portrait" data-reveal>
               <div className="story-portrait-frame">
                 <Image
                   src="/khumaa.jpeg"
@@ -410,10 +518,10 @@ export default function HomePage() {
                   height={1018}
                   sizes="(max-width: 780px) 90vw, 48vw"
                 />
-              </div>
-              <div className="story-portrait-caption">
-                <span>CHAIRMAN</span>
-                <p>C.A. Khuma Parsad Aryal</p>
+                <div className="story-portrait-caption">
+                  <span>CHAIRMAN</span>
+                  <p>C.A. Khuma Parsad Aryal</p>
+                </div>
               </div>
             </div>
           </div>
@@ -421,7 +529,7 @@ export default function HomePage() {
 
         <section className="locations-section" id="locations" aria-labelledby="locations-title">
           <div className="locations-panel">
-            <div className="locations-copy">
+            <div className="locations-copy" data-reveal>
               <p className="locations-overline">Sanjeevani Group across Nepal</p>
               <h2 id="locations-title">Our<br /><em>Locations</em></h2>
               <p>Sanjeevani Group companies work in cities across Nepal, so help is never far from where you live or do business. Find the office or project nearest to you.</p>
@@ -429,14 +537,56 @@ export default function HomePage() {
                 Find a location near you <span aria-hidden="true">↗</span>
               </a>
               <small>Select a city marker to view its location in Google Maps.</small>
+              <div className="reference-stats locations-stats" ref={statsRef} aria-label="Sanjeevani Group at a glance">
+                <div><strong>{statsCounts[0]}</strong><span>Businesses in the group</span></div>
+                <div><strong>{statsCounts[1]}</strong><span>Areas of work</span></div>
+                <div><strong>{statsCounts[2]}</strong><span>Shared purpose</span></div>
+                <div><strong>Nepal</strong><span>Rooted in community</span></div>
+              </div>
             </div>
-            <NepalNetworkMap />
+            <NepalNetworkMap drawOnScroll />
+          </div>
+        </section>
+
+        <section className="key-sectors-section" aria-labelledby="key-sectors-title">
+          <div className="reference-wrap key-sectors-heading" data-reveal>
+            <h2 id="key-sectors-title">Key <em>Sectors</em></h2>
+            <p>
+              Sanjeevani Group operates in six key sectors: <strong>Healthcare</strong>, <strong>Medical Education</strong>,{" "}
+              <strong>Education</strong>, <strong>Agriculture</strong>, <strong>Construction</strong>, and <strong>Hydropower</strong>.
+              Rooted in Nepal, our businesses work together to deliver quality services and lasting value to the communities we serve.
+            </p>
+          </div>
+          <div className="key-sectors-carousel">
+            <div className="key-sectors-arrows">
+              <button type="button" aria-label="Previous sectors" onClick={() => scrollSectors(-1)}>←</button>
+              <button type="button" aria-label="Next sectors" onClick={() => scrollSectors(1)}>→</button>
+            </div>
+            <div className="key-sectors-track" ref={sectorTrackRef}>
+              {[0, 1, 2].flatMap((copy) => keySectors.map((sector) => (
+                <Link
+                  className="key-sector-card"
+                  href={sector.href}
+                  key={`${copy}-${sector.title}`}
+                  aria-hidden={copy !== 1 ? true : undefined}
+                  tabIndex={copy !== 1 ? -1 : undefined}
+                >
+                  <Image src={sector.image} alt="" fill sizes="(max-width: 780px) 80vw, 25vw" />
+                  <span className="key-sector-shade" aria-hidden="true" />
+                  <span className="key-sector-copy">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">{sector.icon}</svg>
+                    <strong>{sector.title}</strong>
+                    <small>{sector.detail}</small>
+                  </span>
+                </Link>
+              )))}
+            </div>
           </div>
         </section>
 
         <section className="impact-section" id="impact" aria-labelledby="impact-title">
           <div className="reference-wrap">
-            <div className="impact-heading">
+            <div className="impact-heading" data-reveal>
               <div>
                 <p className="section-overline">PURPOSE IN ACTION</p>
                 <h2 id="impact-title">Our impact.<br /><em>Our shared responsibility.</em></h2>
@@ -445,71 +595,95 @@ export default function HomePage() {
                 From care and education to agriculture, our businesses work in the sectors that shape everyday life and help communities move forward.
               </p>
             </div>
-            <div className="impact-grid">
-              <Link className="impact-card impact-card-featured" href="/businesses?group=healthcare">
-                <Image src="/hospital.jpg" alt="Healthcare services within the Sanjeevani Group" fill sizes="(max-width: 780px) 100vw, 58vw" />
-                <span className="impact-card-shade" aria-hidden="true" />
-                <span className="impact-card-index">01 / CARE</span>
-                <span className="impact-card-copy">
-                  <strong>Care that brings us closer.</strong>
-                  <small>Healthcare and clinical services</small>
-                </span>
-                <span className="impact-card-arrow" aria-hidden="true">↗</span>
-              </Link>
-              <Link className="impact-card" href="/businesses?group=education">
-                <Image src="/education.jpg" alt="Learning and education across the group" fill sizes="(max-width: 780px) 100vw, 38vw" />
-                <span className="impact-card-shade" aria-hidden="true" />
-                <span className="impact-card-index">02 / LEARNING</span>
-                <span className="impact-card-copy">
-                  <strong>Opening doors through learning.</strong>
-                  <small>Education and opportunity</small>
-                </span>
-                <span className="impact-card-arrow" aria-hidden="true">↗</span>
-              </Link>
-              <Link className="impact-card" href="/businesses?group=agriculture">
-                <Image src="/agro.jpg" alt="Agriculture and food businesses" fill sizes="(max-width: 780px) 100vw, 38vw" />
-                <span className="impact-card-shade" aria-hidden="true" />
-                <span className="impact-card-index">03 / LIVELIHOODS</span>
-                <span className="impact-card-copy">
-                  <strong>Growing from the ground up.</strong>
-                  <small>Agriculture and food</small>
-                </span>
-                <span className="impact-card-arrow" aria-hidden="true">↗</span>
-              </Link>
-            </div>
-            <div className="impact-footer">
-              <span>Different sectors. One shared commitment to meaningful progress.</span>
-              <Link href="/businesses">Explore our businesses <span aria-hidden="true">↗</span></Link>
+            <div className="pillars-card" data-reveal>
+              <span className="pillars-watermark" aria-hidden="true"><GroupEmblem /></span>
+              <div className="pillars-tabs" role="tablist" aria-label="Our commitments">
+                {pillars.map((pillar, index) => (
+                  <button
+                    key={pillar.tab}
+                    type="button"
+                    role="tab"
+                    id={`pillar-tab-${index}`}
+                    aria-selected={pillarIndex === index}
+                    aria-controls="pillar-panel"
+                    className={pillarIndex === index ? "is-active" : ""}
+                    onClick={() => setPillarIndex(index)}
+                  >
+                    {pillar.tab}
+                  </button>
+                ))}
+              </div>
+              <div className="pillars-panel" id="pillar-panel" role="tabpanel" aria-labelledby={`pillar-tab-${pillarIndex}`} key={pillarIndex}>
+                <div className="pillars-copy">
+                  <h3>{pillars[pillarIndex].title}</h3>
+                  {pillars[pillarIndex].paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                </div>
+                <div className="pillars-media">
+                  <div className="pillars-image">
+                    <Image src={pillars[pillarIndex].image} alt={pillars[pillarIndex].imageAlt} fill sizes="(max-width: 780px) 100vw, 45vw" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="group-film-section" id="group-film" aria-label="Sanjeevani Group film">
-          <div className="reference-wrap group-film-layout">
-            <div className="group-film-frame">
-              <video
-                ref={groupFilmVideoRef}
-                controls
-                playsInline
-                preload="metadata"
-                aria-label="Sanjeevani Group video"
-                onVolumeChange={(event) => {
-                  if (!event.currentTarget.muted) setGroupFilmAutoplayBlocked(false);
-                }}
-              >
-                <source src="/video.mp4" type="video/mp4" />
-                Your browser does not support embedded video.
-              </video>
-              {groupFilmAutoplayBlocked && (
-                <button className="group-film-play-prompt" type="button" onClick={playGroupFilmWithSound}>
-                  <span aria-hidden="true">◖))</span> Enable sound
-                </button>
-              )}
-              <span className="group-film-frame-label">20 SEC <i /> SANJEEVANI · NEPAL</span>
+        <section className="news-section" aria-labelledby="news-title">
+          <div className="reference-wrap">
+            <h2 id="news-title" className="news-title">In the News</h2>
+            <div className="news-grid" data-reveal>
+              <article className="news-feature">
+                <div className="news-feature-media">
+                  {newsImages.map((image, index) => (
+                    <Image className={newsSlide === index ? "is-active" : ""} src={image.src} alt={newsSlide === index ? image.alt : ""} fill sizes="(max-width: 780px) 100vw, 30vw" key={image.src} />
+                  ))}
+                  <div className="news-feature-dots">
+                    {newsImages.map((image, index) => (
+                      <button key={image.src} type="button" className={newsSlide === index ? "is-active" : ""} aria-label={`Show image ${index + 1}`} aria-pressed={newsSlide === index} onClick={() => setNewsSlide(index)} />
+                    ))}
+                  </div>
+                </div>
+                <Link className="news-feature-copy" href="/press-release">
+                  <span className="news-label">Press release</span>
+                  <h3>Official updates from Sanjeevani Group</h3>
+                  <p className="news-quote">Verified announcements and statements from across our businesses are published here.</p>
+                  <span className="news-more">View press releases <span aria-hidden="true">↗</span></span>
+                </Link>
+              </article>
+
+              <article className="news-card news-card-company">
+                <span className="news-label">Our companies</span>
+                {businesses.length > 0 && (
+                  <div className="news-card-body" key={companyIndex} aria-live="polite">
+                    <h3>{businesses[companyIndex % businesses.length].name}</h3>
+                    <p className="news-quote">
+                      {businesses[companyIndex % businesses.length].sector}
+                      {businesses[companyIndex % businesses.length].location ? ` · ${businesses[companyIndex % businesses.length].location}` : ""}
+                    </p>
+                  </div>
+                )}
+                <button className="news-refresh" type="button" aria-label="Show another company" onClick={() => setCompanyIndex((current) => (current + 1) % Math.max(businesses.length, 1))}>{refreshIcon}</button>
+              </article>
+
+              <article className="news-card news-card-facts">
+                <span className="news-label">Facts</span>
+                <h3>Did you know</h3>
+                <div className="news-card-body" key={factIndex} aria-live="polite">
+                  <p className="news-quote">{groupFacts[factIndex]}<small>One horizon, many ambitions.</small></p>
+                </div>
+                <button className="news-refresh" type="button" aria-label="Show another fact" onClick={() => setFactIndex((current) => (current + 1) % groupFacts.length)}>{refreshIcon}</button>
+              </article>
+
+              <article className="news-card news-card-social">
+                <span className="news-label">Stay connected</span>
+                <h3>Follow Sanjeevani Group</h3>
+                <p className="news-quote">News, events and stories from our hospitals, colleges, schools and projects across Nepal.</p>
+                <SocialLinks className="news-social-links" />
+                <Link className="news-corner-link" href="/news" aria-label="Open news">↗</Link>
+              </article>
             </div>
           </div>
         </section>
-
       </main>
 
       <GroupFooter />

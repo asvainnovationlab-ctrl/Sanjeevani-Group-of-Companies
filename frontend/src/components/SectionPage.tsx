@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
+import { getBusinessLogo } from "@/data/businessLogos";
 import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
@@ -15,13 +16,13 @@ import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 const navigation = [
-  { label: "About us", href: "/about-us", keywords: "our story about history values purpose leadership team" },
-  { label: "Business", href: "/businesses", keywords: "companies healthcare education agriculture suppliers construction" },
-  { label: "Media", href: "/media", keywords: "updates stories group" },
-  { label: "Investors", href: "/investors", keywords: "growth long term contact" },
-  { label: "Community", href: "/community", keywords: "people education health agriculture" },
-  { label: "Careers", href: "/careers", keywords: "jobs work careers email" },
-  { label: "Contact", href: "/contact", keywords: "contact email phone location enquiry message" },
+  { label: "About us", href: "/about-us" },
+  { label: "Business", href: "/businesses" },
+  { label: "Media", href: "/media" },
+  { label: "Investors", href: "/investors" },
+  { label: "Community", href: "/community" },
+  { label: "Careers", href: "/careers" },
+  { label: "Contact", href: "/contact" },
 ];
 const mediaPages = [
   { label: "News", href: "/news" },
@@ -375,11 +376,38 @@ function Brand() {
   );
 }
 
+const coreValues = [
+  {
+    title: "Pioneering Spirit",
+    icon: <><path d="M12 15c3-2 6-6 6-11-5 0-9 3-11 6l-3 1 2 2" /><path d="m9 15 2 2" /><path d="M6 18c-1 1-1.5 2.5-1.5 2.5S6 20 7 19" /><circle cx="14.5" cy="9.5" r="1.5" /></>,
+    text: "Sanjeevani Group is founded on the belief that better services change lives. We actively nurture new ideas in our people and our businesses.",
+  },
+  {
+    title: "Team Work",
+    icon: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M15 14.5c3 0 6 1.8 6 5.5" /></>,
+    text: "We believe every person in our organisation is a valuable and indispensable member of one team.",
+  },
+  {
+    title: "Accountability",
+    icon: <><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z" /><path d="m9 12 2 2 4-4" /></>,
+    text: "Transparency and good governance underpin every action we take across Sanjeevani Group.",
+  },
+  {
+    title: "Excellence",
+    icon: <><circle cx="12" cy="9" r="6" /><path d="m12 6 .9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1L9 8.2l2.1-.3L12 6Z" /><path d="m8.5 14-1.5 7 5-2.5 5 2.5-1.5-7" /></>,
+    text: "We strive for the highest standards of quality in healthcare, education and every business we run.",
+  },
+  {
+    title: "Morality",
+    icon: <><path d="M12 3v18M7 21h10" /><path d="M5 7h14" /><path d="m5 7-3 6c0 1.7 1.3 3 3 3s3-1.3 3-3L5 7ZM19 7l-3 6c0 1.7 1.3 3 3 3s3-1.3 3-3l-3-6Z" /></>,
+    text: "We are dedicated to delivering ethical, fair and responsible services to the people and communities we serve.",
+  },
+];
+
 export default function SectionPage({ section }: { section: string }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
+  const photoHero = section === "mission-vision-values" || section === "our-story";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [letter, setLetter] = useState("All");
@@ -390,6 +418,18 @@ export default function SectionPage({ section }: { section: string }) {
   const [careerSearch, setCareerSearch] = useState("");
   const [careerCompany, setCareerCompany] = useState("All companies");
   const [careerType, setCareerType] = useState("All areas");
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [valuesTab, setValuesTab] = useState<"core" | "mudra">("core");
+
+  useEffect(() => {
+    if (!photoHero) return;
+    function updateHeader() {
+      setHeaderScrolled(window.scrollY > 24);
+    }
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
+  }, [photoHero]);
 
   useEffect(() => {
     if (section !== "businesses" && section !== "about-us" && section !== "our-story" && section !== "careers") return;
@@ -421,23 +461,6 @@ export default function SectionPage({ section }: { section: string }) {
     }
   }, [section]);
 
-  const searchResults = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return [];
-    const businessMatches = businesses
-      .filter((business) => `${business.name} ${business.sector}`.toLowerCase().includes(term))
-      .slice(0, 5)
-      .map((business) => ({ label: business.name, detail: business.sector, href: "/businesses" }));
-    const pageMatches = navigation
-      .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(term))
-      .slice(0, 4)
-      .map((item) => ({ label: item.label, detail: "Explore this page", href: item.href }));
-    const mediaMatches = mediaPages
-      .filter((item) => item.label.toLowerCase().includes(term))
-      .map((item) => ({ ...item, detail: "Explore this page" }));
-    return [...businessMatches, ...pageMatches, ...mediaMatches].slice(0, 7);
-  }, [businesses, search]);
-
   const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
   const visibleBusinesses = useMemo(() => {
@@ -461,13 +484,6 @@ export default function SectionPage({ section }: { section: string }) {
     });
   }, [careerCompany, careerSearch, careerType]);
 
-  function followSearchResult(href: string) {
-    if (href === "/businesses" && search.trim()) {
-      window.sessionStorage.setItem("sanjeevani-business-search", search.trim());
-    }
-    window.location.assign(href);
-  }
-
   function submitContactForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -489,7 +505,7 @@ export default function SectionPage({ section }: { section: string }) {
 
   return (
     <>
-      <header className={`reference-header${section === "businesses" ? " businesses-site-header" : ""}`}>
+      <header className={`reference-header${section === "businesses" ? " businesses-site-header" : ""}${photoHero ? (headerScrolled ? " is-scrolled" : " is-overlay") : ""}`}>
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
@@ -504,12 +520,6 @@ export default function SectionPage({ section }: { section: string }) {
             ))}
             <SocialLinks className="mobile-nav-social-links" />
           </nav>
-          <div className="reference-search" role="search">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <label className="visually-hidden" htmlFor="section-search">Search Sanjeevani Group</label>
-            <input id="section-search" type="search" placeholder="Search the group" value={search} onFocus={() => setSearchOpen(true)} onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => { if (event.key === "Escape") setSearchOpen(false); if (event.key === "Enter" && searchResults[0]) followSearchResult(searchResults[0].href); }} />
-            {searchOpen && search.trim() && <ul className="search-results">{searchResults.length ? searchResults.map((result) => <li key={`${result.href}-${result.label}`}><button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => followSearchResult(result.href)}>{result.label}<small>{result.detail}</small></button></li>) : <li className="search-no-results">No results found.</li>}</ul>}
-          </div>
           <SocialLinks className="header-social-links" />
           <button className="reference-menu" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Close" : "Menu"}</button>
         </div>
@@ -517,8 +527,8 @@ export default function SectionPage({ section }: { section: string }) {
 
       <GmailContactButton />
 
-      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}`}>
-        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "newsletter", "reviews", "gallery", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}`}>
+      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "newsletter", "reviews", "gallery", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${section === "our-story" ? " story-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
           {section === "businesses" && <div className="businesses-hero-art" aria-hidden="true"><span>Together<br />for a better<br />tomorrow</span></div>}
@@ -543,11 +553,31 @@ export default function SectionPage({ section }: { section: string }) {
             ) : section === "contact" ? (
               <div className="contact-network-hero-content">
                 <div className="contact-network-hero-copy">
-                  <p className="section-overline">SANJEEVANI GROUP</p>
-                  <h1>Our <em>network</em></h1>
+                  <h1>Connecting <em>Nepal</em></h1>
                 </div>
-                <NepalNetworkMap connected />
+                <NepalNetworkMap connected drawOnScroll />
                 <p className="contact-network-hero-description">Sanjeevani Group brings together businesses represented across cities in Nepal. Select a location marker to view the city in Google Maps.</p>
+                <div className="head-office-card">
+                  <h2>Head Office</h2>
+                  <address>
+                    Kathmandu, Nepal<br />
+                    {/* TODO: replace with the real office number, e.g. <a href="tel:+97714XXXXXX">01-4XXXXXX</a> */}
+                    Phone: to be added<br />
+                    <a href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>
+                  </address>
+                </div>
+              </div>
+            ) : section === "our-story" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">Our Story</h1>
+                <span className="mission-hero-tag">Our Story</span>
+                <p className="mission-hero-text">Rooted in Nepal and led by Chairman C.A. Khuma Parsad Aryal, Sanjeevani Group has grown into a family of independent businesses across healthcare, education, agriculture, construction and hydropower, working together to transform lives across the nation.</p>
+              </div>
+            ) : section === "mission-vision-values" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">Mission, Vision &amp; Values</h1>
+                <span className="mission-hero-tag">About Sanjeevani Group</span>
+                <p className="mission-hero-text">Guided by purpose and growing with care, Sanjeevani Group brings independent businesses together to create meaningful progress for the communities we serve across Nepal.</p>
               </div>
             ) : section === "careers" ? (
               <div className="career-hero-copy">
@@ -567,6 +597,14 @@ export default function SectionPage({ section }: { section: string }) {
           </div>
           <span className="section-page-number" aria-hidden="true">{page.number}</span>
         </section>
+
+        {section === "mission-vision-values" && (
+          <section className="mission-statement" aria-label="Our commitment">
+            <div className="reference-wrap">
+              <p>Sanjeevani Group continues to grow across healthcare, education, agriculture, construction and hydropower by focusing on care, innovation and sustainable progress for the people of Nepal.</p>
+            </div>
+          </section>
+        )}
 
         {section === "careers" ? (
           <section className="career-board" aria-labelledby="career-board-title">
@@ -653,28 +691,6 @@ export default function SectionPage({ section }: { section: string }) {
                 </form>
               </div>
             </section>
-            <section className="contact-details" aria-labelledby="contact-details-title">
-              <div className="reference-wrap">
-                <h2 id="contact-details-title">Contact &amp; support</h2>
-                <div className="contact-details-grid">
-                  <a href="/#locations" className="contact-detail">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
-                    <h3>Group locations</h3>
-                    <p>Explore Sanjeevani Group locations across Nepal.</p>
-                  </a>
-                  <a href="mailto:info@sanjeevanigroup.com" className="contact-detail">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1" /><path d="m4 7 8 6 8-6" /></svg>
-                    <h3>Email</h3>
-                    <p>info@sanjeevanigroup.com</p>
-                  </a>
-                  <div className="contact-detail">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.8 10 7.5 8.3 9.2a14.5 14.5 0 0 0 6.5 6.5l1.7-1.7 3.7 2.8-.7 3.5c-.1.6-.7 1-1.3 1C10.4 20.6 3.4 13.6 2.7 5.8c-.1-.6.4-1.2 1-1.3l3.5-.7Z" /></svg>
-                    <h3>Phone</h3>
-                    <p>Any time.<br />9846****** · 9827******</p>
-                  </div>
-                </div>
-              </div>
-            </section>
           </>
         ) : section === "about-us" || section === "our-story" ? (
           <>
@@ -688,13 +704,19 @@ export default function SectionPage({ section }: { section: string }) {
                   <p className="section-lead">Explore the {businesses.length} businesses that make up Sanjeevani Group, each with its own focus and place in our shared story.</p>
                 </div>
                 <ol className="about-timeline">
-                  {businesses.map((business) => (
+                  {businesses.map((business) => {
+                    const logo = getBusinessLogo(business.name);
+                    return (
                     <li key={business._id}>
                       <span className="about-timeline-marker" aria-hidden="true" />
                       <article className={`about-timeline-card about-timeline-${business.category}`}>
                         <div className="about-timeline-art" aria-hidden="true">
                           <span>{business.sector}</span>
-                          <strong>{business.name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</strong>
+                          {logo ? (
+                            <span className="about-timeline-logo"><Image src={logo} alt="" fill sizes="104px" /></span>
+                          ) : (
+                            <strong>{business.name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</strong>
+                          )}
                         </div>
                         <div className="about-timeline-copy">
                           <span className="about-timeline-kicker">{business.category.replace("-", " ").toUpperCase()}</span>
@@ -704,7 +726,8 @@ export default function SectionPage({ section }: { section: string }) {
                         </div>
                       </article>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ol>
                 <p className="about-history-note">The companies are shown in group directory order. Verified founding dates and historical milestones can be added when available.</p>
               </div>
@@ -780,7 +803,7 @@ export default function SectionPage({ section }: { section: string }) {
           </section>
         ) : (
           <>
-            <section className="reference-section section-page-content">
+            {section !== "mission-vision-values" && <section className="reference-section section-page-content">
               <div className="reference-wrap section-page-copy">
                 <div><p className="section-overline">{page.number} / {page.navLabel.toUpperCase()}</p><h2>{page.lead}</h2></div>
                 <div className="section-page-paragraphs">{page.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
@@ -790,7 +813,7 @@ export default function SectionPage({ section }: { section: string }) {
                   {section === "investors" && <a className="reference-button" href="mailto:info@sanjeevanigroup.com?subject=Investor%20enquiry">Investor enquiries <span>↗</span></a>}
                 </div>
               </div>
-            </section>
+            </section>}
             {["our-story", "community", "media"].includes(section) && (
               <section className="section-page-highlights">
                 <div className="reference-wrap">
@@ -807,6 +830,55 @@ export default function SectionPage({ section }: { section: string }) {
               </section>
             )}
           </>
+        )}
+        {section === "mission-vision-values" && (
+          <section className="mission-feature" aria-labelledby="mission-feature-title">
+            <div className="reference-wrap mission-feature-content">
+              <h2 id="mission-feature-title" className="mission-hero-tag">Vision</h2>
+              <p className="mission-hero-text">We strive to become one of Nepal’s most trusted groups by bringing innovation to every business we run and creating shared value for our communities and stakeholders.</p>
+            </div>
+          </section>
+        )}
+        {section === "mission-vision-values" && (
+          <section className="values-section" aria-labelledby="values-title">
+            <div className="reference-wrap">
+              <h2 id="values-title">The Values That Guide Us</h2>
+              <div className="values-tabs" role="tablist" aria-label="Values">
+                <button type="button" role="tab" id="values-tab-core" aria-selected={valuesTab === "core"} aria-controls="values-panel" className={valuesTab === "core" ? "is-active" : ""} onClick={() => setValuesTab("core")}>Our Core Values</button>
+                <button type="button" role="tab" id="values-tab-mudra" aria-selected={valuesTab === "mudra"} aria-controls="values-panel" className={valuesTab === "mudra" ? "is-active" : ""} onClick={() => setValuesTab("mudra")}>Sanjeevani Leaf</button>
+              </div>
+              <div id="values-panel" role="tabpanel" aria-labelledby={valuesTab === "core" ? "values-tab-core" : "values-tab-mudra"} key={valuesTab} className="values-panel">
+                {valuesTab === "core" ? (
+                  <div className="values-grid">
+                    {coreValues.map((value) => (
+                      <article className="value-card" key={value.title}>
+                        <span className="value-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24">{value.icon}</svg></span>
+                        <h3>{value.title}</h3>
+                        <p>{value.text}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mudra-panel">
+                    <div className="mudra-copy">
+                      <h3>The Herb of Life</h3>
+                      <p><strong>Sanjeevani (संजीवनी)</strong> comes from the Sanskrit words <em>sam</em> (completely) and <em>jīv</em> (life), meaning <strong>“that which restores life.”</strong></p>
+                      <p>In the Ramayana, the Sanjeevani herb was brought from the Himalayas to revive Lakshmana, a symbol of <strong>hope, healing and renewal</strong>, even in the hardest moments. Like the herb, we aspire to bring new life to every venture, community and person we touch. In our brandmark, the interlinked paths of the emblem represent our core values of <strong>Pioneering Spirit, Team Work, Accountability, Excellence and Morality</strong>.</p>
+                    </div>
+                    <div className="mudra-art" aria-hidden="true"><GroupEmblem /></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+        {section === "mission-vision-values" && (
+          <section className="mission-feature mission-feature-left" aria-labelledby="mission-statement-title">
+            <div className="reference-wrap mission-feature-content">
+              <h2 id="mission-statement-title" className="mission-hero-tag">Mission</h2>
+              <p className="mission-hero-text">We are committed to bringing independent businesses together to create meaningful progress and opportunity, delivering quality care, education and essential services to the communities we serve across Nepal.</p>
+            </div>
+          </section>
         )}
       </main>
 
