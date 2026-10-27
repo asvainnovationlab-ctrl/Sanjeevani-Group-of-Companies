@@ -1974,7 +1974,6 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
 }
 
 /* Our story hero */
-.section-page-hero.mission-page-hero.story-page-hero { background: linear-gradient(180deg, #050f0880 0%, #050f0814 30%, #050f0826 60%, #050f08b3 100%), url("/history.webp") center / cover no-repeat, linear-gradient(160deg, #0f2416, #1d4a24); }
 
 /* Company logos in Our Story timeline */
 .about-timeline-logo { width: 104px; height: 104px; position: relative; z-index: 1; flex: 0 0 auto; overflow: hidden; border: 4px solid #fff; border-radius: 18px; background: #fff; box-shadow: 0 12px 26px -12px #0009; }
