@@ -6,7 +6,6 @@ const mediaLinks = [
   { label: "News", href: "/news" },
   { label: "Events", href: "/events" },
   { label: "Press Release", href: "/press-release" },
-  { label: "Newsletter", href: "/newsletter" },
 ];
 
 export default function MediaNavMenu({

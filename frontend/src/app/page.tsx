@@ -36,7 +36,6 @@ const navigation = [
   { label: "About us", href: "/about-us" },
   { label: "Businesses", href: "/businesses" },
   { label: "Media", href: "/media" },
-  { label: "Investors", href: "/investors" },
   { label: "Community", href: "/community" },
   { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/contact" },
@@ -127,10 +126,73 @@ const pillars = [
   },
 ];
 
-const newsImages = [
-  { src: "/hospital.jpg", alt: "Sanjeevani hospital" },
-  { src: "/medical%20college.jpg", alt: "Sanjeevani medical college campus" },
-  { src: "/hydro.jpg", alt: "Sanjeevani hydropower project" },
+// TODO: replace these sample press releases with real ones (newest first).
+const latestPressReleases = [
+  {
+    image: "/hospital.jpg",
+    alt: "Sanjeevani hospital",
+    date: "November 2026",
+    title: "Sanjeevani Hospital expands specialist services",
+    summary: "New departments bring more specialist care closer to patients in the region.",
+  },
+  {
+    image: "/medical%20college.jpg",
+    alt: "Sanjeevani medical college campus",
+    date: "October 2026",
+    title: "Medical college opens admissions for the new academic year",
+    summary: "Applications are now open for undergraduate and postgraduate medical programmes.",
+  },
+  {
+    image: "/hydro.jpg",
+    alt: "Sanjeevani hydropower project",
+    date: "September 2026",
+    title: "Progress update on our hydropower project",
+    summary: "Construction milestones reached as the project moves towards generation.",
+  },
+];
+
+// TODO: replace these sample events with real ones (newest first).
+const latestEvents = [
+  {
+    image: "/education.jpg",
+    alt: "Students at a Sanjeevani Group college",
+    date: "November 2026",
+    title: "Annual convocation and academic awards",
+    summary: "Graduates from our medical and academic colleges are honoured alongside faculty and families.",
+  },
+  {
+    image: "/hospital.jpg",
+    alt: "Sanjeevani hospital building",
+    date: "October 2026",
+    title: "Free community health camp",
+    summary: "Doctors from our hospitals offer free check-ups and health advice to local communities.",
+  },
+  {
+    image: "/agro.jpg",
+    alt: "Sanjeevani agro farm",
+    date: "September 2026",
+    title: "Farmers' outreach programme",
+    summary: "Our agro companies share modern farming practices with farmers across the region.",
+  },
+];
+
+// TODO: replace these sample notices with real ones from each company (newest first).
+const companyNotices = [
+  {
+    company: "Nepalgunj Medical College",
+    date: "November 2026",
+    title: "Entrance exam schedule published",
+  },
+  {
+    company: "Sanjeevani Hospital, Nepalgunj",
+    date: "November 2026",
+    title: "OPD hours extended on weekdays",
+  },
+  {
+    company: "Mount Everest Boarding School",
+    date: "October 2026",
+    title: "Admissions open for the new session",
+  },
 ];
 
 const groupFacts = [
@@ -160,7 +222,8 @@ export default function HomePage() {
   const [introIndex, setIntroIndex] = useState(0);
   const [pillarIndex, setPillarIndex] = useState(0);
   const [newsSlide, setNewsSlide] = useState(0);
-  const [companyIndex, setCompanyIndex] = useState(0);
+  const [eventSlide, setEventSlide] = useState(0);
+  const [noticeIndex, setNoticeIndex] = useState(0);
   const [factIndex, setFactIndex] = useState(0);
   const [activeHomeSection, setActiveHomeSection] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -375,10 +438,17 @@ export default function HomePage() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setNewsSlide((current) => (current + 1) % newsImages.length);
-    }, 4000);
+      setNewsSlide((current) => (current + 1) % latestPressReleases.length);
+    }, 3000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [newsSlide]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setEventSlide((current) => (current + 1) % latestEvents.length);
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [eventSlide]);
 
   function scrollSectors(direction: number) {
     const track = sectorTrackRef.current;
@@ -411,7 +481,7 @@ export default function HomePage() {
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => item.label === "Investors" ? null : item.label === "About us" ? (
+            {navigation.map((item) => item.label === "About us" ? (
               <AboutNavMenu key={item.href} />
             ) : item.label === "Businesses" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} />
@@ -634,35 +704,36 @@ export default function HomePage() {
             <div className="news-grid" data-reveal>
               <article className="news-feature">
                 <div className="news-feature-media">
-                  {newsImages.map((image, index) => (
-                    <Image className={newsSlide === index ? "is-active" : ""} src={image.src} alt={newsSlide === index ? image.alt : ""} fill sizes="(max-width: 780px) 100vw, 30vw" key={image.src} />
+                  {latestPressReleases.map((release, index) => (
+                    <Image className={newsSlide === index ? "is-active" : ""} src={release.image} alt={newsSlide === index ? release.alt : ""} fill sizes="(max-width: 780px) 100vw, 30vw" key={release.title} />
                   ))}
                   <div className="news-feature-dots">
-                    {newsImages.map((image, index) => (
-                      <button key={image.src} type="button" className={newsSlide === index ? "is-active" : ""} aria-label={`Show image ${index + 1}`} aria-pressed={newsSlide === index} onClick={() => setNewsSlide(index)} />
+                    {latestPressReleases.map((release, index) => (
+                      <button key={release.title} type="button" className={newsSlide === index ? "is-active" : ""} aria-label={`Show press release ${index + 1}`} aria-pressed={newsSlide === index} onClick={() => setNewsSlide(index)} />
                     ))}
                   </div>
                 </div>
                 <Link className="news-feature-copy" href="/press-release">
                   <span className="news-label">Press release</span>
-                  <h3>Official updates from Sanjeevani Group</h3>
-                  <p className="news-quote">Verified announcements and statements from across our businesses are published here.</p>
-                  <span className="news-more">View press releases <span aria-hidden="true">↗</span></span>
+                  <div className="news-card-body" key={newsSlide} aria-live="polite">
+                    <span className="news-event-date">{latestPressReleases[newsSlide].date}</span>
+                    <h3>{latestPressReleases[newsSlide].title}</h3>
+                    <p className="news-quote">{latestPressReleases[newsSlide].summary}</p>
+                  </div>
+                  <span className="news-more">View all press releases <span aria-hidden="true">↗</span></span>
                 </Link>
               </article>
 
               <article className="news-card news-card-company">
-                <span className="news-label">Our companies</span>
-                {businesses.length > 0 && (
-                  <div className="news-card-body" key={companyIndex} aria-live="polite">
-                    <h3>{businesses[companyIndex % businesses.length].name}</h3>
-                    <p className="news-quote">
-                      {businesses[companyIndex % businesses.length].sector}
-                      {businesses[companyIndex % businesses.length].location ? ` · ${businesses[companyIndex % businesses.length].location}` : ""}
-                    </p>
-                  </div>
-                )}
-                <button className="news-refresh" type="button" aria-label="Show another company" onClick={() => setCompanyIndex((current) => (current + 1) % Math.max(businesses.length, 1))}>{refreshIcon}</button>
+                <span className="news-label">Notices</span>
+                <div className="news-card-body" key={noticeIndex} aria-live="polite">
+                  <h3>{companyNotices[noticeIndex].title}</h3>
+                  <p className="news-quote">
+                    {companyNotices[noticeIndex].company}
+                    <small>{companyNotices[noticeIndex].date}</small>
+                  </p>
+                </div>
+                <button className="news-refresh" type="button" aria-label="Show another notice" onClick={() => setNoticeIndex((current) => (current + 1) % companyNotices.length)}>{refreshIcon}</button>
               </article>
 
               <article className="news-card news-card-facts">
@@ -674,12 +745,26 @@ export default function HomePage() {
                 <button className="news-refresh" type="button" aria-label="Show another fact" onClick={() => setFactIndex((current) => (current + 1) % groupFacts.length)}>{refreshIcon}</button>
               </article>
 
-              <article className="news-card news-card-social">
-                <span className="news-label">Stay connected</span>
-                <h3>Follow Sanjeevani Group</h3>
-                <p className="news-quote">News, events and stories from our hospitals, colleges, schools and projects across Nepal.</p>
-                <SocialLinks className="news-social-links" />
-                <Link className="news-corner-link" href="/news" aria-label="Open news">↗</Link>
+              <article className="news-feature news-feature-events">
+                <div className="news-feature-media">
+                  {latestEvents.map((event, index) => (
+                    <Image className={eventSlide === index ? "is-active" : ""} src={event.image} alt={eventSlide === index ? event.alt : ""} fill sizes="(max-width: 780px) 100vw, 30vw" key={event.title} />
+                  ))}
+                  <div className="news-feature-dots">
+                    {latestEvents.map((event, index) => (
+                      <button key={event.title} type="button" className={eventSlide === index ? "is-active" : ""} aria-label={`Show event ${index + 1}`} aria-pressed={eventSlide === index} onClick={() => setEventSlide(index)} />
+                    ))}
+                  </div>
+                </div>
+                <Link className="news-feature-copy" href="/events">
+                  <span className="news-label">Events</span>
+                  <div className="news-card-body" key={eventSlide} aria-live="polite">
+                    <span className="news-event-date">{latestEvents[eventSlide].date}</span>
+                    <h3>{latestEvents[eventSlide].title}</h3>
+                    <p className="news-quote">{latestEvents[eventSlide].summary}</p>
+                  </div>
+                  <span className="news-more">View all events <span aria-hidden="true">↗</span></span>
+                </Link>
               </article>
             </div>
           </div>

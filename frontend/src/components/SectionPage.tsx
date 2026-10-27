@@ -19,7 +19,6 @@ const navigation = [
   { label: "About us", href: "/about-us" },
   { label: "Business", href: "/businesses" },
   { label: "Media", href: "/media" },
-  { label: "Investors", href: "/investors" },
   { label: "Community", href: "/community" },
   { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/contact" },
@@ -28,7 +27,6 @@ const mediaPages = [
   { label: "News", href: "/news" },
   { label: "Events", href: "/events" },
   { label: "Press Release", href: "/press-release" },
-  { label: "Newsletter", href: "/newsletter" },
 ];
 
 const careerAreas = [
@@ -198,17 +196,6 @@ const pageContent: Record<string, {
       "There are no approved press releases to display at this time. Official statements will be published here when available.",
     ],
   },
-  newsletter: {
-    number: "03D",
-    navLabel: "Newsletter",
-    eyebrow: "SANJEEVANI GROUP / NEWSLETTER",
-    title: "News from<br />across Sanjeevani.",
-    intro: "Read updates and highlights from Sanjeevani Group and its businesses.",
-    lead: "Newsletter",
-    paragraphs: [
-      "No newsletters are available yet. Group news and highlights will be shared here when editions are ready.",
-    ],
-  },
   reviews: {
     number: "03E",
     navLabel: "Reviews",
@@ -229,18 +216,6 @@ const pageContent: Record<string, {
     lead: "Gallery",
     paragraphs: [
       "There are no approved gallery photos to display yet. Images will be added here as they become available.",
-    ],
-  },
-  investors: {
-    number: "04",
-    navLabel: "Investors",
-    eyebrow: "SANJEEVANI GROUP / INVESTORS",
-    title: "A diverse group.<br />A long-term view.",
-    intro: "Information for partners interested in Sanjeevani Group and its portfolio of businesses.",
-    lead: "Building with a long-term perspective.",
-    paragraphs: [
-      "Sanjeevani Group brings together independent businesses across several sectors. For official company, governance, or financial information, please contact the group directly.",
-      "No financial reports or investment offers are published on this page.",
     ],
   },
   community: {
@@ -317,7 +292,7 @@ const pageContent: Record<string, {
     lead: "Website terms",
     paragraphs: [
       "This website provides general information about Sanjeevani Group and its businesses. Content is provided for information and may change; contact the relevant business to confirm current services, locations, and details.",
-      "Nothing on this website is an offer, investment recommendation, or substitute for professional advice. Investor information should be requested directly from the group.",
+      "Nothing on this website is an offer, investment recommendation, or substitute for professional advice.",
       "You may not misuse the website, attempt to disrupt its operation, or use its content in a way that violates applicable law or another person’s rights.",
       "Links to third-party websites are provided for convenience. Sanjeevani Group does not control those websites or their content.",
       "Questions about these terms can be sent to info@sanjeevanigroup.com. These draft terms should be reviewed for the group’s jurisdiction and business requirements before publication.",
@@ -353,7 +328,6 @@ const pageContent: Record<string, {
       { label: "Team", href: "/team" },
       { label: "Media", href: "/media" },
       ...mediaPages,
-      { label: "Investors", href: "/investors" },
       { label: "Community", href: "/community" },
       { label: "Careers", href: "/careers" },
       { label: "Contact", href: "/contact" },
@@ -509,12 +483,12 @@ export default function SectionPage({ section }: { section: string }) {
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
-            {navigation.map((item) => item.label === "Investors" ? null : item.label === "About us" ? (
+            {navigation.map((item) => item.label === "About us" ? (
               <AboutNavMenu key={item.href} isCurrent={["about-us", "our-story", "mission-vision-values", "leadership", "team"].includes(section)} />
             ) : item.label === "Business" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} isCurrent={section === "businesses"} />
             ) : item.label === "Media" ? (
-              <MediaNavMenu key={item.href} isCurrent={["media", "news", "events", "press-release", "newsletter"].includes(section)} onNavigate={() => setMenuOpen(false)} />
+              <MediaNavMenu key={item.href} isCurrent={["media", "news", "events", "press-release"].includes(section)} onNavigate={() => setMenuOpen(false)} />
             ) : (
               <Link className={item.href === `/${section}` ? "is-current" : ""} href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>
             ))}
@@ -528,7 +502,7 @@ export default function SectionPage({ section }: { section: string }) {
       <GmailContactButton />
 
       <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}`}>
-        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "newsletter", "reviews", "gallery", "investors", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${section === "our-story" ? " story-page-hero" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${section === "our-story" ? " story-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
           {section === "businesses" && <div className="businesses-hero-art" aria-hidden="true"><span>Together<br />for a better<br />tomorrow</span></div>}
@@ -552,10 +526,12 @@ export default function SectionPage({ section }: { section: string }) {
               </div>
             ) : section === "contact" ? (
               <div className="contact-network-hero-content">
+                <span className="contact-sky-orb" aria-hidden="true" />
                 <div className="contact-network-hero-copy">
                   <h1>Connecting <em>Nepal</em></h1>
                 </div>
                 <NepalNetworkMap connected drawOnScroll />
+                <div className="contact-skyline" aria-hidden="true" />
                 <p className="contact-network-hero-description">Sanjeevani Group brings together businesses represented across cities in Nepal. Select a location marker to view the city in Google Maps.</p>
                 <div className="head-office-card">
                   <h2>Head Office</h2>
@@ -810,7 +786,6 @@ export default function SectionPage({ section }: { section: string }) {
                   {page.faqs && <div className="section-faq-list">{page.faqs.map(({ question, answer }) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>}
                   {page.links && <nav className="section-sitemap-links" aria-label="Website pages">{page.links.map(({ label, href }) => <Link href={href} key={href}>{label}<span aria-hidden="true">↗</span></Link>)}</nav>}
                   {section === "careers" && <a className="reference-button" href="mailto:careers@sanjeevanigroup.com?subject=Career%20enquiry">Email our team <span>↗</span></a>}
-                  {section === "investors" && <a className="reference-button" href="mailto:info@sanjeevanigroup.com?subject=Investor%20enquiry">Investor enquiries <span>↗</span></a>}
                 </div>
               </div>
             </section>}
