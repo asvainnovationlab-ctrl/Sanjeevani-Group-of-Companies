@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type FormEvent, type MouseEvent as ReactMouseEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
@@ -11,23 +11,159 @@ import GroupFooter from "@/components/GroupFooter";
 import BusinessDirectoryCard from "@/components/BusinessDirectoryCard";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
-import MediaNavMenu from "@/components/MediaNavMenu";
+import { companyNotices, getYouTubeId, latestEvents, latestPressReleases, youtubeVideos } from "@/data/newsroom";
 import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 const navigation = [
   { label: "About us", href: "/about-us" },
   { label: "Business", href: "/businesses" },
-  { label: "Media", href: "/media" },
+  { label: "Newsroom", href: "/newsroom" },
   { label: "Community", href: "/community" },
   { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/contact" },
 ];
-const mediaPages = [
-  { label: "News", href: "/news" },
-  { label: "Events", href: "/events" },
-  { label: "Press Release", href: "/press-release" },
+
+type LeaderSocials = { linkedin: string; facebook: string; instagram: string; x: string };
+
+// TODO: replace these placeholder links with each person's real profile URLs.
+const placeholderSocials: LeaderSocials = {
+  linkedin: "https://www.linkedin.com/",
+  facebook: "https://www.facebook.com/",
+  instagram: "https://www.instagram.com/",
+  x: "https://x.com/",
+};
+
+const chairmanSocials = placeholderSocials;
+
+// TODO: add each foundation's real logo (in /public), photo, description and website.
+// "Know more" opens the website; until one is set it links to the Contact page.
+const communityFoundations: { name: string; logo?: string; photo: string; tagline?: string; description: string; website: string }[] = [
+  {
+    name: "Khuma Aryal Foundation",
+    logo: "/khuma.png",
+    photo: "/aama.jpg",
+    description: "Guiding young lives through education, health, sports and employment. We work to prevent the problems faced by young people by offering good counselling, real opportunity and steady community support across Nepal.",
+    website: "",
+  },
+  {
+    name: "Sanjeevani Developers",
+    logo: "/companylogo/sanjevani debelopers.jpg",
+    photo: "/construction.jpg",
+    tagline: "Think Green. Think Life.",
+    description: "With over 30 years of experience, Sanjeevani Group is a trusted name in real estate, committed to quality, innovation and sustainable development. With 45+ completed and ongoing projects and over 2,000 happy families, we create modern living spaces that harmonize with nature. Guided by integrity and customer satisfaction, we build not just properties, but thriving communities and lasting legacies.",
+    website: "",
+  },
 ];
+
+// TODO: replace these placeholder photos with real community programme photos.
+const communityGallery: ({ type: "photo"; src: string; alt: string } | { type: "text"; text: string })[] = [
+  { type: "photo", src: "/hospital.jpg", alt: "Sanjeevani hospital serving the community" },
+  { type: "photo", src: "/aama.jpg", alt: "Community members with Sanjeevani Group" },
+  { type: "photo", src: "/education.jpg", alt: "Students learning at a Sanjeevani school" },
+  { type: "photo", src: "/medical%20college.jpg", alt: "Sanjeevani medical college campus" },
+  { type: "text", text: "Sanjeevani Group's businesses are part of the communities around them. Through healthcare, education and agriculture, our companies work to bring quality services closer to people across Nepal." },
+  { type: "photo", src: "/agro.png", alt: "Sanjeevani agriculture project" },
+  { type: "photo", src: "/construction.jpg", alt: "Sanjeevani construction project" },
+  { type: "photo", src: "/hydro.png", alt: "Sanjeevani hydropower project" },
+  { type: "photo", src: "/vision.jpg", alt: "Sanjeevani Group in the community" },
+];
+
+// TODO: replace every "[Add …]" placeholder with the Chairman's verified biography.
+const chairmanStory = {
+  intro: "C.A. Khuma Parsad Aryal is the Chairman of Sanjeevani Group, leading a family of independent businesses across healthcare, medical education, education, agriculture, construction and hydropower.",
+  panel: "Under his leadership, Sanjeevani Group has brought together hospitals, medical colleges, schools, agro and food companies, construction, development and hydropower ventures, each with its own focus and a shared commitment to meaningful progress for Nepal.",
+  journeyHighlight: "[Add a key highlight from the Chairman's journey, for example how he founded the group and the vision behind it.]",
+  journey: "[Add the story of how the Chairman began his career and the first businesses he established.]",
+  visionHighlight: "[Add a highlight about the Chairman's vision for healthcare, education and development in Nepal.]",
+  vision: [
+    "[Add details of major milestones achieved under the Chairman's leadership.]",
+    "[Add details of the Chairman's community, social and philanthropic contributions.]",
+  ],
+  honoursHighlight: "[Add awards, honours or recognition the Chairman has received.]",
+  honours: "[Add further details about these honours and other achievements.]",
+  roles: [
+    { title: "Chairman", detail: "Sanjeevani Group of Companies" },
+    { title: "[Add role]", detail: "[Add other positions, memberships or board roles held by the Chairman.]" },
+  ],
+};
+
+// TODO: replace placeholder names, designations and photos with the real leadership team.
+const leadershipBoard = [
+  { name: "C.A. Khuma Parsad Aryal", role: "Chairman", photo: "/khumaa.jpeg", socials: chairmanSocials },
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+];
+const leadershipTeam = [
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
+];
+
+const leaderSocialIcons: { key: keyof LeaderSocials; label: string; icon: JSX.Element }[] = [
+  { key: "linkedin", label: "LinkedIn", icon: <path d="M5.2 7.6a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM3.4 9h3.6v11H3.4V9Zm5.8 0h3.4v1.5h.1a3.7 3.7 0 0 1 3.3-1.8c3.5 0 4.1 2.3 4.1 5.2V20h-3.6v-5.4c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V20H9.2V9Z" /> },
+  { key: "facebook", label: "Facebook", icon: <path d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8h3.4Z" /> },
+  { key: "instagram", label: "Instagram", icon: <path d="M12 7.3a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm6-7.9a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM21 8.2c-.1-1.5-.4-2.8-1.5-3.8-1-1-2.4-1.4-3.8-1.5-1.5-.1-6-.1-7.5 0-1.5.1-2.8.4-3.8 1.5-1 1-1.4 2.3-1.5 3.8-.1 1.5-.1 6 0 7.5.1 1.5.4 2.8 1.5 3.8 1 1 2.3 1.4 3.8 1.5 1.5.1 6 .1 7.5 0 1.5-.1 2.8-.4 3.8-1.5 1-1 1.4-2.3 1.5-3.8.1-1.5.1-6 0-7.5Zm-2 9.1a3 3 0 0 1-1.7 1.7c-1.2.5-4 .4-5.3.4s-4.1.1-5.3-.4A3 3 0 0 1 5 17.3c-.5-1.2-.4-4-.4-5.3s-.1-4.1.4-5.3A3 3 0 0 1 6.7 5c1.2-.5 4-.4 5.3-.4s4.1-.1 5.3.4A3 3 0 0 1 19 6.7c.5 1.2.4 4 .4 5.3s.1 4.1-.4 5.3Z" /> },
+  { key: "x", label: "X", icon: <path d="M18.9 3h2.9l-6.4 7.3L23 21h-6l-4.7-6.2L6.9 21H4l6.8-7.8L3.3 3h6.2l4.2 5.7L18.9 3Zm-1 16h1.6L8.4 4.9H6.7L17.9 19Z" /> },
+];
+
+function tiltCard(event: ReactMouseEvent<HTMLElement>) {
+  const card = event.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width - 0.5;
+  const y = (event.clientY - rect.top) / rect.height - 0.5;
+  card.style.setProperty("--ry", `${x * 16}deg`);
+  card.style.setProperty("--rx", `${y * -16}deg`);
+  card.style.setProperty("--gx", `${(x + 0.5) * 100}%`);
+  card.style.setProperty("--gy", `${(y + 0.5) * 100}%`);
+}
+
+function resetTilt(event: ReactMouseEvent<HTMLElement>) {
+  event.currentTarget.style.setProperty("--ry", "0deg");
+  event.currentTarget.style.setProperty("--rx", "0deg");
+}
+
+function YouTubeVideo({ id, title, thumbnail }: { id: string; title: string; thumbnail?: string }) {
+  const [playing, setPlaying] = useState(false);
+  if (playing) {
+    return (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allowFullScreen
+      />
+    );
+  }
+  return (
+    <button className="newsroom-video-cover" type="button" onClick={() => setPlaying(true)} aria-label={`Play video: ${title}`}>
+      {thumbnail ? (
+        <Image src={thumbnail} alt="" fill sizes="(max-width: 600px) 100vw, (max-width: 1050px) 50vw, 33vw" />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" />
+      )}
+      <span className="newsroom-video-title">{title}</span>
+      <span className="newsroom-video-play" aria-hidden="true">
+        <svg viewBox="0 0 68 48"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.3.3 34 .3 34 .3s-21.3 0-26.5 1.4a8.5 8.5 0 0 0-6 6C.1 12.9.1 24 .1 24s0 11.1 1.4 16.3a8.5 8.5 0 0 0 6 6C12.7 47.7 34 47.7 34 47.7s21.3 0 26.5-1.4a8.5 8.5 0 0 0 6-6c1.4-5.2 1.4-16.3 1.4-16.3s0-11.1-1.4-16.3Z" fill="#f00" /><path d="M45 24 27 14v20" fill="#fff" /></svg>
+      </span>
+    </button>
+  );
+}
+
+function LeaderSocialLinks({ name, socials, className = "" }: { name: string; socials: LeaderSocials; className?: string }) {
+  return (
+    <div className={`leader-socials ${className}`.trim()}>
+      {leaderSocialIcons.map(({ key, label, icon }) => (
+        <a href={socials[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${name} on ${label}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{icon}</svg>
+        </a>
+      ))}
+    </div>
+  );
+}
 
 const careerAreas = [
   {
@@ -130,6 +266,15 @@ const pageContent: Record<string, {
       "C.A. Khuma Parsad Aryal is the Chairman of Sanjeevani Group. The group brings together independent businesses working across healthcare, education, agriculture, infrastructure and more.",
     ],
   },
+  chairman: {
+    number: "14A",
+    navLabel: "Chairman",
+    eyebrow: "SANJEEVANI GROUP / LEADERSHIP / CHAIRMAN",
+    title: "C.A. Khuma<br />Parsad Aryal",
+    intro: "Chairman of Sanjeevani Group of Companies.",
+    lead: "Chairman",
+    paragraphs: [],
+  },
   team: {
     number: "15",
     navLabel: "Team",
@@ -152,49 +297,14 @@ const pageContent: Record<string, {
       "Browse the directory by company name or first letter. Search results reflect the latest published directory when MongoDB is connected.",
     ],
   },
-  media: {
+  newsroom: {
     number: "03",
-    navLabel: "Media",
-    eyebrow: "SANJEEVANI GROUP / MEDIA",
-    title: "Stories from<br />across the group.",
-    intro: "A place for announcements, stories, and updates from Sanjeevani Group and its businesses.",
-    lead: "News and updates",
-    paragraphs: [
-      "There are no verified media announcements to display yet. Group updates can be added here when they are ready to share.",
-    ],
-  },
-  news: {
-    number: "03A",
-    navLabel: "News",
-    eyebrow: "SANJEEVANI GROUP / NEWS",
-    title: "News from<br />across the group.",
-    intro: "Announcements and updates from Sanjeevani Group and its businesses.",
-    lead: "News",
-    paragraphs: [
-      "There are no verified news announcements to share at this time. Updates will be published here when confirmed.",
-    ],
-  },
-  events: {
-    number: "03B",
-    navLabel: "Events",
-    eyebrow: "SANJEEVANI GROUP / EVENTS",
-    title: "Events across<br />the group.",
-    intro: "Discover events and activities from Sanjeevani Group and its businesses.",
-    lead: "Events",
-    paragraphs: [
-      "There are no confirmed upcoming events to display at this time. Event details will be shared here when available.",
-    ],
-  },
-  "press-release": {
-    number: "03C",
-    navLabel: "Press Release",
-    eyebrow: "SANJEEVANI GROUP / PRESS RELEASE",
-    title: "Official updates<br />from the group.",
-    intro: "Official announcements and statements from Sanjeevani Group.",
-    lead: "Press Release",
-    paragraphs: [
-      "There are no approved press releases to display at this time. Official statements will be published here when available.",
-    ],
+    navLabel: "Newsroom",
+    eyebrow: "SANJEEVANI GROUP / NEWSROOM",
+    title: "News and updates<br />from across the group.",
+    intro: "Press releases, events and notices from Sanjeevani Group and its businesses, all in one place.",
+    lead: "Newsroom",
+    paragraphs: [],
   },
   reviews: {
     number: "03E",
@@ -326,8 +436,7 @@ const pageContent: Record<string, {
       { label: "Locations", href: "/#locations" },
       { label: "Businesses", href: "/businesses" },
       { label: "Team", href: "/team" },
-      { label: "Media", href: "/media" },
-      ...mediaPages,
+      { label: "Newsroom", href: "/newsroom" },
       { label: "Community", href: "/community" },
       { label: "Careers", href: "/careers" },
       { label: "Contact", href: "/contact" },
@@ -380,7 +489,9 @@ const coreValues = [
 
 export default function SectionPage({ section }: { section: string }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
-  const photoHero = section === "mission-vision-values" || section === "our-story";
+  const storyLayout = section === "our-story" || section === "about-us";
+  const leadershipLayout = section === "leadership" || section === "chairman";
+  const photoHero = section === "mission-vision-values" || section === "community" || section === "newsroom" || leadershipLayout || storyLayout;
   const [menuOpen, setMenuOpen] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [directoryQuery, setDirectoryQuery] = useState("");
@@ -394,6 +505,24 @@ export default function SectionPage({ section }: { section: string }) {
   const [careerType, setCareerType] = useState("All areas");
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [valuesTab, setValuesTab] = useState<"core" | "mudra">("core");
+
+  useEffect(() => {
+    if (!leadershipLayout) return;
+    const items = Array.from(document.querySelectorAll<HTMLElement>(".leadership-reveal"));
+    if (!("IntersectionObserver" in window)) {
+      items.forEach((item) => item.classList.add("is-in"));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-in");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: "0px 0px -6% 0px" });
+    items.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, [leadershipLayout]);
 
   useEffect(() => {
     if (!photoHero) return;
@@ -484,11 +613,9 @@ export default function SectionPage({ section }: { section: string }) {
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
             {navigation.map((item) => item.label === "About us" ? (
-              <AboutNavMenu key={item.href} isCurrent={["about-us", "our-story", "mission-vision-values", "leadership", "team"].includes(section)} />
+              <AboutNavMenu key={item.href} isCurrent={["about-us", "our-story", "mission-vision-values", "leadership", "chairman", "team"].includes(section)} />
             ) : item.label === "Business" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} isCurrent={section === "businesses"} />
-            ) : item.label === "Media" ? (
-              <MediaNavMenu key={item.href} isCurrent={["media", "news", "events", "press-release"].includes(section)} onNavigate={() => setMenuOpen(false)} />
             ) : (
               <Link className={item.href === `/${section}` ? "is-current" : ""} href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>
             ))}
@@ -502,7 +629,7 @@ export default function SectionPage({ section }: { section: string }) {
       <GmailContactButton />
 
       <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}`}>
-        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "media", "news", "events", "press-release", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${section === "our-story" ? " story-page-hero" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "newsroom", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${storyLayout ? " story-page-hero" : ""}${section === "about-us" ? " about-page-hero" : ""}${leadershipLayout ? " leadership-page-hero" : ""}${section === "community" ? " community-page-hero" : ""}${section === "newsroom" ? " newsroom-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
           {section === "businesses" && <div className="businesses-hero-art" aria-hidden="true"><span>Together<br />for a better<br />tomorrow</span></div>}
@@ -543,11 +670,35 @@ export default function SectionPage({ section }: { section: string }) {
                   </address>
                 </div>
               </div>
-            ) : section === "our-story" ? (
+            ) : storyLayout ? (
               <div className="mission-hero-copy">
-                <h1 className="visually-hidden">Our Story</h1>
-                <span className="mission-hero-tag">Our Story</span>
+                <h1 className="visually-hidden">{page.navLabel}</h1>
+                <span className="mission-hero-tag">{page.navLabel}</span>
                 <p className="mission-hero-text">Rooted in Nepal and led by Chairman C.A. Khuma Parsad Aryal, Sanjeevani Group has grown into a family of independent businesses across healthcare, education, agriculture, construction and hydropower, working together to transform lives across the nation.</p>
+              </div>
+            ) : section === "newsroom" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">Newsroom</h1>
+                <span className="mission-hero-tag">Newsroom</span>
+                <p className="mission-hero-text">{page.intro}</p>
+              </div>
+            ) : section === "community" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">Our community</h1>
+                <span className="mission-hero-tag">Our Community</span>
+                <p className="mission-hero-text">{page.intro}</p>
+              </div>
+            ) : section === "chairman" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">C.A. Khuma Parsad Aryal, Chairman</h1>
+                <span className="mission-hero-tag">Chairman</span>
+                <p className="mission-hero-text">C.A. Khuma Parsad Aryal leads Sanjeevani Group, a family of independent businesses working to transform lives across Nepal.</p>
+              </div>
+            ) : section === "leadership" ? (
+              <div className="mission-hero-copy">
+                <h1 className="visually-hidden">Leadership</h1>
+                <span className="mission-hero-tag">Our Leadership</span>
+                <p className="mission-hero-text">Guided by experience and a long-term view, our leadership brings independent businesses together around one shared purpose: meaningful progress for Nepal.</p>
               </div>
             ) : section === "mission-vision-values" ? (
               <div className="mission-hero-copy">
@@ -638,6 +789,279 @@ export default function SectionPage({ section }: { section: string }) {
               <p className="career-listing-note">These are career areas, not advertised vacancies. Role availability, requirements, and locations vary by company.</p>
             </div>
           </section>
+        ) : section === "newsroom" ? (
+          <section className="newsroom">
+            <div className="reference-wrap">
+              <nav className="newsroom-jump" aria-label="Newsroom sections">
+                <a href="#press-releases">Press releases</a>
+                <a href="#events">Events</a>
+                <a href="#notices">Notices</a>
+                <a href="#youtube">YouTube</a>
+              </nav>
+
+              {[
+                { id: "press-releases", label: "Press releases", stories: latestPressReleases },
+                { id: "events", label: "Events", stories: latestEvents },
+              ].map((group) => (
+                <section className="newsroom-group" id={group.id} key={group.id} aria-labelledby={`${group.id}-title`}>
+                  <div className="newsroom-group-heading">
+                    <h2 id={`${group.id}-title`}>{group.label}</h2>
+                    <span>{group.stories.length} {group.stories.length === 1 ? "update" : "updates"}</span>
+                  </div>
+                  <div className="newsroom-grid">
+                    {group.stories.map((story) => (
+                      <article className="newsroom-card" key={story.title}>
+                        <div className="newsroom-card-photo">
+                          <Image src={story.image} alt={story.alt} fill sizes="(max-width: 600px) 100vw, (max-width: 1050px) 50vw, 33vw" />
+                        </div>
+                        <div className="newsroom-card-body">
+                          <time>{story.date}</time>
+                          <h3>{story.title}</h3>
+                          <p>{story.summary}</p>
+                          {story.link && (
+                            <a className="newsroom-card-link" href={story.link} target="_blank" rel="noopener noreferrer">
+                              Read full story <span aria-hidden="true">↗</span>
+                            </a>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              <section className="newsroom-group" id="notices" aria-labelledby="notices-title">
+                <div className="newsroom-group-heading">
+                  <h2 id="notices-title">Notices</h2>
+                  <span>{companyNotices.length} {companyNotices.length === 1 ? "notice" : "notices"}</span>
+                </div>
+                <ul className="newsroom-notices">
+                  {companyNotices.map((notice, index) => {
+                    const logo = getBusinessLogo(notice.company);
+                    return (
+                      <li className="newsroom-notice" key={`${notice.company}-${notice.title}`}>
+                        <div className="newsroom-notice-top">
+                          <span className="newsroom-notice-badge">Notice {String(index + 1).padStart(2, "0")}</span>
+                          <time>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+                            {notice.date}
+                          </time>
+                        </div>
+                        <h3>{notice.title}</h3>
+                        <div className="newsroom-notice-company">
+                          <span className="newsroom-notice-logo">
+                            {logo ? <Image src={logo} alt="" fill sizes="44px" /> : notice.company.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}
+                          </span>
+                          <span>{notice.company}</span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              <section className="newsroom-group" id="youtube" aria-labelledby="youtube-title">
+                <div className="newsroom-group-heading">
+                  <h2 id="youtube-title">YouTube</h2>
+                  <span>{youtubeVideos.length} {youtubeVideos.length === 1 ? "video" : "videos"}</span>
+                </div>
+                {youtubeVideos.length > 0 ? (
+                  <div className="newsroom-videos">
+                    {youtubeVideos.map((video, index) => {
+                      const id = getYouTubeId(video.url);
+                      if (!id) return null;
+                      return (
+                        <div className="newsroom-video" key={`${id}-${index}`}>
+                          <YouTubeVideo id={id} title={video.title} thumbnail={video.thumbnail} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="newsroom-empty">Videos from across the group will appear here soon.</p>
+                )}
+              </section>
+
+              <p className="newsroom-contact">For media enquiries, email <a href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>.</p>
+            </div>
+          </section>
+        ) : section === "community" ? (
+          <>
+          <section className="community-foundations">
+            <div className="reference-wrap">
+              {communityFoundations.map((foundation, index) => (
+                <article className={`community-foundation${index % 2 === 1 ? " is-reversed" : ""}`} key={`${foundation.name}-${index}`}>
+                  <div className="community-foundation-copy">
+                    <div className="community-foundation-logo">
+                      {foundation.logo ? (
+                        <Image src={foundation.logo} alt={`${foundation.name} logo`} fill sizes="200px" />
+                      ) : (
+                        <GroupEmblem />
+                      )}
+                    </div>
+                    <p className="community-foundation-kicker">Sanjeevani Group with</p>
+                    <h2>{foundation.name}</h2>
+                    {foundation.tagline && <p className="community-foundation-tagline">{foundation.tagline}</p>}
+                    <p>{foundation.description}</p>
+                    {foundation.website ? (
+                      <a className="community-foundation-link" href={foundation.website} target="_blank" rel="noopener noreferrer">
+                        <span aria-hidden="true">›</span>Know more
+                      </a>
+                    ) : (
+                      <Link className="community-foundation-link" href="/contact">
+                        <span aria-hidden="true">›</span>Know more
+                      </Link>
+                    )}
+                  </div>
+                  <div className="community-foundation-photo">
+                    <Image src={foundation.photo} alt={`${foundation.name} community work`} fill sizes="(max-width: 900px) 100vw, 45vw" />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+          <section className="community-gallery">
+            <div className="reference-wrap community-gallery-grid">
+              {communityGallery.map((item, index) => item.type === "text" ? (
+                <div className="community-gallery-note" key={`note-${index}`}>
+                  <p>{item.text}</p>
+                </div>
+              ) : (
+                <figure className="community-gallery-photo" key={item.src}>
+                  <Image src={item.src} alt={item.alt} fill sizes="(max-width: 600px) 100vw, (max-width: 1050px) 50vw, 33vw" />
+                </figure>
+              ))}
+            </div>
+          </section>
+          </>
+        ) : section === "chairman" ? (
+          <>
+            <section className="chairman-story">
+              <div className="reference-wrap">
+                <p className="chairman-story-highlight leadership-reveal">{chairmanStory.intro}</p>
+
+                <div className="leadership-chairman-panel chairman-story-panel leadership-reveal">
+                  <div className="leadership-chairman-photo">
+                    <Image src="/chairman.png" alt="Portrait of C.A. Khuma Parsad Aryal, Chairman of Sanjeevani Group" fill sizes="(max-width: 780px) 90vw, 40vw" priority />
+                  </div>
+                  <div className="leadership-chairman-copy">
+                    <h2>C.A. Khuma Parsad Aryal</h2>
+                    <p>{chairmanStory.panel}</p>
+                    <LeaderSocialLinks className="leader-socials-light" name="C.A. Khuma Parsad Aryal" socials={chairmanSocials} />
+                  </div>
+                  <span className="leadership-chairman-mark" aria-hidden="true"><GroupEmblem /></span>
+                </div>
+
+                <div className="chairman-story-block leadership-reveal">
+                  <p className="chairman-story-highlight">{chairmanStory.journeyHighlight}</p>
+                  <p>{chairmanStory.journey}</p>
+                </div>
+
+                <div className="chairman-story-split">
+                  <div className="chairman-story-split-photo leadership-reveal">
+                    <Image src="/khumaa.jpeg" alt="C.A. Khuma Parsad Aryal" fill sizes="(max-width: 900px) 100vw, 48vw" />
+                  </div>
+                  <div className="chairman-story-split-copy leadership-reveal">
+                    <p className="chairman-story-highlight">{chairmanStory.visionHighlight}</p>
+                    {chairmanStory.vision.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  </div>
+                </div>
+
+                <div className="chairman-story-block leadership-reveal">
+                  <p className="chairman-story-highlight">{chairmanStory.honoursHighlight}</p>
+                  <p>{chairmanStory.honours}</p>
+                </div>
+
+                <div className="chairman-roles leadership-reveal">
+                  <h2>Key Roles</h2>
+                  <div className="chairman-roles-grid">
+                    <div>
+                      {chairmanStory.roles.map((role) => (
+                        <div className="chairman-role" key={role.title + role.detail}>
+                          <h3>{role.title}</h3>
+                          <p>{role.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="chairman-role">
+                      <h3>Group businesses</h3>
+                      <ul>{businesses.map((business) => <li key={business._id}>{business.name}</li>)}</ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="chairman-companies">
+                  {businesses.map((business, index) => {
+                    const logo = getBusinessLogo(business.name);
+                    return (
+                      <article className="chairman-company leadership-reveal" key={business._id} style={{ "--i": index % 4 } as CSSProperties}>
+                        <div className="chairman-company-logo">
+                          {logo ? <Image src={logo} alt={`${business.name} logo`} fill sizes="150px" /> : <strong>{business.name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</strong>}
+                        </div>
+                        <div>
+                          <h3>{business.name}</h3>
+                          <p>{business.description}</p>
+                          {(business.sector || business.location) && <small>{[business.sector, business.location].filter(Boolean).join(" · ")}</small>}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            <section className="chairman-back">
+              <div className="reference-wrap">
+                <Link href="/leadership"><span aria-hidden="true">←</span> Back to Leadership</Link>
+              </div>
+            </section>
+          </>
+        ) : section === "leadership" ? (
+          <>
+            <section className="leadership-chairman">
+              <div className="reference-wrap">
+                <p className="leadership-chairman-statement leadership-reveal">Rooted in Nepal and guided by a long-term view, C.A. Khuma Parsad Aryal has led Sanjeevani Group as it has grown into a family of {businesses.length} independent businesses working to transform lives across the nation.</p>
+                <div className="leadership-chairman-panel leadership-reveal">
+                  <div className="leadership-chairman-photo">
+                    <Image src="/chairman.png" alt="Portrait of C.A. Khuma Parsad Aryal, Chairman of Sanjeevani Group" fill sizes="(max-width: 780px) 90vw, 40vw" />
+                  </div>
+                  <div className="leadership-chairman-copy">
+                    <h2>C.A. Khuma Parsad Aryal</h2>
+                    <p className="leadership-chairman-role">Chairman</p>
+                    <p>Under his leadership, Sanjeevani Group has brought together businesses across healthcare, medical education, education, agriculture, construction and hydropower, each with its own focus and a shared commitment to meaningful progress.</p>
+                    <LeaderSocialLinks className="leader-socials-light" name="C.A. Khuma Parsad Aryal" socials={chairmanSocials} />
+                    <Link className="leadership-chairman-link" href="/chairman">View details</Link>
+                  </div>
+                  <span className="leadership-chairman-mark" aria-hidden="true"><GroupEmblem /></span>                </div>
+              </div>
+            </section>
+
+            <section className="leadership-section reference-section">
+              <div className="reference-wrap">
+                <div className="leadership-heading leadership-reveal">
+                  <p className="section-overline">OUR LEADERSHIP</p>
+                  <h2>The people guiding <em>our shared purpose.</em></h2>
+                </div>
+                {[leadershipBoard, leadershipTeam].map((group, groupIndex) => (
+                  <div className={`leadership-grid${groupIndex === 0 ? " leadership-grid-board" : ""}`} key={groupIndex}>
+                    {group.map((leader, index) => (
+                      <article className="leadership-card leadership-reveal" key={`${leader.name}-${index}`} style={{ "--i": index } as CSSProperties} onMouseMove={tiltCard} onMouseLeave={resetTilt}>
+                        <div className="leadership-photo">
+                          <Image src={leader.photo} alt={`Portrait of ${leader.name}`} fill sizes="(max-width: 780px) 100vw, 33vw" />
+                        </div>
+                        <div className="leadership-info">
+                          <h3>{leader.name}</h3>
+                          <p>{leader.role}</p>
+                          <LeaderSocialLinks name={leader.name} socials={leader.socials} />
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+          </>
         ) : section === "contact" ? (
           <>
             <section className="contact-section">
@@ -706,17 +1130,6 @@ export default function SectionPage({ section }: { section: string }) {
                   })}
                 </ol>
                 <p className="about-history-note">The companies are shown in group directory order. Verified founding dates and historical milestones can be added when available.</p>
-              </div>
-            </section>
-            <section className="about-values">
-              <div className="reference-wrap">
-                <p className="section-overline">WHAT GUIDES US</p>
-                <h2>Our shared values</h2>
-                <div className="about-values-grid">
-                  <article><span>PEOPLE</span><h3>Care</h3><p>Put people and the communities around our businesses first.</p></article>
-                  <article><span>RELATIONSHIPS</span><h3>Trust</h3><p>Build lasting relationships through responsible, thoughtful work.</p></article>
-                  <article><span>FUTURE</span><h3>Growth</h3><p>Bring different expertise together to create opportunity.</p></article>
-                </div>
               </div>
             </section>
           </>
@@ -789,17 +1202,17 @@ export default function SectionPage({ section }: { section: string }) {
                 </div>
               </div>
             </section>}
-            {["our-story", "community", "media"].includes(section) && (
+            {(storyLayout || section === "community") && (
               <section className="section-page-highlights">
                 <div className="reference-wrap">
-                  <p className="section-overline">{section === "our-story" ? "WHAT CONNECTS US" : section === "community" ? "AREAS ACROSS THE GROUP" : "STAY CONNECTED"}</p>
+                  <p className="section-overline">{storyLayout ? "WHAT CONNECTS US" : section === "community" ? "AREAS ACROSS THE GROUP" : "STAY CONNECTED"}</p>
                   <div className="section-highlight-grid">
-                    {(section === "our-story"
+                    {(storyLayout
                       ? [["01", "Care", "Put people and the communities around our businesses at the heart of progress."], ["02", "Trust", "Build lasting relationships through thoughtful, reliable work."], ["03", "Growth", "Bring different areas of expertise together to help create opportunity."]]
                       : section === "community"
                         ? [["01", "Healthcare", "Healthcare businesses are part of the wider group."], ["02", "Education", "Education businesses help shape the group’s portfolio."], ["03", "Agriculture", "Agriculture businesses support another important area of work."]]
                         : [["01", "Group updates", "News and announcements will be shared here when confirmed."], ["02", "Business stories", "Stories from across the group will appear as they become available."], ["03", "Contact", "For a media enquiry, get in touch with the group."]]
-                    ).map(([number, title, description]) => <article className="section-highlight-card" key={number}><span>{number}</span><h3>{title}</h3><p>{description}</p>{section === "media" && number === "03" && <a href="mailto:info@sanjeevanigroup.com">Send an enquiry ↗</a>}</article>)}
+                    ).map(([number, title, description]) => <article className="section-highlight-card" key={number}><span>{number}</span><h3>{title}</h3><p>{description}</p></article>)}
                   </div>
                 </div>
               </section>

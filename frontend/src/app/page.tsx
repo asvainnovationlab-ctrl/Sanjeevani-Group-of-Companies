@@ -9,19 +9,19 @@ import GmailContactButton from "@/components/GmailContactButton";
 import GroupEmblem from "@/components/GroupEmblem";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
-import MediaNavMenu from "@/components/MediaNavMenu";
+import { companyNotices, latestEvents, latestPressReleases } from "@/data/newsroom";
 import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 type DirectoryResponse = { data: Business[]; message?: string };
 
 const slides = [
-  { label: "Hospital", theme: "hospital", image: "/hospital.jpg" },
   { label: "Medical College", theme: "medical-college", image: "/medical%20college.jpg" },
+  { label: "Hospital", theme: "hospital", image: "/hospital.jpg" },
   { label: "Education", theme: "education", image: "/education.jpg" },
-  { label: "Agro", theme: "agro", image: "/agro.jpg" },
+  { label: "Agro", theme: "agro", image: "/agro.png" },
   { label: "Construction", theme: "construction", image: "/construction.jpg" },
-  { label: "Hydro", theme: "hydro", image: "/hydro.jpg" },
+  { label: "Hydro", theme: "hydro", image: "/hydro.png" },
 ];
 const slideDuration = 3000;
 
@@ -35,7 +35,7 @@ const homeSections = [
 const navigation = [
   { label: "About us", href: "/about-us" },
   { label: "Businesses", href: "/businesses" },
-  { label: "Media", href: "/media" },
+  { label: "Newsroom", href: "/newsroom" },
   { label: "Community", href: "/community" },
   { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/contact" },
@@ -44,8 +44,8 @@ const introImages = [
   { src: "/medical%20college.jpg", alt: "Sanjeevani medical college campus" },
   { src: "/hospital.jpg", alt: "Sanjeevani hospital" },
   { src: "/education.jpg", alt: "Students learning at a Sanjeevani school" },
-  { src: "/agro.jpg", alt: "Sanjeevani agriculture project" },
-  { src: "/hydro.jpg", alt: "Sanjeevani hydropower project" },
+  { src: "/agro.png", alt: "Sanjeevani agriculture project" },
+  { src: "/hydro.png", alt: "Sanjeevani hydropower project" },
 ];
 
 const keySectors = [
@@ -73,7 +73,7 @@ const keySectors = [
   {
     title: "Agriculture",
     detail: "Farming and food",
-    image: "/agro.jpg",
+    image: "/agro.png",
     href: "/businesses?group=agriculture",
     icon: <><path d="M12 21V11" /><path d="M12 11C12 6 8 3 3 3c0 5 4 8 9 8Z" /><path d="M12 14c0-4 3-7 8-7 0 4-3 7-8 7Z" /></>,
   },
@@ -87,7 +87,7 @@ const keySectors = [
   {
     title: "Hydropower",
     detail: "Clean energy for Nepal",
-    image: "/hydro.jpg",
+    image: "/hydro.png",
     href: "/businesses?group=infrastructure",
     icon: <><path d="M12 3s-5 5.5-5 9a5 5 0 0 0 10 0c0-3.5-5-9-5-9Z" /><path d="M12.5 9.5 10.5 13h3l-2 3.5" /></>,
   },
@@ -97,7 +97,7 @@ const pillars = [
   {
     tab: "Sustainability",
     title: "Responsible Growth",
-    image: "/hydro.jpg",
+    image: "/hydro.png",
     imageAlt: "Sanjeevani hydropower project",
     paragraphs: [
       "Our growth is guided by a simple belief: businesses should leave the communities and environment around them better than they found them. Across healthcare, education, agriculture, construction and hydropower, we aim to create long-term value while caring for our people and our planet.",
@@ -117,81 +117,12 @@ const pillars = [
   {
     tab: "Our Impact",
     title: "Progress We Share",
-    image: "/agro.jpg",
+    image: "/agro.png",
     imageAlt: "Sanjeevani agriculture project",
     paragraphs: [
       "Our impact is measured by the lives we touch: patients who receive care closer to home, students who gain the skills to shape their futures, farmers who grow with confidence and communities connected by stronger infrastructure.",
       "With 18 businesses across six areas of work, Sanjeevani Group remains committed to meaningful, lasting progress for Nepal and its people.",
     ],
-  },
-];
-
-// TODO: replace these sample press releases with real ones (newest first).
-const latestPressReleases = [
-  {
-    image: "/hospital.jpg",
-    alt: "Sanjeevani hospital",
-    date: "November 2026",
-    title: "Sanjeevani Hospital expands specialist services",
-    summary: "New departments bring more specialist care closer to patients in the region.",
-  },
-  {
-    image: "/medical%20college.jpg",
-    alt: "Sanjeevani medical college campus",
-    date: "October 2026",
-    title: "Medical college opens admissions for the new academic year",
-    summary: "Applications are now open for undergraduate and postgraduate medical programmes.",
-  },
-  {
-    image: "/hydro.jpg",
-    alt: "Sanjeevani hydropower project",
-    date: "September 2026",
-    title: "Progress update on our hydropower project",
-    summary: "Construction milestones reached as the project moves towards generation.",
-  },
-];
-
-// TODO: replace these sample events with real ones (newest first).
-const latestEvents = [
-  {
-    image: "/education.jpg",
-    alt: "Students at a Sanjeevani Group college",
-    date: "November 2026",
-    title: "Annual convocation and academic awards",
-    summary: "Graduates from our medical and academic colleges are honoured alongside faculty and families.",
-  },
-  {
-    image: "/hospital.jpg",
-    alt: "Sanjeevani hospital building",
-    date: "October 2026",
-    title: "Free community health camp",
-    summary: "Doctors from our hospitals offer free check-ups and health advice to local communities.",
-  },
-  {
-    image: "/agro.jpg",
-    alt: "Sanjeevani agro farm",
-    date: "September 2026",
-    title: "Farmers' outreach programme",
-    summary: "Our agro companies share modern farming practices with farmers across the region.",
-  },
-];
-
-// TODO: replace these sample notices with real ones from each company (newest first).
-const companyNotices = [
-  {
-    company: "Nepalgunj Medical College",
-    date: "November 2026",
-    title: "Entrance exam schedule published",
-  },
-  {
-    company: "Sanjeevani Hospital, Nepalgunj",
-    date: "November 2026",
-    title: "OPD hours extended on weekdays",
-  },
-  {
-    company: "Mount Everest Boarding School",
-    date: "October 2026",
-    title: "Admissions open for the new session",
   },
 ];
 
@@ -485,8 +416,6 @@ export default function HomePage() {
               <AboutNavMenu key={item.href} />
             ) : item.label === "Businesses" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} />
-            ) : item.label === "Media" ? (
-              <MediaNavMenu key={item.href} />
             ) : (
               <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
             ))}
@@ -713,7 +642,7 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-                <Link className="news-feature-copy" href="/press-release">
+                <Link className="news-feature-copy" href="/newsroom#press-releases">
                   <span className="news-label">Press release</span>
                   <div className="news-card-body" key={newsSlide} aria-live="polite">
                     <span className="news-event-date">{latestPressReleases[newsSlide].date}</span>
@@ -756,7 +685,7 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-                <Link className="news-feature-copy" href="/events">
+                <Link className="news-feature-copy" href="/newsroom#events">
                   <span className="news-label">Events</span>
                   <div className="news-card-body" key={eventSlide} aria-live="polite">
                     <span className="news-event-date">{latestEvents[eventSlide].date}</span>

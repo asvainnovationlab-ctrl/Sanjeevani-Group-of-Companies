@@ -16,7 +16,7 @@ const aboutLinks = [
     label: "Our Story",
     description: "How our shared purpose has grown over time.",
     href: "/our-story",
-    image: "/agro.jpg",
+    image: "/agro.png",
     imageAlt: "Sanjeevani Group agriculture fields",
   },
   {
