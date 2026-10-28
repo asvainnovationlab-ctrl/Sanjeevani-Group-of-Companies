@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
 import { getBusinessLogo } from "@/data/businessLogos";
+import { getCompanyProfile, toWebsiteUrl } from "@/data/companyProfiles";
 import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
@@ -66,7 +67,7 @@ const communityGallery: ({ type: "photo"; src: string; alt: string } | { type: "
   { type: "photo", src: "/agro.png", alt: "Sanjeevani agriculture project" },
   { type: "photo", src: "/construction.jpg", alt: "Sanjeevani construction project" },
   { type: "photo", src: "/hydro.png", alt: "Sanjeevani hydropower project" },
-  { type: "photo", src: "/vision.jpg", alt: "Sanjeevani Group in the community" },
+  { type: "photo", src: "/impact/impact.jpg", alt: "Sanjeevani Group in the community" },
 ];
 
 // TODO: replace every "[Add …]" placeholder with the Chairman's verified biography.
@@ -507,8 +508,8 @@ export default function SectionPage({ section }: { section: string }) {
   const [valuesTab, setValuesTab] = useState<"core" | "mudra">("core");
 
   useEffect(() => {
-    if (!leadershipLayout) return;
-    const items = Array.from(document.querySelectorAll<HTMLElement>(".leadership-reveal"));
+    if (!leadershipLayout && !storyLayout) return;
+    const items = Array.from(document.querySelectorAll<HTMLElement>(".leadership-reveal, .about-reveal"));
     if (!("IntersectionObserver" in window)) {
       items.forEach((item) => item.classList.add("is-in"));
       return;
@@ -522,7 +523,9 @@ export default function SectionPage({ section }: { section: string }) {
     }, { threshold: 0.18, rootMargin: "0px 0px -6% 0px" });
     items.forEach((item) => observer.observe(item));
     return () => observer.disconnect();
-  }, [leadershipLayout]);
+    // businesses: the About/Our Story timeline re-renders when /api/businesses
+    // replaces the bundled list, and those new <li>s need observing too.
+  }, [leadershipLayout, storyLayout, businesses]);
 
   useEffect(() => {
     if (!photoHero) return;
@@ -629,7 +632,7 @@ export default function SectionPage({ section }: { section: string }) {
       <GmailContactButton />
 
       <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}`}>
-        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "newsroom", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${storyLayout ? " story-page-hero" : ""}${storyLayout ? " about-page-hero" : ""}${leadershipLayout ? " leadership-page-hero" : ""}${section === "community" ? " community-page-hero" : ""}${section === "newsroom" ? " newsroom-page-hero" : ""}`}>
+        <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "newsroom", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${storyLayout ? " story-page-hero" : ""}${storyLayout ? " about-page-hero" : ""}${section === "about-us" ? " about-us-hero" : ""}${leadershipLayout ? " leadership-page-hero" : ""}${section === "leadership" ? " leadership-team-hero" : ""}${section === "mission-vision-values" ? " mvv-page-hero" : ""}${section === "community" ? " community-page-hero" : ""}${section === "newsroom" ? " newsroom-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
           {section === "businesses" && <div className="businesses-hero-art" aria-hidden="true"><span>Together<br />for a better<br />tomorrow</span></div>}
@@ -1096,7 +1099,7 @@ export default function SectionPage({ section }: { section: string }) {
           <>
             <section className="about-history reference-section">
               <div className="reference-wrap">
-                <div className="about-history-heading">
+                <div className="about-history-heading about-reveal">
                   <div>
                     <p className="section-overline">BRIEF HISTORY</p>
                     <h2>A story of steady<br /><em>progress and purpose.</em></h2>
@@ -1106,30 +1109,53 @@ export default function SectionPage({ section }: { section: string }) {
                 <ol className="about-timeline">
                   {businesses.map((business) => {
                     const logo = getBusinessLogo(business.name);
+                    const profile = getCompanyProfile(business.name);
+                    const websiteUrl = toWebsiteUrl(business.website);
                     return (
-                    <li key={business._id}>
+                    <li className="about-reveal" key={business._id}>
                       <span className="about-timeline-marker" aria-hidden="true" />
                       <article className={`about-timeline-card about-timeline-${business.category}`}>
-                        <div className="about-timeline-art" aria-hidden="true">
-                          <span>{business.sector}</span>
-                          {logo ? (
-                            <span className="about-timeline-logo"><Image src={logo} alt="" fill sizes="104px" /></span>
+                        <div className="about-timeline-photo">
+                          {profile?.photo ? (
+                            <Image src={profile.photo} alt={`${business.name}`} fill sizes="(max-width: 780px) 90vw, 520px" />
                           ) : (
-                            <strong>{business.name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</strong>
+                            <span className="about-timeline-photo-placeholder" aria-hidden="true"><GroupEmblem /></span>
                           )}
+                          {profile?.established && <span className="about-timeline-est">Est. {profile.established}</span>}
                         </div>
-                        <div className="about-timeline-copy">
-                          <span className="about-timeline-kicker">{business.category.replace("-", " ").toUpperCase()}</span>
-                          <h3>{business.name}</h3>
-                          <p>{business.description}</p>
-                          {(business.location || business.sector) && <small>{[business.location, business.sector].filter(Boolean).join(" · ")}</small>}
+                        <div className="about-timeline-body">
+                          <span className="about-timeline-logo" aria-hidden="true">
+                            {logo ? (
+                              <Image src={logo} alt="" fill sizes="84px" />
+                            ) : (
+                              <strong>{business.name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</strong>
+                            )}
+                          </span>
+                          <div className="about-timeline-copy">
+                            <span className="about-timeline-kicker">{business.sector}</span>
+                            <h3>{business.name}</h3>
+                            <p>{business.description}</p>
+                          </div>
+                          <div className="about-timeline-footer">
+                            <span className="about-timeline-location">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z" /></svg>
+                              {business.location || "Nepal"}
+                            </span>
+                            {websiteUrl ? (
+                              <a className="about-timeline-website" href={websiteUrl} target="_blank" rel="noreferrer">
+                                Visit website <span aria-hidden="true">↗</span>
+                              </a>
+                            ) : (
+                              <span className="about-timeline-website is-pending">Website coming soon</span>
+                            )}
+                          </div>
                         </div>
                       </article>
                     </li>
                     );
                   })}
                 </ol>
-                <p className="about-history-note">The companies are shown in group directory order. Verified founding dates and historical milestones can be added when available.</p>
+                <p className="about-history-note about-reveal">The companies are shown in group directory order. Verified founding dates and historical milestones can be added when available.</p>
               </div>
             </section>
           </>

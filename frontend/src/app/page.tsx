@@ -52,42 +52,42 @@ const keySectors = [
   {
     title: "Healthcare",
     detail: "Hospitals and clinical care",
-    image: "/hospital.jpg",
+    image: "/key%20factor/healthcare.jpg",
     href: "/businesses?group=healthcare",
     icon: <><path d="M4 21V8l8-5 8 5v13" /><path d="M9 21v-5h6v5" /><path d="M12 7.5v5M9.5 10h5" /></>,
   },
   {
     title: "Medical Education",
     detail: "Medical colleges and training",
-    image: "/medical%20college.jpg",
+    image: "/key%20factor/medical.jpg",
     href: "/businesses?group=medical-colleges",
     icon: <><path d="M2 9l10-5 10 5-10 5L2 9Z" /><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" /><path d="M22 9v6" /></>,
   },
   {
     title: "Education",
     detail: "Schools and learning",
-    image: "/education.jpg",
+    image: "/key%20factor/edu.jpg",
     href: "/businesses?group=education",
     icon: <><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2Z" /><path d="M12 6v14" /></>,
   },
   {
     title: "Agriculture",
     detail: "Farming and food",
-    image: "/agro.png",
+    image: "/key%20factor/agri.jpg",
     href: "/businesses?group=agriculture",
     icon: <><path d="M12 21V11" /><path d="M12 11C12 6 8 3 3 3c0 5 4 8 9 8Z" /><path d="M12 14c0-4 3-7 8-7 0 4-3 7-8 7Z" /></>,
   },
   {
     title: "Construction",
     detail: "Building and infrastructure",
-    image: "/construction.jpg",
+    image: "/key%20factor/construction.jpg",
     href: "/businesses?group=infrastructure",
     icon: <><path d="M3 21h18" /><path d="M5 21V10h6v11" /><path d="M11 4h10M14 4v6h4V4" /><path d="M8 13v.01M8 16v.01" /></>,
   },
   {
     title: "Hydropower",
     detail: "Clean energy for Nepal",
-    image: "/hydro.png",
+    image: "/key%20factor/hydro.jpg",
     href: "/businesses?group=infrastructure",
     icon: <><path d="M12 3s-5 5.5-5 9a5 5 0 0 0 10 0c0-3.5-5-9-5-9Z" /><path d="M12.5 9.5 10.5 13h3l-2 3.5" /></>,
   },
@@ -95,30 +95,30 @@ const keySectors = [
 
 const pillars = [
   {
-    tab: "Sustainability",
-    title: "Responsible Growth",
-    image: "/hydro.png",
-    imageAlt: "Sanjeevani hydropower project",
-    paragraphs: [
-      "Our growth is guided by a simple belief: businesses should leave the communities and environment around them better than they found them. Across healthcare, education, agriculture, construction and hydropower, we aim to create long-term value while caring for our people and our planet.",
-      "From clean hydropower that strengthens Nepal’s energy future to farming that respects the land, our companies work to grow responsibly, use resources carefully and build for the generations to come.",
-    ],
-  },
-  {
     tab: "Innovation",
     title: "Ideas That Move Nepal Forward",
-    image: "/medical%20college.jpg",
-    imageAlt: "Sanjeevani medical college campus",
+    image: "/impact/innovation.png",
+    imageAlt: "Treatment plant with pumps and processing towers",
     paragraphs: [
       "Innovation at Sanjeevani Group means finding better ways to serve people. Our businesses keep looking for new approaches in patient care, medical training, classroom learning, agriculture and infrastructure.",
       "By sharing knowledge across sectors and embracing modern technology, we work to make quality services more accessible, efficient and dependable for the communities we serve.",
     ],
   },
   {
+    tab: "Sustainability",
+    title: "Responsible Growth",
+    image: "/impact/sustainablity.png",
+    imageAlt: "Aerial view of a Sanjeevani Group farm facility",
+    paragraphs: [
+      "Our growth is guided by a simple belief: businesses should leave the communities and environment around them better than they found them. Across healthcare, education, agriculture, construction and hydropower, we aim to create long-term value while caring for our people and our planet.",
+      "From clean hydropower that strengthens Nepal’s energy future to farming that respects the land, our companies work to grow responsibly, use resources carefully and build for the generations to come.",
+    ],
+  },
+  {
     tab: "Our Impact",
     title: "Progress We Share",
-    image: "/agro.png",
-    imageAlt: "Sanjeevani agriculture project",
+    image: "/impact/impact.jpg",
+    imageAlt: "Smiling woman working in the hillside fields",
     paragraphs: [
       "Our impact is measured by the lives we touch: patients who receive care closer to home, students who gain the skills to shape their futures, farmers who grow with confidence and communities connected by stronger infrastructure.",
       "With 18 businesses across six areas of work, Sanjeevani Group remains committed to meaningful, lasting progress for Nepal and its people.",
@@ -160,10 +160,8 @@ export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
-  const storyRuleRef = useRef<HTMLSpanElement>(null);
   const sectorTrackRef = useRef<HTMLDivElement>(null);
   const sectorPauseUntil = useRef(0);
-  const [storyRuleVisible, setStoryRuleVisible] = useState(false);
   const [statsCounts, setStatsCounts] = useState([0, 0, 0]);
 
   useEffect(() => {
@@ -234,24 +232,6 @@ export default function HomePage() {
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);
-  }, []);
-
-  useEffect(() => {
-    const rule = storyRuleRef.current;
-    if (!rule) return;
-    if (!("IntersectionObserver" in window)) {
-      setStoryRuleVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      setStoryRuleVisible(true);
-      observer.disconnect();
-    }, { threshold: 1 });
-
-    observer.observe(rule);
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -500,28 +480,19 @@ export default function HomePage() {
         </section>
 
         <section className="reference-section story-section" id="story">
-          <div className="reference-wrap story-layout">
-            <div className="story-intro" data-reveal>
-              <p className="section-overline">WHO WE ARE</p>
-              <h2>Rooted in Nepal.<br /><em>Growing together.</em></h2>
-              <span ref={storyRuleRef} className={`story-heading-rule${storyRuleVisible ? " is-visible" : ""}`} aria-hidden="true" />
-              <p className="section-lead">Sanjeevani Group is a family of independent businesses working across healthcare, education, agriculture, infrastructure, and more to create meaningful progress in the communities we serve.</p>
-              <Link className="story-about-link" href="/about-us">Who we are <span aria-hidden="true">↗</span></Link>
-            </div>
-            <div className="story-portrait" data-reveal>
-              <div className="story-portrait-frame">
-                <Image
-                  src="/khumaa.jpeg"
-                  alt="Portrait of C.A. Khuma Parsad Aryal"
-                  width={1024}
-                  height={1018}
-                  sizes="(max-width: 780px) 90vw, 48vw"
-                />
-                <div className="story-portrait-caption">
-                  <span>CHAIRMAN</span>
-                  <p>C.A. Khuma Parsad Aryal</p>
-                </div>
+          <div className="reference-wrap story-layout story-layout-chairman">
+            <p className="leadership-chairman-statement story-chairman-statement" data-reveal>Rooted in Nepal and guided by a long-term view, C.A. Khuma Parsad Aryal has led Sanjeevani Group as it has grown into a family of {businesses.length} independent businesses working to transform lives across the nation.</p>
+            <div className="leadership-chairman-panel story-chairman-panel" data-reveal>
+              <div className="leadership-chairman-photo">
+                <Image src="/chairman.png" alt="Portrait of C.A. Khuma Parsad Aryal, Chairman of Sanjeevani Group" fill sizes="(max-width: 780px) 90vw, 40vw" />
               </div>
+              <div className="leadership-chairman-copy">
+                <h2>C.A. Khuma Parsad Aryal</h2>
+                <p className="leadership-chairman-role">Chairman</p>
+                <p>Under his leadership, Sanjeevani Group has brought together businesses across healthcare, medical education, education, agriculture, construction and hydropower, each with its own focus and a shared commitment to meaningful progress.</p>
+                <Link className="leadership-chairman-link" href="/chairman">View details</Link>
+              </div>
+              <span className="leadership-chairman-mark" aria-hidden="true"><GroupEmblem /></span>
             </div>
           </div>
         </section>
