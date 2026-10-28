@@ -23,24 +23,24 @@ export type CompanyProfile = {
 };
 
 export const companyProfiles: Record<string, CompanyProfile> = {
-  "Sanjeevani Hospital, Pokhara": { established: "2008", photo: "/key%20factor/healthcare.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Sanjeevani Hospital, Nepalgunj": { established: "2010", photo: "/hospital.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Nepalgunj Medical College": { established: "2005", photo: "/key%20factor/medical.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Universal Medical College": { established: "2011", photo: "/medical%20college.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Gandaki Medical College": { established: "2007", photo: "/key%20factor/healthcare.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Sanjeevani Hospital, Pokhara": { established: "2008", photo: "/companyprofile/sanjeevani%20hospital.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Sanjeevani Hospital, Nepalgunj": { established: "2010", photo: "/companyprofile/sanjeevani%20hospital.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Nepalgunj Medical College": { established: "2005", photo: "/companyprofile/nepalgunj%20medical%20college.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Universal Medical College": { established: "2011", photo: "/companyprofile/universal%20coolege%20of%20medical%20science.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Gandaki Medical College": { established: "2007", photo: "/companyprofile/gandaki%20medical%20college.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Sanjeevani Institute of Advance Science and Teaching Hospital": { established: "2015", photo: "/hospital.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Khilung Kalika Suppliers": { established: "2012", photo: "/impact/innovation.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Khilung Kalika Construction": { established: "2013", photo: "/key%20factor/construction.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Khilung Kalika Construction": { established: "2013", photo: "/companyprofile/khilung%20kalika%20construcction.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Sanjeevani Developers": { established: "2016", photo: "/construction.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Everest Education Foundation": { established: "2004", photo: "/key%20factor/edu.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Laughing Budha Hydro Power": { established: "2017", photo: "/key%20factor/hydro.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Laughing Budha Hydro Power": { established: "2017", photo: "/companyprofile/laughing%20buddha%20.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Om Agro": { established: "2014", photo: "/key%20factor/agri.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Janakpur Agro": { established: "2018", photo: "/agro.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Khilung Kalika Agro": { established: "2015", photo: "/impact/sustainablity.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Khilung Kalika Agro": { established: "2015", photo: "/companyprofile/khilung%20kalika%20agro.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Khilung Kalika Feeders": { established: "2019", photo: "/impact/sustainablity.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Khilung Kalika Foods": { established: "2020", photo: "/impact/impact.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
   "Khilung Kalika Marketing": { established: "2021", photo: "/aboutus/hero.png", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
-  "Mount Everest School": { established: "2002", photo: "/education.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
+  "Mount Everest School": { established: "2002", photo: "/companyprofile/mount%20everest%20school.jpg", managingDirector: "", managingDirectorPhoto: "", email: "", phone: "", address: "" },
 };
 
 export function getCompanyProfile(name: string): CompanyProfile | undefined {
