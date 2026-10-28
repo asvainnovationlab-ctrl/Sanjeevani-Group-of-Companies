@@ -1079,7 +1079,7 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
 .businesses-hero-art {
   position: absolute;
   inset: 0 0 0 40%;
-  background-image: linear-gradient(90deg, #f8fbf5 0%, #f8fbf500 45%), linear-gradient(0deg, #153c3040, transparent 60%), url("/companylogo/business%20page%20hero.jpg");
+  background-image: linear-gradient(90deg, #f8fbf5 0%, #f8fbf500 45%), linear-gradient(0deg, #153c3040, transparent 60%), url("/business/business.png");
   background-size: cover;
   background-position: center 45%;
   clip-path: ellipse(76% 92% at 80% 43%);
@@ -1268,7 +1268,7 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
   z-index: 0;
   inset: 0;
   clip-path: none;
-  background-image: url("/companylogo/business%20page%20hero.jpg");
+  background-image: url("/business/business.png");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -1304,7 +1304,7 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
   position: absolute;
   z-index: 0;
   inset: 0;
-  background-image: url("/career%20hero%20image.webp");
+  background-image: url("/careers/career.png");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -1952,15 +1952,16 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
 .mudra-art .group-emblem { transform-style: preserve-3d; animation: about-emblem-flip 4s ease-in-out infinite; }
 
 /* Mission feature (image right, text left) */
-.mission-page > .mission-feature-left { background: linear-gradient(90deg, #0b1b10e6 0%, #0b1b10b3 35%, #0b1b1033 65%, #0b1b1000 100%), url("/aboutus/mission.jpg") center / cover no-repeat, #1a1f1c; }
-:root[data-theme="dark"] .mission-page > .mission-feature-left { background: linear-gradient(90deg, #0b1b10e6 0%, #0b1b10b3 35%, #0b1b1033 65%, #0b1b1000 100%), url("/aboutus/mission.jpg") center / cover no-repeat, #1a1f1c; }
+/* Mission: full-bleed photo, same section size as Vision (min-height comes from
+   the shared .mission-feature rule); text sits on the left. */
+.mission-page > .mission-feature-left { background: linear-gradient(90deg, #0b1b10e6 0%, #0b1b10b3 35%, #0b1b1033 65%, #0b1b1000 100%), url("/aboutus/mission.png") center / cover no-repeat, #1a1f1c; }
+:root[data-theme="dark"] .mission-page > .mission-feature-left { background: linear-gradient(90deg, #0b1b10e6 0%, #0b1b10b3 35%, #0b1b1033 65%, #0b1b1000 100%), url("/aboutus/mission.png") center / cover no-repeat, #1a1f1c; }
 .mission-feature-left .mission-feature-content { width: min(1160px, calc(100% - 56px)); padding-top: 0; padding-left: 0; }
+/* Mission: text a little further left and lower on the photo (desktop only). */
+@media (min-width: 781px) { .mission-page > .mission-feature-left .mission-feature-content { width: min(1240px, calc(100% - 56px)); padding-top: clamp(140px, 22vh, 240px); } }
 @media (max-width: 780px) {
-  .mission-page > .mission-feature-left { background: linear-gradient(180deg, #0b1b1000 30%, #0b1b10cc 100%), url("/aboutus/mission.jpg") center / cover no-repeat, #1a1f1c; }
+  .mission-page > .mission-feature-left { background: linear-gradient(180deg, #0b1b1000 30%, #0b1b10cc 100%), url("/aboutus/mission.png") center / cover no-repeat, #1a1f1c; }
   .mission-feature-left .mission-feature-content { width: calc(100% - 36px); }
-}
-@media (min-width: 781px) {
-  .mission-page > .mission-feature-left { min-height: 0; aspect-ratio: 1600 / 1066; background-size: 100% 100%, cover, auto; }
 }
 
 /* Our story hero */
@@ -2246,7 +2247,7 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
 .newsroom-card-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Newsroom hero + notices */
-.section-page-hero.mission-page-hero.newsroom-page-hero { background: linear-gradient(180deg, #050f0880 0%, #050f0814 30%, #050f0826 60%, #050f08c4 100%), url("/news.avif") center / cover no-repeat, linear-gradient(160deg, #0f2416, #1d4a24); }
+.section-page-hero.mission-page-hero.newsroom-page-hero { background: linear-gradient(180deg, #050f0880 0%, #050f0814 30%, #050f0826 60%, #050f08c4 100%), url("/news/news.png") center / cover no-repeat, linear-gradient(160deg, #0f2416, #1d4a24); }
 .newsroom-card time { color: var(--brass); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .newsroom-notices { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; list-style: none; }
 .newsroom-notice { position: relative; padding: 26px 24px 24px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-top: 4px solid #8cc63f; border-radius: 0 0 18px 18px; background: linear-gradient(180deg, color-mix(in srgb, #8cc63f 8%, var(--card)) 0%, var(--card) 55%); box-shadow: 0 18px 40px -32px #1d2b2066; }
@@ -2407,3 +2408,35 @@ body.font-body :is(h1, h2, h3, h4, h5, h6, .brand-wordmark, .brand-wordmark > sp
   .about-timeline-body { padding: 0 18px 18px; }
   .about-timeline-logo { width: 72px; height: 72px; margin-top: -36px; border-radius: 15px; }
 }
+
+/* Businesses hero: photo only, with the same tag + statement treatment and
+   light overlay as the About Us hero (same in both themes). */
+.businesses-page-hero::after, :root[data-theme="dark"] .businesses-page-hero::after { background: linear-gradient(180deg, #050f0880 0%, #050f0814 30%, #050f0826 60%, #050f08b3 100%); }
+:root[data-theme="dark"] .businesses-page-hero { background: transparent; }
+.businesses-page-hero .businesses-hero-copy { width: min(620px, 100%); }
+.businesses-page-hero .mission-hero-text { max-width: 600px; }
+.businesses-hero-art > span { display: none; }
+/* ...and the photo runs up under the transparent header, like the other photo heroes. */
+.section-page-hero.businesses-page-hero { min-height: 100svh; margin-top: -73px; }
+@media (max-width: 780px) { .section-page-hero.businesses-page-hero { min-height: 100svh; margin-top: -68px; } }
+
+/* Careers hero: transparent header over the photo and the same light overlay
+   as the About Us / Businesses heroes, in both themes. */
+.section-page-hero.career-page-hero { min-height: 100svh; margin-top: -73px; }
+@media (max-width: 780px) { .section-page-hero.career-page-hero { min-height: 100svh; margin-top: -68px; } }
+.career-page-hero::after, :root[data-theme="dark"] .career-page-hero::after { background: linear-gradient(180deg, #050f0880 0%, #050f0814 30%, #050f0826 60%, #050f08b3 100%); }
+:root[data-theme="dark"] .career-page-hero { background: transparent; }
+.section-page-hero.career-page-hero .career-hero-copy { width: min(620px, 100%); }
+
+/* Chairman-card green (.leadership-chairman-panel) reused for the footer and
+   the Core Values cards. Headings switch from near-black to the card's light
+   green, since dark text doesn't read on this darker green. */
+.group-footer.site-footer { background: linear-gradient(135deg, #4f8f2a 0%, #3a7020 100%); }
+.site-footer-column h2 { color: #c4e58a; }
+.site-footer-links a:hover, .site-footer-contact a:hover, .site-footer-bottom nav a:hover { color: #c4e58a; }
+.site-footer-bottom { border-top-color: #ffffff33; }
+.value-card { background: linear-gradient(135deg, #4f8f2a 0%, #3a7020 100%); color: #eef6e6; box-shadow: 0 24px 44px -28px #1d4a24cc; }
+.value-card:hover { box-shadow: 0 32px 54px -26px #1d4a24; }
+.value-card h3 { color: #fff; text-shadow: none; }
+.value-card p { color: #eef6e6; }
+.value-card strong { color: #fff; }

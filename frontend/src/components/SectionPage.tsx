@@ -5,11 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { businesses as localBusinesses, businessGroups, type Business, type BusinessGroup } from "@/data/businesses";
 import { getBusinessLogo } from "@/data/businessLogos";
-import { getCompanyProfile, toWebsiteUrl } from "@/data/companyProfiles";
+import { getCompanyProfile, getCompanySlug, sectorImages, toWebsiteUrl } from "@/data/companyProfiles";
 import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
-import BusinessDirectoryCard from "@/components/BusinessDirectoryCard";
+import CompanyProfile from "@/components/CompanyProfile";
+import LegalDocument from "@/components/LegalDocument";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
 import { companyNotices, getYouTubeId, latestEvents, latestPressReleases, youtubeVideos } from "@/data/newsroom";
@@ -488,18 +489,20 @@ const coreValues = [
   },
 ];
 
-export default function SectionPage({ section }: { section: string }) {
+export default function SectionPage({ section, companySlug }: { section: string; companySlug?: string }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
   const storyLayout = section === "our-story" || section === "about-us";
   const leadershipLayout = section === "leadership" || section === "chairman";
   const photoHero = section === "mission-vision-values" || section === "community" || section === "newsroom" || leadershipLayout || storyLayout;
+  // Pages whose hero photo runs under a transparent header that turns solid on scroll.
+  const overlayHeader = photoHero || section === "businesses" || section === "careers";
   const [menuOpen, setMenuOpen] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [letter, setLetter] = useState("All");
   const [businessCategory, setBusinessCategory] = useState<Business["category"] | "all">("all");
   const [businessGroup, setBusinessGroup] = useState<BusinessGroup | "all">("all");
-  const [businessDirectoryOpen, setBusinessDirectoryOpen] = useState(false);
+  const [, setBusinessDirectoryOpen] = useState(false);
   const [contactNotice, setContactNotice] = useState("");
   const [careerSearch, setCareerSearch] = useState("");
   const [careerCompany, setCareerCompany] = useState("All companies");
@@ -528,14 +531,14 @@ export default function SectionPage({ section }: { section: string }) {
   }, [leadershipLayout, storyLayout, businesses]);
 
   useEffect(() => {
-    if (!photoHero) return;
+    if (!overlayHeader) return;
     function updateHeader() {
       setHeaderScrolled(window.scrollY > 24);
     }
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);
-  }, [photoHero]);
+  }, [overlayHeader]);
 
   useEffect(() => {
     if (section !== "businesses" && section !== "about-us" && section !== "our-story" && section !== "careers") return;
@@ -564,10 +567,18 @@ export default function SectionPage({ section }: { section: string }) {
       setDirectoryQuery(searchQuery || savedSearch || "");
       setBusinessDirectoryOpen(Boolean(group || searchQuery || savedSearch || category));
       if (savedSearch) window.sessionStorage.removeItem("sanjeevani-business-search");
+      // Arriving from a sector link (e.g. the Business menu): skip the hero and
+      // open straight on the company directory. "instant" overrides the
+      // site-wide smooth scrolling so the hero never flashes past.
+      if (group || searchQuery || savedSearch || category) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const directory = document.getElementById("explore");
+          if (directory) window.scrollTo({ top: directory.getBoundingClientRect().top + window.scrollY, behavior: "instant" });
+        }));
+      }
     }
   }, [section]);
 
-  const alphabet = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 
   const visibleBusinesses = useMemo(() => {
     const term = directoryQuery.trim().toLowerCase();
@@ -579,6 +590,17 @@ export default function SectionPage({ section }: { section: string }) {
       return matchesLetter && matchesSearch && matchesCategory && matchesGroup;
     });
   }, [businessCategory, businessGroup, businesses, directoryQuery, letter]);
+
+  // Businesses directory: the selected sector (undefined = all companies) and
+  // the visible companies grouped by sector, in businessGroups order.
+  const activeBusinessGroup = businessGroups.find((item) => item.value === businessGroup);
+  const directoryGroups = useMemo(() => {
+    const grouped = businessGroups
+      .map((group) => ({ key: group.value, label: group.label, items: visibleBusinesses.filter(group.matches) }))
+      .filter((entry) => entry.items.length > 0);
+    const others = visibleBusinesses.filter((business) => !businessGroups.some((group) => group.matches(business)));
+    return others.length ? [...grouped, { key: "other", label: "Other companies", items: others }] : grouped;
+  }, [visibleBusinesses]);
 
   const visibleCareerAreas = useMemo(() => {
     const term = careerSearch.trim().toLowerCase();
@@ -611,7 +633,7 @@ export default function SectionPage({ section }: { section: string }) {
 
   return (
     <>
-      <header className={`reference-header${section === "businesses" ? " businesses-site-header" : ""}${photoHero ? (headerScrolled ? " is-scrolled" : " is-overlay") : ""}`}>
+      <header className={`reference-header${overlayHeader ? (headerScrolled ? " is-scrolled" : " is-overlay") : ""}`}>
         <div className="reference-wrap header-inner">
           <Brand />
           <nav className={`reference-nav${menuOpen ? " is-open" : ""}`} aria-label="Main navigation">
@@ -631,7 +653,13 @@ export default function SectionPage({ section }: { section: string }) {
 
       <GmailContactButton />
 
-      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}`}>
+      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}${companySlug ? " company-page bx-scope cx" : ""}${!companySlug && (section === "privacy-policy" || section === "terms-of-use") ? " legal-page bx-scope lg" : ""}`}>
+        {companySlug ? (
+          <CompanyProfile slug={companySlug} businesses={businesses} />
+        ) : section === "privacy-policy" || section === "terms-of-use" ? (
+          <LegalDocument kind={section} title={page.title} intro={page.intro} lead={page.lead} paragraphs={page.paragraphs} />
+        ) : (
+        <>
         <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "newsroom", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${storyLayout ? " story-page-hero" : ""}${storyLayout ? " about-page-hero" : ""}${section === "about-us" ? " about-us-hero" : ""}${leadershipLayout ? " leadership-page-hero" : ""}${section === "leadership" ? " leadership-team-hero" : ""}${section === "mission-vision-values" ? " mvv-page-hero" : ""}${section === "community" ? " community-page-hero" : ""}${section === "newsroom" ? " newsroom-page-hero" : ""}`}>
           <div className="hero-grid" aria-hidden="true" />
           <div className="section-page-orbit" aria-hidden="true" />
@@ -639,20 +667,10 @@ export default function SectionPage({ section }: { section: string }) {
           {section === "careers" && <div className="career-hero-art" aria-hidden="true" />}
           <div className="reference-wrap section-page-hero-content">
             {section === "businesses" ? (
-              <div className="businesses-hero-copy">
-                <p className="section-overline">THE GROUP</p>
-                <h1>Our <em>Businesses</em></h1>
-                <p className="businesses-hero-description">Eighteen companies, each with a distinct role in our shared story.<br />Explore the directory by name.</p>
-                <label className="businesses-hero-search">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-                  <span className="visually-hidden">Search companies by name or sector</span>
-                  <input id="page-directory-search" type="search" placeholder="Search companies by name or sector..." value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setLetter("All"); }} />
-                  <span className="businesses-hero-search-count" aria-live="polite">{visibleBusinesses.length}<small>results</small></span>
-                </label>
-                <div className="businesses-hero-stats">
-                  <div><strong>{businesses.length}</strong><span>Companies<br />in the group</span></div>
-                  <div><strong>{businessGroups.length}</strong><span>Diverse sectors<br />Healthcare · Education · More</span></div>
-                </div>
+              <div className="mission-hero-copy businesses-hero-copy">
+                <h1 className="visually-hidden">Our Businesses</h1>
+                <span className="mission-hero-tag">Our Businesses</span>
+                <p className="mission-hero-text">Sanjeevani Group brings together {businesses.length} independent companies across healthcare, medical education, education, agriculture, construction and hydropower, each with its own focus and a shared commitment to meaningful progress for Nepal.</p>
               </div>
             ) : section === "contact" ? (
               <div className="contact-network-hero-content">
@@ -710,11 +728,10 @@ export default function SectionPage({ section }: { section: string }) {
                 <p className="mission-hero-text">Guided by purpose and growing with care, Sanjeevani Group brings independent businesses together to create meaningful progress for the communities we serve across Nepal.</p>
               </div>
             ) : section === "careers" ? (
-              <div className="career-hero-copy">
-                <p className="section-overline">{page.eyebrow}</p>
-                <h1 dangerouslySetInnerHTML={{ __html: page.title }} />
-                <a className="career-hero-cta" href="#career-board-title">Explore career paths <span aria-hidden="true">↗</span></a>
-                <p className="career-hero-message">{page.intro}</p>
+              <div className="mission-hero-copy career-hero-copy">
+                <h1 className="visually-hidden">Careers</h1>
+                <span className="mission-hero-tag">Careers</span>
+                <p className="mission-hero-text">Build your career with Sanjeevani Group. Across healthcare, education, agriculture, construction and hydropower, our businesses bring together people who want to make a real difference for communities across Nepal.</p>
               </div>
             ) : (
               <>
@@ -1160,60 +1177,71 @@ export default function SectionPage({ section }: { section: string }) {
             </section>
           </>
         ) : section === "businesses" ? (
-          <section className="reference-section directory-section business-directory-section section-page-content">
-            <div className="reference-wrap">
-              <div className="business-category-selector">
-                <div className="business-category-column">
-                  {businessGroups.slice(0, 3).map((group) => (
-                    <button className={`business-category-tile business-category-tile-${group.value}`} type="button" key={group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); setBusinessDirectoryOpen(true); }}>
-                      <span className="business-category-art" aria-hidden="true" />
-                      <strong>{group.label}</strong>
-                      <span className="business-category-arrow" aria-hidden="true">↗</span>
+          <section className="bx-scope bx-directory" id="explore" aria-labelledby="bx-directory-title">
+            <div className="bx-wrap">
+              <header className="bx-head">
+                <h2 id="bx-directory-title">Explore our companies</h2>
+                <p className="bx-lead">Choose a sector to see its companies, then open any company for its full profile.</p>
+              </header>
+              <div className="bx-index">
+                <nav className="bx-sectors" aria-label="Filter businesses by sector">
+                  <button type="button" className="bx-sector" aria-pressed={businessGroup === "all" && businessCategory === "all"} onClick={() => { setBusinessGroup("all"); setBusinessCategory("all"); setLetter("All"); setDirectoryQuery(""); setBusinessDirectoryOpen(true); }}>
+                    <span className="bx-sector-thumb bx-sector-thumb-all" aria-hidden="true"><GroupEmblem /></span>
+                    <span className="bx-sector-copy"><strong>All companies</strong><small>Every company in the group</small></span>
+                    <span className="bx-sector-count num">{businesses.length}</span>
+                  </button>
+                  {businessGroups.map((group) => (
+                    <button type="button" className="bx-sector" key={group.value} aria-pressed={businessGroup === group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); setDirectoryQuery(""); setBusinessDirectoryOpen(true); }}>
+                      <span className="bx-sector-thumb" aria-hidden="true"><Image src={sectorImages[group.value]} alt="" fill sizes="64px" /></span>
+                      <span className="bx-sector-copy"><strong>{group.label}</strong><small>{group.detail}</small></span>
+                      <span className="bx-sector-count num">{businesses.filter(group.matches).length}</span>
                     </button>
                   ))}
-                </div>
-                <div className="business-category-center">
-                  <span className="business-category-emblem"><GroupEmblem /></span>
-                  <span className="business-category-center-label">SANJEEVANI GROUP</span>
-                  <h2>Many businesses.<br /><em>One shared purpose.</em></h2>
-                  <p>Choose an area to explore the companies in our group.</p>
-                  <button type="button" className="business-category-all" onClick={() => { setBusinessGroup("all"); setBusinessCategory("all"); setLetter("All"); setDirectoryQuery(""); setBusinessDirectoryOpen(true); }}>View all businesses <span aria-hidden="true">↓</span></button>
-                </div>
-                <div className="business-category-column">
-                  {businessGroups.slice(3).map((group) => (
-                    <button className={`business-category-tile business-category-tile-${group.value}`} type="button" key={group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); setBusinessDirectoryOpen(true); }}>
-                      <span className="business-category-art" aria-hidden="true" />
-                      <strong>{group.label}</strong>
-                      <span className="business-category-arrow" aria-hidden="true">↗</span>
-                    </button>
-                  ))}
+                </nav>
+                <div className="bx-panel" id="business-directory-results">
+                  <div className="bx-panel-head">
+                    <div className="bx-panel-title">
+                      <h3>{directoryQuery.trim() ? "Search results" : activeBusinessGroup ? activeBusinessGroup.label : "All companies"}</h3>
+                      <p>{directoryQuery.trim() ? "Across every Sanjeevani Group company" : activeBusinessGroup ? activeBusinessGroup.detail : "Every company in Sanjeevani Group, by sector"}</p>
+                    </div>
+                    <div className="bx-toolbar">
+                      <label className="bx-search">
+                        <span className="visually-hidden">Search companies</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                        <input id="page-directory-search" type="search" placeholder="Search companies" autoComplete="off" value={directoryQuery} onChange={(event) => { setDirectoryQuery(event.target.value); setBusinessGroup("all"); setBusinessCategory("all"); setLetter("All"); }} />
+                      </label>
+                      <span className="bx-count" aria-live="polite"><span className="num">{visibleBusinesses.length}</span> {visibleBusinesses.length === 1 ? "company" : "companies"}</span>
+                    </div>
+                  </div>
+                  <div className="bx-groups" key={`${businessGroup}-${letter}`}>
+                    {directoryGroups.map((entry) => (
+                      <div className="bx-group" key={entry.key}>
+                        {!activeBusinessGroup && <h4>{entry.label}</h4>}
+                        <ul className="bx-companies">
+                          {entry.items.map((business) => {
+                            const profile = getCompanyProfile(business.name);
+                            const photo = profile?.photo || sectorImages[entry.key] || "/business/business.png";
+                            return (
+                              <li key={business._id}>
+                                <Link className="bx-company" href={`/businesses/${getCompanySlug(business.name)}`}>
+                                  <span className="bx-company-photo"><Image src={photo} alt="" fill sizes="(max-width: 780px) 34vw, 176px" /></span>
+                                  <span className="bx-company-copy">
+                                    <strong>{business.name}</strong>
+                                    <span>{business.location || business.sector}</span>
+                                  </span>
+                                  {profile?.established && <span className="bx-company-year">Since <span className="num">{profile.established}</span></span>}
+                                  <span className="bx-company-go">View profile</span>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                    {visibleBusinesses.length === 0 && <p className="bx-empty">No companies match &ldquo;{directoryQuery.trim()}&rdquo;. Try another name or sector.</p>}
+                  </div>
                 </div>
               </div>
-              {businessDirectoryOpen && (
-                <div className="business-directory-panel" id="business-directory-results">
-                  <div className="business-directory-results-heading">
-                    <div>
-                      <span>BUSINESS DIRECTORY</span>
-                      <h2>{businessGroup === "all" ? "All businesses" : businessGroups.find((item) => item.value === businessGroup)?.label}</h2>
-                    </div>
-                    <button type="button" onClick={() => setBusinessDirectoryOpen(false)}>Back to categories <span aria-hidden="true">↑</span></button>
-                  </div>
-                  <div className="business-directory-toolbar">
-                    <div className="business-directory-filters" role="group" aria-label="Filter businesses by sector">
-                      <button type="button" className={businessGroup === "all" && businessCategory === "all" ? "is-active" : ""} aria-pressed={businessGroup === "all" && businessCategory === "all"} onClick={() => { setBusinessGroup("all"); setBusinessCategory("all"); }}>All</button>
-                      {businessGroups.map((group) => <button type="button" key={group.value} className={businessGroup === group.value ? "is-active" : ""} aria-pressed={businessGroup === group.value} onClick={() => { setBusinessGroup(group.value); setBusinessCategory("all"); setLetter("All"); }}>{group.label}</button>)}
-                    </div>
-                    <label className="business-directory-letter-filter">
-                      <span>Sort by first letter</span>
-                      <select value={letter} onChange={(event) => { setLetter(event.target.value); setDirectoryQuery(""); }}>
-                        {alphabet.map((value) => <option key={value} value={value}>{value === "All" ? "All companies" : value}</option>)}
-                      </select>
-                    </label>
-                    <span className="business-directory-result-count">{visibleBusinesses.length} results</span>
-                  </div>
-                  <div className="directory-grid" aria-live="polite">{visibleBusinesses.map((business, index) => <BusinessDirectoryCard business={business} index={index} key={business._id} />)}{visibleBusinesses.length === 0 && <p className="directory-empty">No businesses match. Try another name or letter.</p>}</div>
-                </div>
-              )}
             </div>
           </section>
         ) : (
@@ -1294,18 +1322,12 @@ export default function SectionPage({ section }: { section: string }) {
             </div>
           </section>
         )}
+        </>
+        )}
       </main>
 
-      {section === "businesses" ? (
-        <>
-          <section className="business-page-motto" aria-label="Our motto">
-            <div className="business-page-motto-content">
-              <span className="business-page-motto-emblem"><GroupEmblem /></span>
-              <p>One horizon, <em>many ambitions.</em></p>
-            </div>
-          </section>
-          <div className="business-page-footer"><GroupFooter /></div>
-        </>
+      {section === "businesses" && !companySlug ? (
+        <div className="business-page-footer"><GroupFooter /></div>
       ) : section === "contact" ? (
         <div className="contact-page-footer"><GroupFooter /></div>
       ) : section === "careers" ? (

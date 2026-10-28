@@ -1,0 +1,62 @@
+/* Hallmark · shape: long-document (summary hero, sticky contents beside numbered clauses,) · genre: editorial · theme: brand · redesign: full
+ * paper: oklch(98.6% 0.008 120) · accent: oklch(48% 0.13 135) · display: Poppins (brand) · body: Inter (brand) · hero: settled, headline beside a document summary · nav: kept · footer: kept · signature: the numbered clause list with its contents rail, a dense legal notice set like a well-made document
+ * axes: light/geometric-sans/chromatic-green · posture: settled · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S3 R5 V3 · weakest: S, a legal page reads alike across sites by design; made it this group's own through its real clauses, the draft status shown plainly and the bg.png skyline in the header */
+/* Hallmark · scope · /privacy-policy and /terms-of-use only; colours come from the --bx-* tokens on :root in businesses.css and the scale from .bx-scope, so the legal pages and the Businesses pages share one system */
+/* Hallmark · waive 44c · the hero is a document header (headline, one line, the email action, the summary) and the clauses begin on the first screen · a full-screen hero would push the notice itself below the fold */
+/* Hallmark · waive 79 · same document header; the space below it is the gap before clause one, tightened to 64px · reading starts on the first screen by design */
+/* Hallmark · added clause headings ("Directory searches", "Acceptable use" ...) · each names what its paragraph already says; every clause's own text is unchanged */
+
+.lg-hero { position: relative; padding-block: var(--space-3xl) calc(var(--space-2xl) + 10vw); isolation: isolate; overflow: clip; border-bottom: 1px solid var(--bx-rule); background: var(--bx-paper-2); }
+/* The bg.png skyline along the bottom of the header, on its own layer so dark
+   mode can re-tone the drawing without touching the text above it. */
+.lg-hero::before { position: absolute; z-index: -1; inset: 0; background: url("/bg.png") center bottom / 100% auto no-repeat; content: ""; pointer-events: none; }
+:root[data-theme="dark"] .lg-hero::before { filter: invert(1) hue-rotate(180deg) brightness(2.4) contrast(1.4) saturate(1.3); opacity: 0.9; }
+.lg-hero-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; gap: var(--gap-columns); }
+.lg-hero h1 { max-width: 14ch; text-wrap: balance; color: var(--bx-ink-2); font-size: var(--text-display); font-weight: 600; line-height: 1.04; }
+.lg-hero .bx-lead { margin-top: var(--space-lg); }
+.lg-actions { margin-top: var(--space-xl); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); }
+.lg-text-link { color: var(--bx-accent-text); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; transition: text-decoration-color var(--dur-short); }
+.lg-text-link:hover { text-decoration-color: transparent; }
+
+.lg-summary { margin: 0; padding: var(--space-xs) var(--space-lg); border: 1px solid var(--bx-rule); border-radius: var(--radius-card); background: var(--bx-paper); box-shadow: 0 24px 50px -40px color-mix(in oklab, var(--bx-shade) 55%, transparent); }
+.lg-summary > div { padding-block: var(--space-md); display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; border-bottom: 1px solid var(--bx-rule); }
+.lg-summary > div:last-child { border-bottom: 0; }
+.lg-summary dt { color: var(--bx-muted); font-size: var(--text-sm); }
+.lg-summary dd { margin: 0; min-width: 0; color: var(--bx-ink-2); font-weight: 500; overflow-wrap: anywhere; }
+.lg-summary a { white-space: nowrap; color: var(--bx-accent-text); text-decoration: underline; text-underline-offset: 0.18em; }
+
+.lg-body { padding-block: var(--space-2xl) var(--section-gap); background: var(--bx-paper); }
+.lg-body-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; gap: var(--gap-columns); }
+.lg-toc { position: sticky; top: calc(var(--header-offset) + var(--space-lg)); padding-top: var(--space-sm); }
+.lg-toc-title { margin-bottom: var(--space-sm); color: var(--bx-ink-2); font: 600 var(--text-md)/1.3 var(--bx-display); }
+.lg-toc ol { margin: 0; padding: 0; list-style: none; border-left: 1px solid var(--bx-rule); }
+.lg-toc a { margin-left: -1px; padding: var(--space-xs) 0 var(--space-xs) var(--space-md); display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); border-left: 2px solid transparent; color: var(--bx-muted); font-size: var(--text-sm); line-height: 1.45; text-decoration: none; transition: color var(--dur-short), border-color var(--dur-short); }
+.lg-toc a:hover { border-left-color: var(--bx-accent-text); color: var(--bx-ink-2); }
+.lg-toc a:active { color: var(--bx-accent-text); }
+.lg-toc a .num { color: var(--bx-accent-text); font-weight: 600; }
+
+.lg-clauses { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--bx-ink-2); }
+.lg-clause { padding-block: var(--space-xl); display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: var(--space-lg); border-bottom: 1px solid var(--bx-rule); scroll-margin-top: calc(var(--header-offset) + var(--space-lg)); }
+.lg-clause-number { color: var(--bx-accent-text); font: 600 var(--text-2xl)/1 var(--bx-display); }
+.lg-document { min-width: 0; }
+.lg-document > h2 { margin-bottom: var(--space-xl); color: var(--bx-ink-2); font-size: var(--text-section); font-weight: 600; line-height: 1.1; text-wrap: balance; }
+.lg-clause h3 { color: var(--bx-ink-2); font-size: var(--text-xl); font-weight: 600; line-height: 1.25; }
+.lg-clause p { max-width: 65ch; margin-top: var(--space-sm); color: var(--bx-ink); font-size: 1.0625rem; line-height: 1.75; }
+.lg-clause p a { color: var(--bx-accent-text); font-weight: 500; text-decoration: underline; text-underline-offset: 0.18em; transition: text-decoration-color var(--dur-short); }
+.lg-clause p a:hover { text-decoration-color: transparent; }
+
+
+@media (max-width: 60rem) {
+  .lg-hero-grid, .lg-body-grid { grid-template-columns: 1fr; }
+  .lg-hero-grid { gap: var(--space-xl); }
+  .lg-toc { position: static; margin-bottom: var(--space-xl); padding-bottom: var(--space-lg); border-bottom: 1px solid var(--bx-rule); }
+}
+@media (max-width: 40rem) {
+  .lg-hero { padding-block: var(--space-2xl) calc(var(--space-xl) + 18vw); }
+  .lg-clause { grid-template-columns: 1fr; gap: var(--space-xs); padding-block: var(--space-lg); }
+  .lg-clause-number { font-size: var(--text-xl); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg *, .lg *::before, .lg *::after { transition-duration: 0.01ms !important; }
+}

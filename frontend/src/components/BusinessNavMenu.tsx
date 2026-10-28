@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import Link from "next/link";
 import { businessGroups, type Business } from "@/data/businesses";
+import { getCompanySlug } from "@/data/companyProfiles";
 
 // Full page loads on purpose: the Businesses page only reads ?group/?search
 // on mount, so a client-side navigation from /businesses to itself wouldn't
@@ -47,14 +48,11 @@ export default function BusinessNavMenu({
               {companies.length > 0 && (
                 <div className="nav-subflyout" aria-label={`${category.label} companies`}>
                   <span className="nav-subflyout-title">{category.label}</span>
-                  {companies.map((business) => {
-                    const companyHref = `${categoryHref}&search=${encodeURIComponent(business.name)}`;
-                    return (
-                      <Link href={companyHref} key={business._id} onClick={(event) => navigate(event, companyHref)}>
-                        {business.name}
-                      </Link>
-                    );
-                  })}
+                  {companies.map((business) => (
+                    <Link href={`/businesses/${getCompanySlug(business.name)}`} key={business._id}>
+                      {business.name}
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>

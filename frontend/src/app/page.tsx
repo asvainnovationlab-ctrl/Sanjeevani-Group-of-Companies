@@ -16,8 +16,8 @@ import NepalNetworkMap from "@/components/NepalNetworkMap";
 type DirectoryResponse = { data: Business[]; message?: string };
 
 const slides = [
+  { label: "Hospital", theme: "hospital", image: "/business/business.png" },
   { label: "Medical College", theme: "medical-college", image: "/medical%20college.jpg" },
-  { label: "Hospital", theme: "hospital", image: "/hospital.jpg" },
   { label: "Education", theme: "education", image: "/education.jpg" },
   { label: "Agro", theme: "agro", image: "/agro.png" },
   { label: "Construction", theme: "construction", image: "/construction.jpg" },
