@@ -13,6 +13,7 @@ import CompanyProfile from "@/components/CompanyProfile";
 import LegalDocument from "@/components/LegalDocument";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
+import CareersNavMenu from "@/components/CareersNavMenu";
 import { companyNotices, getYouTubeId, latestEvents, latestPressReleases, youtubeVideos } from "@/data/newsroom";
 import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
@@ -578,6 +579,16 @@ export default function SectionPage({ section, companySlug }: { section: string;
         }));
       }
     }
+    if (section === "careers") {
+      const company = new URLSearchParams(window.location.search).get("company");
+      if (company) {
+        setCareerCompany(company);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const board = document.getElementById("career-board");
+          if (board) window.scrollTo({ top: board.getBoundingClientRect().top + window.scrollY, behavior: "instant" });
+        }));
+      }
+    }
   }, [section]);
 
 
@@ -642,6 +653,8 @@ export default function SectionPage({ section, companySlug }: { section: string;
               <AboutNavMenu key={item.href} isCurrent={["about-us", "our-story", "mission-vision-values", "leadership", "chairman", "team"].includes(section)} />
             ) : item.label === "Business" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} isCurrent={section === "businesses"} />
+            ) : item.label === "Careers" ? (
+              <CareersNavMenu businesses={businesses} key={item.href} isCurrent={section === "careers"} />
             ) : (
               <Link className={item.href === `/${section}` ? "is-current" : ""} href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>
             ))}
@@ -755,7 +768,7 @@ export default function SectionPage({ section, companySlug }: { section: string;
         )}
 
         {section === "careers" ? (
-          <section className="career-board" aria-labelledby="career-board-title">
+          <section className="career-board" id="career-board" aria-labelledby="career-board-title">
             <div className="reference-wrap">
               <div className="career-board-heading">
                 <div>

@@ -8,6 +8,7 @@ import GroupFooter from "@/components/GroupFooter";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupEmblem from "@/components/GroupEmblem";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
+import CareersNavMenu from "@/components/CareersNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
 import { companyNotices, latestEvents, latestPressReleases } from "@/data/newsroom";
 import SocialLinks from "@/components/SocialLinks";
@@ -31,6 +32,8 @@ const homeSections = [
   { id: "locations", label: "Locations" },
   { id: "impact", label: "Our impact" },
 ];
+
+const welcomeSectors = ["Healthcare", "Education", "Agriculture", "Infrastructure"];
 
 const navigation = [
   { label: "Home", href: "/" },
@@ -149,6 +152,7 @@ function Brand() {
 
 export default function HomePage() {
   const [hasEntered, setHasEntered] = useState(false);
+  const [welcomeSector, setWelcomeSector] = useState(0);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [slideIndex, setSlideIndex] = useState(0);
   const [introIndex, setIntroIndex] = useState(0);
@@ -173,8 +177,12 @@ export default function HomePage() {
   }, [hasEntered]);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setHasEntered(true), 500);
-    return () => window.clearTimeout(timeout);
+    const timeout = window.setTimeout(() => setHasEntered(true), 2700);
+    const rotation = window.setInterval(() => setWelcomeSector((index) => (index + 1) % welcomeSectors.length), 650);
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(rotation);
+    };
   }, []);
 
   useEffect(() => {
@@ -380,6 +388,9 @@ export default function HomePage() {
             </div>
             <p className="welcome-name">Sanjeevani Group</p>
             <p className="welcome-subtitle">OF COMPANIES</p>
+            <p className="welcome-sector" aria-hidden="true">
+              <span key={welcomeSector}>{welcomeSectors[welcomeSector]}</span>
+            </p>
             <div className="welcome-progress" role="status" aria-label="Loading Sanjeevani Group">
               <span className="welcome-progress-track" aria-hidden="true">
                 <span className="welcome-progress-fill" />
@@ -397,6 +408,8 @@ export default function HomePage() {
               <AboutNavMenu key={item.href} />
             ) : item.label === "Businesses" ? (
               <BusinessNavMenu businesses={businesses} key={item.href} />
+            ) : item.label === "Careers" ? (
+              <CareersNavMenu businesses={businesses} key={item.href} />
             ) : (
               <a href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
             ))}
