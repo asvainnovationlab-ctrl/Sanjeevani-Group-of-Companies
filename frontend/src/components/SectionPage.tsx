@@ -18,6 +18,7 @@ import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
 
 const navigation = [
+  { label: "Home", href: "/" },
   { label: "About us", href: "/about-us" },
   { label: "Business", href: "/businesses" },
   { label: "Newsroom", href: "/newsroom" },

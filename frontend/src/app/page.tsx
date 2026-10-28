@@ -33,6 +33,7 @@ const homeSections = [
 ];
 
 const navigation = [
+  { label: "Home", href: "/" },
   { label: "About us", href: "/about-us" },
   { label: "Businesses", href: "/businesses" },
   { label: "Newsroom", href: "/newsroom" },
