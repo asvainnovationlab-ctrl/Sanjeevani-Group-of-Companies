@@ -101,3 +101,34 @@ export const companyNotices: CompanyNotice[] = [
     title: "Admissions open for the new session",
   },
 ];
+
+// Newsroom gallery: the Photos and Videos tabs below the YouTube section.
+// TODO: these use photos already on the site as placeholders. Put new photos
+// in public/gallery/ and list them here, newest first. `caption` is shown
+// under the photo and in the full-screen viewer.
+export type GalleryPhoto = { src: string; alt: string; caption: string };
+
+export const galleryPhotos: GalleryPhoto[] = [
+  { src: "/business/business.png", alt: "Aerial view of a Sanjeevani Group hospital campus", caption: "Hospital campus from above" },
+  { src: "/key%20factor/medical.jpg", alt: "Doctors and students at a clinical training session", caption: "Clinical skills training" },
+  { src: "/key%20factor/edu.jpg", alt: "School children standing beside a yellow school bus", caption: "Students on their way to class" },
+  { src: "/impact/impact.jpg", alt: "Smiling woman working in green hillside fields", caption: "In the fields" },
+  { src: "/key%20factor/construction.jpg", alt: "Worker on concrete formwork at a construction site", caption: "On site with the construction team" },
+  { src: "/key%20factor/hydro.jpg", alt: "Water rushing through a hydropower dam spillway", caption: "Hydropower spillway" },
+  { src: "/leaderhero/leader.jpg", alt: "Sanjeevani Group leadership seated together at a table", caption: "Group leadership meeting" },
+  { src: "/aboutus/mission.png", alt: "Engineers in hard hats reviewing plans on a laptop", caption: "Engineers reviewing project plans" },
+  { src: "/key%20factor/healthcare.jpg", alt: "Front of the teaching hospital building", caption: "Teaching hospital" },
+];
+
+// A video is a YouTube link, or your own file in public/gallery/ (mp4 or webm)
+// with an optional poster image.
+// TODO: replace these placeholders with the group's own videos.
+export type GalleryVideo =
+  | { kind: "youtube"; url: string; title: string; thumbnail?: string }
+  | { kind: "file"; src: string; title: string; poster?: string };
+
+export const galleryVideos: GalleryVideo[] = [
+  { kind: "youtube", url: "https://youtu.be/HF5RPCxa0m0", title: "Placeholder video: replace with a group video", thumbnail: "/key%20factor/healthcare.jpg" },
+  { kind: "youtube", url: "https://youtu.be/HF5RPCxa0m0", title: "Placeholder video: replace with a group video", thumbnail: "/impact/sustainablity.png" },
+  { kind: "youtube", url: "https://youtu.be/HF5RPCxa0m0", title: "Placeholder video: replace with a group video", thumbnail: "/key%20factor/hydro.jpg" },
+];

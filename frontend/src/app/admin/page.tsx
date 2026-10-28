@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import AdminApplications from "@/components/AdminApplications";
 import type { Business, BusinessCategory } from "@/data/businesses";
 
 type BusinessForm = {
@@ -290,6 +291,7 @@ export default function AdminPage() {
           </div>
         ) : <p className="admin-empty">No businesses have been added yet.</p>}
       </section>
+      <AdminApplications />
     </main>
   );
 }

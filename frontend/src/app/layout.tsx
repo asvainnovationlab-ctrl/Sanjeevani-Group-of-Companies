@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./businesses.css";
 import "./legal.css";
+import "./leaders.css";
+import "./careers.css";
+import "./gallery.css";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 export const metadata: Metadata = {
