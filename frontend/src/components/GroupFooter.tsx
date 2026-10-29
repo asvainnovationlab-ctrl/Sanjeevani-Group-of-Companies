@@ -82,6 +82,7 @@ export default function GroupFooter() {
           <nav aria-label="Legal">
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-use">Terms &amp; Condition</Link>
+            <Link href="/faq">FAQ</Link>
           </nav>
         </div>
       </div>

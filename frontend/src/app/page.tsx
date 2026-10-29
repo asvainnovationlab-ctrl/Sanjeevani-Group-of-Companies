@@ -13,7 +13,6 @@ import AboutNavMenu from "@/components/AboutNavMenu";
 import { companyNotices, latestEvents, latestPressReleases } from "@/data/newsroom";
 import SocialLinks from "@/components/SocialLinks";
 import NepalNetworkMap from "@/components/NepalNetworkMap";
-import { faqs } from "@/data/faqs";
 
 type DirectoryResponse = { data: Business[]; message?: string };
 
@@ -32,7 +31,6 @@ const homeSections = [
   { id: "story", label: "Who we are" },
   { id: "locations", label: "Locations" },
   { id: "impact", label: "Our impact" },
-  { id: "faq", label: "FAQ" },
 ];
 
 const welcomeSectors = ["Healthcare", "Education", "Agriculture", "Infrastructure"];
@@ -682,22 +680,6 @@ export default function HomePage() {
                   <span className="news-more">View all events <span aria-hidden="true">↗</span></span>
                 </Link>
               </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="home-faq-section" id="faq" aria-labelledby="home-faq-title">
-          <div className="reference-wrap home-faq-layout" data-reveal>
-            <div className="home-faq-heading">
-              <p className="section-overline">FREQUENTLY ASKED QUESTIONS</p>
-              <h2 id="home-faq-title">Questions about<br /><em>the group?</em></h2>
-              <p className="section-lead">Helpful information about Sanjeevani Group, its businesses, locations, and how to get in touch.</p>
-              <Link className="group-intro-link" href="/faq">View all FAQs <span aria-hidden="true">→</span></Link>
-            </div>
-            <div className="section-faq-list">
-              {faqs.map(({ question, answer }) => (
-                <details key={question}><summary>{question}</summary><p>{answer}</p></details>
-              ))}
             </div>
           </div>
         </section>

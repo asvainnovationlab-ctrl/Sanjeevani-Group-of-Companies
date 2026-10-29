@@ -13,6 +13,7 @@ import CompanyProfile from "@/components/CompanyProfile";
 import LeaderProfile from "@/components/LeaderProfile";
 import NewsroomGallery from "@/components/NewsroomGallery";
 import CareerVacancies from "@/components/CareerVacancies";
+import VacancyDetail from "@/components/VacancyDetail";
 import { careerAreas, getAreaVacancies } from "@/data/careers";
 import { chairmanSocials, leaderHref, leadershipBoard, leadershipTeam, type LeaderSocials } from "@/data/leaders";
 import LegalDocument from "@/components/LegalDocument";
@@ -428,7 +429,7 @@ const coreValues = [
   },
 ];
 
-export default function SectionPage({ section, companySlug, leaderSlug, careerAreaSlug }: { section: string; companySlug?: string; leaderSlug?: string; careerAreaSlug?: string }) {
+export default function SectionPage({ section, companySlug, leaderSlug, careerAreaSlug, vacancyId }: { section: string; companySlug?: string; leaderSlug?: string; careerAreaSlug?: string; vacancyId?: string }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
   const storyLayout = section === "our-story" || section === "about-us";
   const leadershipLayout = section === "leadership" || section === "chairman";
@@ -604,15 +605,19 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
 
       <GmailContactButton />
 
-      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}${companySlug ? " company-page bx-scope cx" : ""}${leaderSlug ? " leader-page bx-scope ld" : ""}${careerAreaSlug ? " vacancy-page bx-scope vc" : ""}${!companySlug && (section === "privacy-policy" || section === "terms-of-use") ? " legal-page bx-scope lg" : ""}`}>
+      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}${companySlug ? " company-page bx-scope cx" : ""}${leaderSlug ? " leader-page bx-scope ld" : ""}${careerAreaSlug ? " vacancy-page bx-scope vc" : ""}${!companySlug && (section === "privacy-policy" || section === "terms-of-use" || section === "faq") ? " legal-page bx-scope lg" : ""}`}>
         {companySlug ? (
           <CompanyProfile slug={companySlug} businesses={businesses} />
+        ) : careerAreaSlug && vacancyId ? (
+          <VacancyDetail areaSlug={careerAreaSlug} vacancyId={vacancyId} />
         ) : careerAreaSlug ? (
           <CareerVacancies slug={careerAreaSlug} />
         ) : leaderSlug ? (
           <LeaderProfile slug={leaderSlug} socials={(name, links) => <LeaderSocialLinks name={name} socials={links} />} />
         ) : section === "privacy-policy" || section === "terms-of-use" ? (
           <LegalDocument kind={section} title={page.title} intro={page.intro} lead={page.lead} paragraphs={page.paragraphs} />
+        ) : section === "faq" ? (
+          <LegalDocument kind="faq" title={page.title} intro={page.intro} lead={page.lead} paragraphs={faqs.map((item) => item.answer)} titles={faqs.map((item) => item.question)} />
         ) : (
         <>
         <section className={`section-page-hero${["about-us", "our-story", "mission-vision-values", "leadership", "team", "businesses", "newsroom", "reviews", "gallery", "community", "contact"].includes(section) ? " section-page-hero-clean" : ""}${section === "contact" ? " contact-page-hero" : ""}${section === "careers" ? " career-page-hero" : ""}${section === "businesses" ? " businesses-page-hero" : ""}${photoHero ? " mission-page-hero" : ""}${storyLayout ? " story-page-hero" : ""}${storyLayout ? " about-page-hero" : ""}${section === "about-us" ? " about-us-hero" : ""}${leadershipLayout ? " leadership-page-hero" : ""}${section === "leadership" ? " leadership-team-hero" : ""}${section === "mission-vision-values" ? " mvv-page-hero" : ""}${section === "community" ? " community-page-hero" : ""}${section === "newsroom" ? " newsroom-page-hero" : ""}`}>

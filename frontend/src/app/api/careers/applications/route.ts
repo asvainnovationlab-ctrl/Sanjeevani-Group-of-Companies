@@ -10,6 +10,9 @@ const allowedCv: Record<string, { mime: string; magic: number[] }> = {
   pdf: { mime: "application/pdf", magic: [0x25, 0x50, 0x44, 0x46] }, // %PDF
   docx: { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", magic: [0x50, 0x4b, 0x03, 0x04] }, // zip
   doc: { mime: "application/msword", magic: [0xd0, 0xcf, 0x11, 0xe0] }, // OLE
+  jpg: { mime: "image/jpeg", magic: [0xff, 0xd8, 0xff] },
+  jpeg: { mime: "image/jpeg", magic: [0xff, 0xd8, 0xff] },
+  png: { mime: "image/png", magic: [0x89, 0x50, 0x4e, 0x47] },
 };
 
 function text(form: FormData, name: string, max: number) {
@@ -66,9 +69,9 @@ export async function POST(request: Request) {
   if (cv.size > maxCvBytes) return fail("Your CV must be 5 MB or smaller.");
   const extension = cv.name.split(".").pop()?.toLowerCase() ?? "";
   const kind = allowedCv[extension];
-  if (!kind) return fail("Your CV must be a PDF or Word file (.pdf, .doc or .docx).");
+  if (!kind) return fail("Your CV must be a PDF, Word or image file (.pdf, .doc, .docx, .jpg or .png).");
   const bytes = Buffer.from(await cv.arrayBuffer());
-  if (!kind.magic.every((byte, index) => bytes[index] === byte)) return fail("That file does not look like a real PDF or Word document.");
+  if (!kind.magic.every((byte, index) => bytes[index] === byte)) return fail("That file does not look like a real PDF, Word document or image.");
 
   if (!process.env.MONGODB_URI) {
     return fail("Online applications are not available right now. Please email your CV to info@sanjeevanigroup.com.", 503);

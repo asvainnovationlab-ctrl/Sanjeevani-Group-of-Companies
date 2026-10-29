@@ -1,7 +1,9 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
+"use client";
 
-type LegalKind = "privacy-policy" | "terms-of-use";
+import Link from "next/link";
+import { type MouseEvent, type ReactNode, useState } from "react";
+
+type LegalKind = "privacy-policy" | "terms-of-use" | "faq";
 
 // Clause headings, one per paragraph in SectionPage's pageContent, in order.
 // Each names what its paragraph already says; the paragraph text itself is
@@ -23,11 +25,14 @@ const clauseTitles: Record<LegalKind, string[]> = {
     "Third-party links",
     "Questions about these terms",
   ],
+  // The FAQ passes its own questions as `titles`.
+  faq: [],
 };
 
 const otherDocument: Record<LegalKind, { label: string; href: string }> = {
   "privacy-policy": { label: "Read the terms of use", href: "/terms-of-use" },
   "terms-of-use": { label: "Read the privacy policy", href: "/privacy-policy" },
+  faq: { label: "Read the privacy policy", href: "/privacy-policy" },
 };
 
 const contactEmail = "info@sanjeevanigroup.com";
@@ -49,17 +54,40 @@ export default function LegalDocument({
   intro,
   lead,
   paragraphs,
+  titles: givenTitles,
 }: {
   kind: LegalKind;
   title: string;
   intro: string;
   lead: string;
   paragraphs: string[];
+  titles?: string[];
 }) {
-  const titles = clauseTitles[kind];
+  const titles = givenTitles ?? clauseTitles[kind];
+  const isFaq = kind === "faq";
+  // Which boxes are open. The first starts open so the page never looks empty.
+  const [openItems, setOpenItems] = useState<Set<number>>(() => new Set([0]));
+
+  function setItem(index: number, open: boolean) {
+    setOpenItems((current) => {
+      const next = new Set(current);
+      if (open) next.add(index);
+      else next.delete(index);
+      return next;
+    });
+  }
+
+  // "On this page" links open the box they point to, then scroll to it.
+  function jumpTo(event: MouseEvent<HTMLAnchorElement>, index: number) {
+    event.preventDefault();
+    setItem(index, true);
+    const target = document.getElementById(`clause-${index + 1}`);
+    window.history.replaceState(null, "", `#clause-${index + 1}`);
+    requestAnimationFrame(() => target?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
   const other = otherDocument[kind];
   const isPrivacy = kind === "privacy-policy";
-  const subject = isPrivacy ? "Privacy question" : "Question about the website terms";
+  const subject = isPrivacy ? "Privacy question" : isFaq ? "Question about Sanjeevani Group" : "Question about the website terms";
 
   return (
     <>
@@ -81,9 +109,9 @@ export default function LegalDocument({
           </div>
           <dl className="lg-summary">
             <div><dt>Document</dt><dd>{lead}</dd></div>
-            <div><dt>Sections</dt><dd className="num">{paragraphs.length}</dd></div>
-            <div><dt>Status</dt><dd>Draft, pending review</dd></div>
-            <div><dt>Questions</dt><dd><a href={`mailto:${contactEmail}`}>{contactEmail}</a></dd></div>
+            <div><dt>{isFaq ? "Questions" : "Sections"}</dt><dd className="num">{paragraphs.length}</dd></div>
+            {!isFaq && <div><dt>Status</dt><dd>Draft, pending review</dd></div>}
+            <div><dt>{isFaq ? "Contact" : "Questions"}</dt><dd><a href={`mailto:${contactEmail}`}>{contactEmail}</a></dd></div>
           </dl>
         </div>
       </section>
@@ -92,30 +120,42 @@ export default function LegalDocument({
         <div className="bx-wrap lg-body-grid">
           <nav className="lg-toc" aria-label="On this page">
             <p className="lg-toc-title">On this page</p>
-            <ol>
+            <ul>
               {paragraphs.map((_, index) => (
                 <li key={index}>
-                  <a href={`#clause-${index + 1}`}>
-                    <span className="num">{String(index + 1).padStart(2, "0")}</span>
+                  <a href={`#clause-${index + 1}`} onClick={(event) => jumpTo(event, index)} aria-current={openItems.has(index) ? "true" : undefined}>
                     {titles[index] ?? `Section ${index + 1}`}
                   </a>
                 </li>
               ))}
-            </ol>
+            </ul>
           </nav>
           <div className="lg-document">
-          <h2 id="lg-document-title">{lead}</h2>
-          <ol className="lg-clauses">
-            {paragraphs.map((paragraph, index) => (
-              <li className="lg-clause" id={`clause-${index + 1}`} key={index}>
-                <span className="lg-clause-number num" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <h3>{titles[index] ?? `Section ${index + 1}`}</h3>
-                  <p>{withEmailLinks(paragraph)}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+            <div className="lg-document-head">
+              <h2 id="lg-document-title">{lead}</h2>
+            </div>
+            <div className="lg-items">
+              {paragraphs.map((paragraph, index) => (
+                <details
+                  className="lg-item"
+                  id={`clause-${index + 1}`}
+                  key={index}
+                  open={openItems.has(index)}
+                  onToggle={(event) => {
+                    const open = event.currentTarget.open;
+                    if (open !== openItems.has(index)) setItem(index, open);
+                  }}
+                >
+                  <summary>
+                    <h3>{titles[index] ?? `Section ${index + 1}`}</h3>
+                    <span className="lg-item-icon" aria-hidden="true" />
+                  </summary>
+                  <div className="lg-item-body">
+                    <p>{withEmailLinks(paragraph)}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
         </div>
       </section>

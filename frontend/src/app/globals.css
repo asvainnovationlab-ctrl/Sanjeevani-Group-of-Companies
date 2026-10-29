@@ -630,16 +630,6 @@ svg { display: block; }
 .career-empty { padding: 35px 20px; border: 1px solid #d1dae0; background: #fff; color: #526575; text-align: center; font-size: 13px; }
 .career-listing-note { margin: 16px 0 0; color: #526575; font-size: 11px; line-height: 1.6; }
 .section-faq-list { display: grid; gap: 12px; }
-.home-faq-section { padding: 92px 0; background: var(--bg); }
-.home-faq-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; gap: 48px; }
-.home-faq-heading .section-overline { margin-bottom: 15px; color: var(--brass); }
-.home-faq-heading h2 { margin: 0 0 18px; color: var(--header-ink); font: 400 clamp(36px, 4.4vw, 56px)/1.05 var(--font-body); letter-spacing: -.04em; }
-.home-faq-heading h2 em { color: var(--brass); font-style: normal; }
-.home-faq-heading .section-lead { max-width: 420px; margin: 0 0 22px; font-size: 15px; }
-@media (max-width: 780px) {
-  .home-faq-section { padding: 64px 0; }
-  .home-faq-layout { grid-template-columns: 1fr; gap: 28px; }
-}
 .section-faq-list details { padding: 19px 20px; border: 1px solid var(--line); background: var(--card); }
 .section-faq-list summary { color: var(--header-ink); font-size: 14px; font-weight: 600; cursor: pointer; }
 .section-faq-list details[open] summary { color: var(--brass); }
