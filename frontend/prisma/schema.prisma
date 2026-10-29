@@ -931,6 +931,18 @@ model AuditLog {
   @@index([action, createdAt])
 }
 
+// Fixed-window rate limiting shared by every server instance (login,
+// password reset, applications, contact form). `key` is e.g.
+// "login:ip:<hash>" or "login:email:<hash>"; old windows are pruned.
+model RateLimitBucket {
+  key         String   @id
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
 // Transactional outbox: rows are written in the same transaction as the event
 // (e.g. an application) and delivered by a worker, so a provider outage never
 // loses the underlying record and retries cannot double-send.
