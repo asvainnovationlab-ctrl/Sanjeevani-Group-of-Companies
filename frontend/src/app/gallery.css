@@ -1,0 +1,68 @@
+/* Newsroom gallery (below the YouTube section): Photos / Videos tabs, a photo
+   grid with a full-screen viewer, and a video grid. Uses the Newsroom's own
+   tokens (--line, --header-ink, --muted, --card, --bg-soft) and the --bx-*
+   brand greens, so it matches the sections above it in both themes. */
+
+.nr-gallery { scroll-margin-top: 100px; }
+.nr-gallery .newsroom-group-heading { flex-wrap: wrap; align-items: center; }
+
+/* Tabs */
+.nr-tabs { padding: 4px; display: inline-flex; gap: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-soft); }
+.nr-tabs button { min-height: 40px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: 600 14px/1 var(--font-display); cursor: pointer; transition: background-color .2s, color .2s; }
+.nr-tabs button:hover { color: var(--header-ink); }
+.nr-tabs button[aria-selected="true"] { background: linear-gradient(135deg, var(--bx-accent-2), var(--bx-accent)); color: var(--bx-on-accent); box-shadow: 0 8px 18px -12px var(--bx-shade); }
+.nr-tabs button:focus-visible { outline: 2px solid var(--bx-focus); outline-offset: 2px; }
+.nr-tabs .num { min-width: 22px; padding: 2px 7px; border-radius: 999px; background: var(--line); color: var(--header-ink); font-size: 12px; text-align: center; }
+.nr-tabs button[aria-selected="true"] .num { background: var(--bx-on-accent); color: var(--bx-accent); }
+
+/* Photos: a 3-column grid; every fifth photo spans two columns for rhythm. */
+.nr-photos { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 260px; grid-auto-flow: dense; gap: 16px; list-style: none; }
+.nr-photos li.is-wide { grid-column: span 2; }
+.nr-photo { width: 100%; height: 100%; position: relative; padding: 0; display: block; overflow: hidden; border: 0; border-radius: 16px; background: var(--bg-soft); cursor: zoom-in; }
+.nr-photo img { object-fit: cover; transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
+.nr-photo:hover img { transform: scale(1.05); }
+.nr-photo::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--bx-shade) 75%, transparent) 100%); content: ""; opacity: .85; transition: opacity .3s; }
+.nr-photo:hover::after { opacity: 1; }
+.nr-photo-caption { position: absolute; z-index: 1; right: 16px; bottom: 14px; left: 16px; color: var(--bx-on-accent); font: 600 15px/1.35 var(--font-display); text-align: left; }
+.nr-photo:focus-visible { outline: 3px solid var(--bx-focus); outline-offset: 3px; }
+
+/* Videos */
+.nr-videos { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; list-style: none; }
+.nr-video { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 16px; background: var(--bx-shade); }
+.nr-video video { width: 100%; height: 100%; display: block; object-fit: cover; }
+.nr-video-title { margin-top: 12px; color: var(--header-ink); font: 600 16px/1.35 var(--font-display); }
+
+/* Full-screen photo viewer */
+.nr-viewer { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; background: color-mix(in oklab, var(--bx-shade) 94%, transparent); color: var(--bx-on-accent); }
+.nr-viewer::backdrop { background: color-mix(in oklab, var(--bx-shade) 70%, transparent); }
+.nr-viewer[open] { display: grid; place-items: center; animation: nr-viewer-in .25s ease both; }
+@keyframes nr-viewer-in { from { opacity: 0; } }
+.nr-viewer-figure { width: min(1200px, calc(100% - 160px)); height: calc(100dvh - 120px); margin: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; }
+.nr-viewer-image { position: relative; }
+.nr-viewer-image img { object-fit: contain; }
+.nr-viewer figcaption { display: flex; justify-content: space-between; gap: 16px; color: var(--bx-on-accent-2); font-size: 15px; }
+.nr-viewer-close, .nr-viewer-nav { width: 48px; height: 48px; position: absolute; display: grid; place-items: center; border: 1px solid color-mix(in oklab, var(--bx-on-accent) 30%, transparent); border-radius: 50%; background: color-mix(in oklab, var(--bx-shade) 60%, transparent); color: var(--bx-on-accent); cursor: pointer; transition: background-color .2s; }
+.nr-viewer-close:hover, .nr-viewer-nav:hover { background: var(--bx-accent); }
+.nr-viewer-close:focus-visible, .nr-viewer-nav:focus-visible { outline: 2px solid var(--bx-on-accent); outline-offset: 2px; }
+.nr-viewer svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nr-viewer-close { top: 20px; right: 20px; }
+.nr-viewer-nav { top: 50%; transform: translateY(-50%); }
+.nr-viewer-nav.is-prev { left: 20px; }
+.nr-viewer-nav.is-next { right: 20px; }
+
+@media (max-width: 1050px) {
+  .nr-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 220px; }
+  .nr-videos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+}
+@media (max-width: 600px) {
+  .nr-photos { grid-template-columns: 1fr; grid-auto-rows: 240px; }
+  .nr-photos li.is-wide { grid-column: auto; }
+  .nr-videos { grid-template-columns: 1fr; }
+  .nr-viewer-figure { width: calc(100% - 24px); height: calc(100dvh - 160px); }
+  .nr-viewer-nav { top: auto; bottom: 20px; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nr-photo img, .nr-photo::after, .nr-tabs button { transition: none; }
+  .nr-photo:hover img { transform: none; }
+  .nr-viewer[open] { animation: none; }
+}

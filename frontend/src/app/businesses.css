@@ -18,12 +18,14 @@ html, body { overflow-x: clip; }
   --bx-accent-text: #3a7020;
   --bx-on-accent: #f7fbf2; --bx-on-accent-2: #e3f0d6; --bx-focus: #3a7020;
   --bx-shade: #0b1b10; --bx-tile: #fdfefb;
+  --bx-error: #b42318; --bx-error-bg: #fdecea;
 }
 :root[data-theme="dark"] {
   --bx-paper: #0d110d; --bx-paper-2: #141a13; --bx-paper-3: #1c241b;
   --bx-ink: #e6ede1; --bx-ink-2: #f0f6ea; --bx-muted: #a4b09f;
   --bx-rule: #2a3428;
   --bx-accent-text: #9ad34e; --bx-focus: #9ad34e; --bx-tile: #f7fbf2;
+  --bx-error: #ffb4a8; --bx-error-bg: #3a1512;
 }
 
 .bx-scope {

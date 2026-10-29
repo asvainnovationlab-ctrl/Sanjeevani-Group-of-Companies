@@ -16,7 +16,10 @@ export async function connectToDatabase() {
   }
 
   if (!connectionPromise) {
-    connectionPromise = mongoose.connect(uri, { dbName: databaseName }).catch((error: unknown) => {
+    // Give up after 8s instead of mongoose's 30s default, so a visitor
+    // submitting a form (or loading the directory) isn't left waiting when the
+    // database is unreachable.
+    connectionPromise = mongoose.connect(uri, { dbName: databaseName, serverSelectionTimeoutMS: 8000 }).catch((error: unknown) => {
       connectionPromise = undefined;
       throw error;
     });

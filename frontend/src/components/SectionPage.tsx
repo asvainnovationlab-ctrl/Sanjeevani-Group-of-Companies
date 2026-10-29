@@ -10,6 +10,11 @@ import GroupEmblem from "@/components/GroupEmblem";
 import GmailContactButton from "@/components/GmailContactButton";
 import GroupFooter from "@/components/GroupFooter";
 import CompanyProfile from "@/components/CompanyProfile";
+import LeaderProfile from "@/components/LeaderProfile";
+import NewsroomGallery from "@/components/NewsroomGallery";
+import CareerVacancies from "@/components/CareerVacancies";
+import { careerAreas, getAreaVacancies } from "@/data/careers";
+import { chairmanSocials, leaderHref, leadershipBoard, leadershipTeam, type LeaderSocials } from "@/data/leaders";
 import LegalDocument from "@/components/LegalDocument";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
 import AboutNavMenu from "@/components/AboutNavMenu";
@@ -29,17 +34,6 @@ const navigation = [
   { label: "Contact", href: "/contact" },
 ];
 
-type LeaderSocials = { linkedin: string; facebook: string; instagram: string; x: string };
-
-// TODO: replace these placeholder links with each person's real profile URLs.
-const placeholderSocials: LeaderSocials = {
-  linkedin: "https://www.linkedin.com/",
-  facebook: "https://www.facebook.com/",
-  instagram: "https://www.instagram.com/",
-  x: "https://x.com/",
-};
-
-const chairmanSocials = placeholderSocials;
 
 // TODO: add each foundation's real logo (in /public), photo, description and website.
 // "Know more" opens the website; until one is set it links to the Contact page.
@@ -94,17 +88,6 @@ const chairmanStory = {
 };
 
 // TODO: replace placeholder names, designations and photos with the real leadership team.
-const leadershipBoard = [
-  { name: "C.A. Khuma Parsad Aryal", role: "Chairman", photo: "/khumaa.jpeg", socials: chairmanSocials },
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-];
-const leadershipTeam = [
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-  { name: "Leader Name", role: "Designation", photo: "/khumaa.jpeg", socials: placeholderSocials },
-];
 
 const leaderSocialIcons: { key: keyof LeaderSocials; label: string; icon: JSX.Element }[] = [
   { key: "linkedin", label: "LinkedIn", icon: <path d="M5.2 7.6a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM3.4 9h3.6v11H3.4V9Zm5.8 0h3.4v1.5h.1a3.7 3.7 0 0 1 3.3-1.8c3.5 0 4.1 2.3 4.1 5.2V20h-3.6v-5.4c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9V20H9.2V9Z" /> },
@@ -170,47 +153,6 @@ function LeaderSocialLinks({ name, socials, className = "" }: { name: string; so
   );
 }
 
-const careerAreas = [
-  {
-    title: "Care & clinical services",
-    type: "Healthcare",
-    companyNames: [
-      "Sanjeevani Hospital, Pokhara",
-      "Sanjeevani Hospital, Nepalgunj",
-      "Sanjeevani Institute of Advance Science and Teaching Hospital",
-    ],
-  },
-  {
-    title: "Medical education",
-    type: "Education",
-    companyNames: ["Nepalgunj Medical College", "Universal Medical College", "Gandaki Medical College"],
-  },
-  {
-    title: "School education",
-    type: "Education",
-    companyNames: ["Everest Education Foundation", "Mount Everest School"],
-  },
-  {
-    title: "Agriculture & food",
-    type: "Agriculture",
-    companyNames: ["Om Agro", "Janakpur Agro", "Khilung Kalika Agro", "Khilung Kalika Feeders", "Khilung Kalika Foods"],
-  },
-  {
-    title: "Construction & supply",
-    type: "Infrastructure",
-    companyNames: ["Khilung Kalika Construction", "Khilung Kalika Suppliers"],
-  },
-  {
-    title: "Hydropower & engineering",
-    type: "Infrastructure",
-    companyNames: ["Laughing Budha Hydro Power"],
-  },
-  {
-    title: "Development & marketing",
-    type: "Business operations",
-    companyNames: ["Sanjeevani Developers", "Khilung Kalika Marketing"],
-  },
-];
 
 const pageContent: Record<string, {
   number: string;
@@ -486,11 +428,11 @@ const coreValues = [
   },
 ];
 
-export default function SectionPage({ section, companySlug }: { section: string; companySlug?: string }) {
+export default function SectionPage({ section, companySlug, leaderSlug, careerAreaSlug }: { section: string; companySlug?: string; leaderSlug?: string; careerAreaSlug?: string }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
   const storyLayout = section === "our-story" || section === "about-us";
   const leadershipLayout = section === "leadership" || section === "chairman";
-  const photoHero = section === "mission-vision-values" || section === "community" || section === "newsroom" || leadershipLayout || storyLayout;
+  const photoHero = (section === "mission-vision-values" || section === "community" || section === "newsroom" || leadershipLayout || storyLayout) && !leaderSlug;
   // Pages whose hero photo runs under a transparent header that turns solid on scroll.
   const overlayHeader = photoHero || section === "businesses" || section === "careers";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -662,9 +604,13 @@ export default function SectionPage({ section, companySlug }: { section: string;
 
       <GmailContactButton />
 
-      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}${companySlug ? " company-page bx-scope cx" : ""}${!companySlug && (section === "privacy-policy" || section === "terms-of-use") ? " legal-page bx-scope lg" : ""}`}>
+      <main className={`section-page${section === "businesses" ? " businesses-page" : ""}${photoHero ? " mission-page" : ""}${companySlug ? " company-page bx-scope cx" : ""}${leaderSlug ? " leader-page bx-scope ld" : ""}${careerAreaSlug ? " vacancy-page bx-scope vc" : ""}${!companySlug && (section === "privacy-policy" || section === "terms-of-use") ? " legal-page bx-scope lg" : ""}`}>
         {companySlug ? (
           <CompanyProfile slug={companySlug} businesses={businesses} />
+        ) : careerAreaSlug ? (
+          <CareerVacancies slug={careerAreaSlug} />
+        ) : leaderSlug ? (
+          <LeaderProfile slug={leaderSlug} socials={(name, links) => <LeaderSocialLinks name={name} socials={links} />} />
         ) : section === "privacy-policy" || section === "terms-of-use" ? (
           <LegalDocument kind={section} title={page.title} intro={page.intro} lead={page.lead} paragraphs={page.paragraphs} />
         ) : (
@@ -763,17 +709,17 @@ export default function SectionPage({ section, companySlug }: { section: string;
         )}
 
         {section === "careers" ? (
-          <section className="career-board" id="career-board" aria-labelledby="career-board-title">
-            <div className="reference-wrap">
-              <div className="career-board-heading">
-                <div>
-                  <p className="section-overline">CAREERS AT SANJEEVANI GROUP</p>
+          <>
+          <section className="bx-scope cr-board" id="career-board" aria-labelledby="career-board-title">
+            <div className="bx-wrap">
+              <div className="cr-intro">
+                <div className="cr-intro-copy">
                   <h2 id="career-board-title">Explore career paths</h2>
-                  <p>Discover the fields represented across our businesses. Hiring is managed by each company, so please contact them to confirm current openings.</p>
+                  <p className="bx-lead">Discover the fields represented across our businesses. Hiring is managed by each company, so please contact them to confirm current openings.</p>
                 </div>
               </div>
-              <div className="career-filters">
-                <label className="career-search">
+              <div className="cr-toolbar">
+                <label className="cr-search">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
                   <span className="visually-hidden">Search career areas or businesses</span>
                   <input type="search" placeholder="Search roles or companies" value={careerSearch} onChange={(event) => setCareerSearch(event.target.value)} />
@@ -788,36 +734,42 @@ export default function SectionPage({ section, companySlug }: { section: string;
                   <option>All areas</option>
                   {[...new Set(careerAreas.map((area) => area.type))].map((type) => <option key={type}>{type}</option>)}
                 </select>
+                <p className="cr-count" aria-live="polite"><span className="num">{visibleCareerAreas.length}</span> career {visibleCareerAreas.length === 1 ? "area" : "areas"}</p>
               </div>
-              <p className="career-result-count" aria-live="polite">{visibleCareerAreas.length} career {visibleCareerAreas.length === 1 ? "area" : "areas"} · current vacancies should be confirmed with each business</p>
-              <div className="career-area-list">
-                {visibleCareerAreas.map((area) => (
-                  <article className="career-area-card" key={area.title}>
-                    <div className="career-area-details">
-                      <h3>{area.title}</h3>
-                      <p className="career-area-companies"><strong>{area.companyNames.join(" · ")} | Sanjeevani Group</strong></p>
-                      <div className="career-area-meta"><span><strong>Career area:</strong> {area.type}</span><span><strong>Location:</strong> Nepal</span></div>
-                      <p className="career-area-note"><em>For current openings and application details, please contact the relevant company to confirm availability.</em></p>
-                      <a className="career-area-cta" href={`mailto:info@sanjeevanigroup.com?subject=${encodeURIComponent(`Career enquiry: ${area.title}`)}&body=${encodeURIComponent(`Hello Sanjeevani Group,\n\nI would like to enquire about current opportunities in ${area.title}.\n\nPlease let me know which group company I should contact.\n`)}`}>
-                        Enquire about roles <span aria-hidden="true">↗</span>
-                      </a>
-                    </div>
-                    <div className="career-area-poster">
-                      <Image
-                        src="/career hiring.png"
-                        alt="Nurse hiring poster for GMC Hospital, Nepal, repeated as a visual on career-area cards"
-                        width={1024}
-                        height={1536}
-                        sizes="(max-width: 760px) 80vw, 420px"
-                      />
-                    </div>
-                  </article>
-                ))}
-                {visibleCareerAreas.length === 0 && <p className="career-empty">No career areas match those filters. Try a different search or company.</p>}
-              </div>
-              <p className="career-listing-note">These are career areas, not advertised vacancies. Role availability, requirements, and locations vary by company.</p>
+              <ul className="cr-areas">
+                {visibleCareerAreas.map((area) => {
+                  const openRoles = getAreaVacancies(area.slug).length;
+                  return (
+                    <li className="cr-card" key={area.title}>
+                      <div className="cr-card-photo">
+                        <Image src={area.image} alt="" fill sizes="(max-width: 640px) 92vw, (max-width: 1100px) 46vw, 380px" />
+                        <span className="cr-card-type">{area.type}</span>
+                      </div>
+                      <div className="cr-card-body">
+                        <h3>{area.title}</h3>
+                        <dl className="cr-card-stats">
+                          <div><dt>Roles</dt><dd className="num">{openRoles}</dd></div>
+                          <div><dt>Companies</dt><dd className="num">{area.companyNames.length}</dd></div>
+                          <div><dt>Location</dt><dd>Nepal</dd></div>
+                        </dl>
+                        <ul className="cr-card-companies" aria-label={`Companies in ${area.title}`}>
+                          {area.companyNames.map((name) => (
+                            <li key={name}><Link href={`/businesses/${getCompanySlug(name)}`}>{name}</Link></li>
+                          ))}
+                        </ul>
+                        <Link className="bx-button cr-card-cta" href={`/careers/${area.slug}`} aria-label={`View vacancies in ${area.title}`}>
+                          View vacancies
+                        </Link>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              {visibleCareerAreas.length === 0 && <p className="cr-empty">No career areas match those filters. Try a different search or company.</p>}
+              <p className="cr-note">These are career areas, not advertised vacancies. Role availability, requirements, and locations vary by company.</p>
             </div>
           </section>
+          </>
         ) : section === "newsroom" ? (
           <section className="newsroom">
             <div className="reference-wrap">
@@ -826,6 +778,7 @@ export default function SectionPage({ section, companySlug }: { section: string;
                 <a href="#events">Events</a>
                 <a href="#notices">Notices</a>
                 <a href="#youtube">YouTube</a>
+                <a href="#gallery">Gallery</a>
               </nav>
 
               {[
@@ -910,6 +863,8 @@ export default function SectionPage({ section, companySlug }: { section: string;
                   <p className="newsroom-empty">Videos from across the group will appear here soon.</p>
                 )}
               </section>
+
+              <NewsroomGallery renderYouTube={(id, title, thumbnail) => <YouTubeVideo id={id} title={title} thumbnail={thumbnail} />} />
 
               <p className="newsroom-contact">For media enquiries, email <a href="mailto:info@sanjeevanigroup.com">info@sanjeevanigroup.com</a>.</p>
             </div>
@@ -1079,7 +1034,7 @@ export default function SectionPage({ section, companySlug }: { section: string;
                           <Image src={leader.photo} alt={`Portrait of ${leader.name}`} fill sizes="(max-width: 780px) 100vw, 33vw" />
                         </div>
                         <div className="leadership-info">
-                          <h3>{leader.name}</h3>
+                          <h3><Link className="leadership-card-link" href={leaderHref(leader)}>{leader.name}</Link></h3>
                           <p>{leader.role}</p>
                           <LeaderSocialLinks name={leader.name} socials={leader.socials} />
                         </div>
