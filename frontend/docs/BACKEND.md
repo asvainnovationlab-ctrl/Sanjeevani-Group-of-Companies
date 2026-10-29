@@ -11,7 +11,7 @@ it and what is done.
 | 1 | Repository audit and architecture | Done |
 | 2 | Prisma schema, first migration, data layer, seed, unit tests | **Done (not yet run against a database)** |
 | 3 | Individual admin accounts, sessions, roles, company-scoped access, audit log | **Done: API only, not yet run against a database** |
-| 4 | Company management and media uploads (Cloudinary) | Not started |
+| 4 | Company management and media uploads (Cloudinary) | **Done: API only, not yet run against a database or Cloudinary** |
 | 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | Not started |
 | 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | Not started |
 | 7 | Contact messages, settings, exports | Not started |
@@ -41,6 +41,12 @@ src/server/
   users/service.ts                  invite, suspend, assign roles
   security/rate-limit.ts            PostgreSQL-backed rate limits
   email/outbox.ts                   queue emails in EmailOutbox
+  companies/rules.ts                status workflow, publish checks (pure)
+  companies/service.ts              public + admin company operations
+  media/rules.ts                    upload checks, Cloudinary signing (pure)
+  media/storage.ts                  Cloudinary (or local disk in development)
+  media/service.ts                  media library
+  validation/*.ts                   zod input schemas
 scripts/create-super-admin.ts       first Super Administrator
 tests/                              unit tests (node:test via tsx)
 ```
@@ -132,6 +138,46 @@ Each person has their own account; there is no shared password.
 Required environment: `AUTH_SECRET` (32+ random characters) and, in
 production, `NEXT_PUBLIC_SITE_URL` (used for links in emails, never the
 request's Host header).
+
+## Companies and media (Phase 4)
+
+**Companies** follow a status workflow: `DRAFT → PUBLISHED`, `PUBLISHED →
+DRAFT` (unpublish), anything `→ ARCHIVED`, `ARCHIVED → DRAFT` (restore; never
+straight back to live). Publishing needs a name, sector label and a
+description of at least 20 characters. The web address (slug) cannot change
+while a company is published, so shared links keep working. Every edit saves
+the previous version in `ContentRevision` (last 20 viewable) and writes an
+audit entry listing the changed fields. If two people edit at once, the
+second save is refused (`expectedUpdatedAt`) instead of silently overwriting.
+
+Company Admins and Content Editors only see and edit their own companies;
+creating companies is group-level (`company.create`). The public API only
+returns `PUBLISHED` companies.
+
+**Images** are uploaded through the server, which checks the file's real
+bytes (JPEG, PNG, WebP, GIF, AVIF; max 5 MB; SVG refused because it can
+contain scripts) and requires alt text, then stores them in Cloudinary under
+`CLOUDINARY_FOLDER/<folder>`. Without Cloudinary keys in development, files go
+to `public/uploads/` (git-ignored); in production uploads are refused until
+Cloudinary is configured. An image still used anywhere cannot be deleted, and
+people without a group-wide `media.upload` grant can only delete their own.
+
+| Endpoint | Who | Purpose |
+|---|---|---|
+| `GET /api/companies[?sector=slug]` | public | published companies |
+| `GET /api/companies/:slug` | public | one published company |
+| `GET, POST /api/admin/companies` | `company.read` / `company.create` | list (scoped) / create draft |
+| `GET, PATCH /api/admin/companies/:id` | `company.read` / `company.update` | view / edit |
+| `POST /api/admin/companies/:id/status` | `company.publish` | publish, unpublish, archive, restore |
+| `PUT /api/admin/companies/:id/locations` | `company.update` | replace locations |
+| `GET /api/admin/companies/:id/revisions` | `company.read` | previous versions |
+| `GET, POST /api/admin/media` | `media.upload` | library / upload (multipart: file, altText, folder) |
+| `PATCH, DELETE /api/admin/media/:id` | `media.upload` | edit alt text / delete unused |
+
+Cloudinary setup: create a free account, then set `CLOUDINARY_CLOUD_NAME`,
+`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (Dashboard → API Keys) and
+optionally `CLOUDINARY_FOLDER` (default `sanjeevani`). Note: some hosts cap
+request bodies (Vercel: 4.5 MB), which lowers the effective image limit there.
 
 ## Changing the schema
 

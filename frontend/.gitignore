@@ -1,3 +1,6 @@
 
 # Hallmark design-skill screenshots and lint records (local tooling output)
 .hallmark/
+
+# Images uploaded through the admin in local development (no Cloudinary)
+public/uploads/
