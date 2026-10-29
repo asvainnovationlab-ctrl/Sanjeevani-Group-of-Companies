@@ -13,7 +13,7 @@ it and what is done.
 | 3 | Individual admin accounts, sessions, roles, company-scoped access, audit log | **Done: API only, not yet run against a database** |
 | 4 | Company management and media uploads (Cloudinary) | **Done: API only, not yet run against a database or Cloudinary** |
 | 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | **Done: API only, not yet run against a database, Cloudinary or Resend** |
-| 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | Not started |
+| 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | **Done: API only, not yet run against a database** |
 | 7 | Contact messages, settings, exports | Not started |
 | 8 | MongoDB import script, switch-over, production readiness | Not started |
 
@@ -53,6 +53,11 @@ src/server/
   documents/                        private CV storage (Cloudinary or DB)
   email/templates.ts, sender.ts     email content, Resend delivery + retries
   time.ts                           Nepal time (Asia/Kathmandu) helpers
+  content/types.ts                  registry of editable content types
+  content/service.ts                one CRUD + workflow engine for all of them
+  content/workflow.ts               editorial workflow (pure)
+  content/blocks.ts                 structured rich text (no HTML)
+  content/legal.ts                  versioned Privacy Policy / Terms
 scripts/create-super-admin.ts       first Super Administrator
 tests/                              unit tests (node:test via tsx)
 ```
@@ -246,6 +251,61 @@ outbox once sent. Without `RESEND_API_KEY` emails simply stay queued.
 Schedule the cron endpoint every 5–15 minutes (Vercel Cron, a crontab with
 `curl -H "Authorization: Bearer $CRON_SECRET" https://site/api/cron/maintenance`,
 or an uptime monitor).
+
+## Content: leaders, newsroom, homepage, FAQs, pages (Phase 6)
+
+All editable content goes through one engine (`src/server/content/`), driven
+by a registry entry per type: `faqs`, `news`, `events`, `notices`, `videos`,
+`galleries`, `homepage-slides`, `key-sectors`, `impact-pillars`, `pages`,
+`leaders`. Each entry defines its validation (unknown fields such as `status`
+are refused), how it maps to the database, its permissions and which
+companies own it.
+
+**Workflow** (same for every type):
+
+```
+DRAFT ─submit→ PENDING_REVIEW ─approve→ APPROVED ─publish→ PUBLISHED
+        (reject → DRAFT)              unpublish → DRAFT;  archive ⇄ restore
+```
+
+Content Editors (`content.update`) draft and submit; Content Publishers
+(`content.publish`) approve, reject, publish, unpublish and archive. Live
+content can only be edited by someone who may publish it; editors must have
+it unpublished first. Content that has ever been public can't be deleted,
+only archived. Every edit saves the previous version (`ContentRevision`),
+every action is audited, and simultaneous edits are detected
+(`expectedUpdatedAt`). Leaders use `leader.update` / `leader.publish`.
+
+**Company scope:** news, events, notices and galleries with a `companyId`
+belong to that company; group-level items (`companyId` null) and group types
+(FAQs, homepage, pages, videos) need group-wide rights. A leader belongs to
+every company they hold a role in; the chairman is group-level.
+
+**Rich text** (news, events, pages) is stored as structured blocks
+(paragraph, heading, list, quote, image, link), never HTML, so stored content
+can't inject scripts. Links must be `https://` or site paths.
+
+**Legal pages** are versioned. Editors start a new draft (a copy of the
+latest version), publishers publish it; the previous live version is archived
+in the same transaction and kept as the record of what applied when (the
+database allows only one published version per document). A live version
+can't be archived without publishing a replacement.
+
+| Endpoint | Who | Purpose |
+|---|---|---|
+| `GET /api/content/:type[?company=&placement=]` | public | published items |
+| `GET /api/content/:type/:slugOrKey` | public | one item (news, events, galleries, leaders, pages) |
+| `GET /api/legal/:kind` | public | live Privacy Policy / Terms |
+| `GET, POST /api/admin/content/:type` | per type | list (scoped) / create draft |
+| `GET, PATCH, DELETE /api/admin/content/:type/:id` | per type | view / edit / delete |
+| `POST /api/admin/content/:type/:id/workflow` | per type | submit, approve, reject, publish, … |
+| `GET /api/admin/content/:type/:id/revisions` | per type | previous versions |
+| `GET, POST /api/admin/legal/:kind` | `legal.update` | versions / new draft |
+| `PATCH /api/admin/legal/versions/:id` | `legal.update` | edit draft |
+| `POST /api/admin/legal/versions/:id/workflow` | `legal.update` / `legal.publish` | submit, approve, publish, … |
+
+Not yet: the legal texts currently in `LegalDocument.tsx` are imported into
+the database during the switch-over (Phase 8).
 
 ## Changing the schema
 
