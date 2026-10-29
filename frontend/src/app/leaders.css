@@ -2,8 +2,33 @@
  * paper: oklch(98.6% 0.008 120) · accent: oklch(48% 0.13 135) · display: Poppins (brand) · body: Inter (brand) · hero: split, name beside a framed portrait · nav: kept · footer: kept · signature: the portrait set on an offset block of the chairman-card green, then the person's own message set as a signed letter
  * axes: light/geometric-sans/chromatic-green · posture: split · contrast: pass · fold: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H5 E4 S3 R5 V4 · weakest: S, the CV is still "[Add …]" text; the page is built so the person's own message, career and education carry it the moment they are filled in data/leaders.ts */
-/* Hallmark · waive 81 · span.ld-portrait-block is the offset backing block the portrait stands on, not a picture slot; the portrait itself is the leader photo · it repeats the chairman-card green that ties the leadership pages together */
 /* Hallmark · scope · leader pages only (main.leader-page) plus the Leadership page's card link; colours from the --bx-* tokens on :root in businesses.css, scale from .bx-scope */
+
+/* Hero: a footer-green band under the transparent header, white type, and
+   the portrait in a rounded frame with an offset outline and a soft glow. */
+.ld-hero { min-height: 100svh; margin-top: calc(var(--header-offset) * -1); padding-block: calc(var(--header-offset) + var(--space-2xl)) var(--space-2xl); position: relative; display: grid; align-content: center; overflow: hidden; isolation: isolate; background: radial-gradient(60% 70% at 78% 45%, color-mix(in oklab, var(--bx-on-accent) 16%, transparent), transparent 70%), linear-gradient(135deg, var(--bx-accent-2) 0%, var(--bx-accent) 60%, var(--bx-accent-deep) 100%); color: var(--bx-on-accent); }
+:root[data-theme="dark"] .ld-hero { background: radial-gradient(60% 70% at 78% 45%, color-mix(in oklab, var(--bx-on-accent) 12%, transparent), transparent 70%), linear-gradient(135deg, var(--bx-accent-2) 0%, var(--bx-accent) 60%, var(--bx-accent-deep) 100%); }
+.ld-hero-mark { width: min(46vw, 640px); aspect-ratio: 1; position: absolute; z-index: -1; top: 50%; left: -12%; opacity: .07; transform: translateY(-50%); pointer-events: none; }
+.ld-hero-mark .group-emblem { width: 100%; height: 100%; display: block; filter: brightness(0) invert(1); }
+.ld-hero-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); align-items: center; gap: var(--space-2xl) var(--gap-columns); }
+.ld-hero-role { padding: 6px var(--space-md); display: inline-block; border: 1px solid color-mix(in oklab, var(--bx-on-accent) 45%, transparent); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--bx-shade) 14%, transparent); color: var(--bx-on-accent); font: 500 var(--text-sm)/1.3 var(--bx-body); }
+.ld-hero h1 { max-width: 13ch; margin-top: var(--space-lg); color: var(--bx-on-accent); font-size: clamp(2.75rem, 5.2vw + 0.5rem, 5.5rem); font-weight: 700; line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
+.ld-hero-summary { max-width: 48ch; margin-top: var(--space-lg); padding-left: var(--space-md); border-left: 2px solid color-mix(in oklab, var(--bx-on-accent) 60%, transparent); color: var(--bx-on-accent-2); font-size: var(--text-lead); line-height: 1.6; }
+.ld-actions { margin-top: var(--space-xl); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); }
+.ld-actions .leader-socials { margin: 0; }
+.ld-hero-button { min-height: 52px; padding: 0 var(--space-xl); display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--bx-on-accent); color: var(--bx-accent); font: 600 var(--text-md)/1 var(--bx-display); text-decoration: none; box-shadow: 0 18px 34px -20px var(--bx-shade); transition: background-color var(--dur-short), transform var(--dur-micro) var(--ease-out); }
+.ld-hero-button:hover { background: var(--bx-on-accent-2); transform: translateY(-1px); }
+.ld-hero-button:active { transform: translateY(0); }
+.ld-hero a:focus-visible { outline-color: var(--bx-on-accent); }
+
+.ld-portrait { width: min(100%, 440px); position: relative; justify-self: end; margin: var(--space-lg) var(--space-lg) var(--space-2xl) 0; }
+.ld-portrait-outline { position: absolute; z-index: 0; inset: 28px -28px -28px 28px; border: 1.5px solid color-mix(in oklab, var(--bx-on-accent) 55%, transparent); border-radius: 28px; }
+.ld-portrait-frame { aspect-ratio: 4 / 5; position: relative; z-index: 1; overflow: hidden; border: 6px solid var(--bx-on-accent); border-radius: 28px; background: var(--bx-paper-3); box-shadow: 0 50px 90px -40px var(--bx-shade); }
+.ld-portrait-frame img { object-fit: cover; object-position: center top; transition: transform 1s var(--ease-out); }
+.ld-portrait:hover .ld-portrait-frame img { transform: scale(1.03); }
+.ld-portrait-caption { min-width: 200px; padding: var(--space-md) var(--space-lg); position: absolute; z-index: 2; bottom: calc(var(--space-lg) * -1); left: calc(var(--space-xl) * -1); display: grid; gap: 2px; border-radius: 18px; background: var(--bx-paper); box-shadow: 0 24px 46px -26px var(--bx-shade); }
+.ld-portrait-caption strong { color: var(--bx-ink-2); font: 600 var(--text-md)/1.3 var(--bx-display); }
+.ld-portrait-caption span { color: var(--bx-accent-text); font-size: var(--text-sm); font-weight: 500; }
 
 /* Leadership page cards: the name links to the person's page and its hit
    area covers the whole card; the social icons stay clickable above it. */
@@ -14,18 +39,7 @@
 .leadership-card:has(.leadership-card-link:focus-visible) { outline: 2px solid var(--bx-focus); outline-offset: 3px; }
 .leadership-card .leader-socials { position: relative; z-index: 2; }
 
-.ld-hero { min-height: calc(100svh - var(--header-offset)); padding-block: var(--space-2xl) var(--space-3xl); display: grid; align-content: center; overflow: clip; background: var(--bx-paper-2); }
-.ld-hero-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); align-items: center; gap: var(--gap-columns); }
-.ld-hero h1 { max-width: 14ch; color: var(--bx-ink-2); font-size: var(--text-display); font-weight: 600; line-height: 1.04; text-wrap: balance; }
-.ld-hero-role { margin-top: var(--space-sm); color: var(--bx-accent-text); font: 500 var(--text-lead)/1.4 var(--bx-display); }
-.ld-hero .bx-lead { margin-top: var(--space-lg); }
-.ld-actions { margin-top: var(--space-xl); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); }
-.ld-actions .leader-socials { margin: 0; }
 
-.ld-portrait { width: min(100%, 460px); position: relative; justify-self: end; margin: var(--space-lg) var(--space-lg) var(--space-lg) 0; }
-.ld-portrait-block { position: absolute; z-index: 0; inset: 40px -24px -24px 40px; background: linear-gradient(135deg, var(--bx-accent-2), var(--bx-accent)); }
-.ld-portrait-frame { aspect-ratio: 4 / 5; position: relative; z-index: 1; overflow: hidden; background: var(--bx-paper-3); box-shadow: 0 30px 60px -36px color-mix(in oklab, var(--bx-shade) 70%, transparent); }
-.ld-portrait-frame img { object-fit: cover; object-position: center top; }
 
 .ld-message { padding-block: var(--section-gap); background: var(--bx-paper); }
 .ld-message-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; gap: var(--gap-columns); }
@@ -66,12 +80,14 @@
 
 @media (max-width: 60rem) {
   .ld-hero-grid, .ld-message-grid, .ld-cv-grid { grid-template-columns: 1fr; }
-  .ld-portrait { width: min(100% - 24px, 380px); justify-self: start; margin-top: var(--space-xl); }
+  .ld-portrait { width: min(100% - 40px, 360px); justify-self: center; margin: var(--space-md) 0 var(--space-xl); }
+  .ld-portrait-caption { left: 50%; transform: translateX(-50%); white-space: nowrap; }
+  .ld-hero-mark { width: 90vw; left: -30%; top: 20%; }
 }
 @media (max-width: 40rem) {
   .ld-timeline li { grid-template-columns: 1fr; gap: 4px; }
-  .ld-portrait-block { inset: 24px -16px -16px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .ld-hero-button:hover, .ld-portrait:hover .ld-portrait-frame img { transform: none; }
   .ld *, .leadership-card-link { transition-duration: 0.01ms !important; }
 }

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import GroupEmblem from "@/components/GroupEmblem";
 import type { ReactNode } from "react";
 import { allLeaders, getLeader, getLeaderProfile, leaderHref } from "@/data/leaders";
 
@@ -27,20 +28,25 @@ export default function LeaderProfile({ slug, socials }: { slug: string; socials
   return (
     <>
       <section className="ld-hero" aria-labelledby="ld-name">
+        <span className="ld-hero-mark" aria-hidden="true"><GroupEmblem /></span>
         <div className="bx-wrap ld-hero-grid">
           <div className="ld-hero-copy">
-            <h1 id="ld-name">{leader.name}</h1>
             <p className="ld-hero-role">{leader.role}, Sanjeevani Group</p>
-            <p className="bx-lead">{profile.summary}</p>
+            <h1 id="ld-name">{leader.name}</h1>
+            <p className="ld-hero-summary">{profile.summary}</p>
             <div className="ld-actions">
-              <a className="bx-button" href="#message">Read the message</a>
+              <a className="ld-hero-button" href="#message">Read the message</a>
               {socials(leader.name, leader.socials)}
             </div>
           </div>
           <div className="ld-portrait">
-            <span className="ld-portrait-block" aria-hidden="true" />
+            <span className="ld-portrait-outline" aria-hidden="true" />
             <div className="ld-portrait-frame">
               <Image src={leader.photo} alt={`Portrait of ${leader.name}`} fill priority sizes="(max-width: 960px) 80vw, 460px" />
+            </div>
+            <div className="ld-portrait-caption">
+              <strong>{leader.name}</strong>
+              <span>{leader.role}</span>
             </div>
           </div>
         </div>

@@ -435,7 +435,7 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
   const leadershipLayout = section === "leadership" || section === "chairman";
   const photoHero = (section === "mission-vision-values" || section === "community" || section === "newsroom" || leadershipLayout || storyLayout) && !leaderSlug;
   // Pages whose hero photo runs under a transparent header that turns solid on scroll.
-  const overlayHeader = photoHero || section === "businesses" || section === "careers";
+  const overlayHeader = photoHero || section === "businesses" || section === "careers" || Boolean(leaderSlug);
   const [menuOpen, setMenuOpen] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>(localBusinesses);
   const [directoryQuery, setDirectoryQuery] = useState("");
@@ -613,7 +613,7 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
         ) : careerAreaSlug ? (
           <CareerVacancies slug={careerAreaSlug} />
         ) : leaderSlug ? (
-          <LeaderProfile slug={leaderSlug} socials={(name, links) => <LeaderSocialLinks name={name} socials={links} />} />
+          <LeaderProfile slug={leaderSlug} socials={(name, links) => <LeaderSocialLinks className="leader-socials-light" name={name} socials={links} />} />
         ) : section === "privacy-policy" || section === "terms-of-use" ? (
           <LegalDocument kind={section} title={page.title} intro={page.intro} lead={page.lead} paragraphs={page.paragraphs} />
         ) : section === "faq" ? (
