@@ -67,7 +67,7 @@ tests/                              unit tests (node:test via tsx)
 1. Create a free project at neon.tech (region close to Nepal, e.g. Singapore).
 2. Create a database named `sanjeevani` and copy both connection strings
    (pooled and direct) into `frontend/.env.local` as `DATABASE_URL` and
-   `DIRECT_URL` (see `.env.local.example`). Use a separate Neon branch or
+   `DATABASE_URL_UNPOOLED` (see `.env.local.example`; `neon env pull` writes both). Use a separate Neon branch or
    project for production.
 3. From `frontend/`:
 
@@ -147,7 +147,7 @@ Each person has their own account; there is no shared password.
 | `PUT /api/admin/users/:id/memberships` | `user.manage` | replace roles |
 
 Required environment: `AUTH_SECRET` (32+ random characters) and, in
-production, `NEXT_PUBLIC_SITE_URL` (used for links in emails, never the
+production, `SITE_URL` (read at runtime; used for links in emails, never the
 request's Host header).
 
 ## Companies and media (Phase 4)
@@ -333,8 +333,8 @@ Neon keeps point-in-time history (length depends on the plan) and lets you
 restore by creating a branch at an earlier time. For an off-site copy:
 
 ```bash
-pg_dump "$DIRECT_URL" --format=custom --file=sanjeevani-$(date +%F).dump
-pg_restore --clean --no-owner --dbname="$DIRECT_URL" sanjeevani-YYYY-MM-DD.dump
+pg_dump "$DATABASE_URL_UNPOOLED" --format=custom --file=sanjeevani-$(date +%F).dump
+pg_restore --clean --no-owner --dbname="$DATABASE_URL_UNPOOLED" sanjeevani-YYYY-MM-DD.dump
 ```
 
 ## Design notes

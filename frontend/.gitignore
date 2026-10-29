@@ -4,3 +4,5 @@
 
 # Images uploaded through the admin in local development (no Cloudinary)
 public/uploads/
+.neon
+node_modules/

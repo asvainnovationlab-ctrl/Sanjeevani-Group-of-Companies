@@ -2,13 +2,15 @@ import { forbidden, unauthorized } from "@/server/http/errors";
 import { can, canAny } from "@/server/auth/access";
 import { isSameOrigin } from "@/server/auth/origin";
 import { getSessionUser, type SessionUser } from "@/server/auth/session";
+import { configuredSiteUrl } from "@/server/email/outbox";
 import type { PermissionKey } from "@/server/auth/permissions";
 
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 export function assertSameOrigin(request: Request) {
   if (!UNSAFE.has(request.method)) return;
-  const allowed = process.env.NEXT_PUBLIC_SITE_URL ? [process.env.NEXT_PUBLIC_SITE_URL] : [];
+  const site = configuredSiteUrl();
+  const allowed = site ? [site] : [];
   if (!isSameOrigin(request.headers, allowed)) throw forbidden("Cross-site request blocked.");
 }
 

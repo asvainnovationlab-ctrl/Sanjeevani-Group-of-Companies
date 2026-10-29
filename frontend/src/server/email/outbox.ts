@@ -30,11 +30,17 @@ export async function enqueueEmail(email: OutboxEmail, db: Db = prisma): Promise
   return email.idempotencyKey;
 }
 
+// The site's public base URL, read at runtime (SITE_URL), falling back to
+// NEXT_PUBLIC_SITE_URL, which Next.js fixes at build time.
+export function configuredSiteUrl(): string | undefined {
+  return (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL)?.replace(/\/+$/, "") || undefined;
+}
+
 // Base URL for links in emails. Never derived from the Host header in
 // production, which an attacker could spoof to steal reset tokens.
 export function siteUrl(request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured.replace(/\/+$/, "");
-  if (process.env.NODE_ENV === "production") throw new Error("NEXT_PUBLIC_SITE_URL must be set in production.");
+  const configured = configuredSiteUrl();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") throw new Error("SITE_URL must be set in production.");
   return new URL(request.url).origin;
 }
