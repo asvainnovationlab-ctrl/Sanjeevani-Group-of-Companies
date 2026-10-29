@@ -12,7 +12,7 @@ it and what is done.
 | 2 | Prisma schema, first migration, data layer, seed, unit tests | **Done (not yet run against a database)** |
 | 3 | Individual admin accounts, sessions, roles, company-scoped access, audit log | **Done: API only, not yet run against a database** |
 | 4 | Company management and media uploads (Cloudinary) | **Done: API only, not yet run against a database or Cloudinary** |
-| 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | Not started |
+| 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | **Done: API only, not yet run against a database, Cloudinary or Resend** |
 | 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | Not started |
 | 7 | Contact messages, settings, exports | Not started |
 | 8 | MongoDB import script, switch-over, production readiness | Not started |
@@ -47,6 +47,12 @@ src/server/
   media/storage.ts                  Cloudinary (or local disk in development)
   media/service.ts                  media library
   validation/*.ts                   zod input schemas
+  recruitment/rules.ts              vacancy/application workflow, CSV (pure)
+  recruitment/vacancies.ts          public + admin vacancies, auto-close
+  recruitment/applications.ts       submit, review, notes, CV download, export
+  documents/                        private CV storage (Cloudinary or DB)
+  email/templates.ts, sender.ts     email content, Resend delivery + retries
+  time.ts                           Nepal time (Asia/Kathmandu) helpers
 scripts/create-super-admin.ts       first Super Administrator
 tests/                              unit tests (node:test via tsx)
 ```
@@ -178,6 +184,68 @@ Cloudinary setup: create a free account, then set `CLOUDINARY_CLOUD_NAME`,
 `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (Dashboard → API Keys) and
 optionally `CLOUDINARY_FOLDER` (default `sanjeevani`). Note: some hosts cap
 request bodies (Vercel: 4.5 MB), which lowers the effective image limit there.
+
+## Vacancies and applications (Phase 5)
+
+**Vacancies**: `DRAFT → PUBLISHED → CLOSED` (re-publishable), anything
+`→ ARCHIVED → DRAFT`. Publishing checks the posting is complete (summary,
+education, experience, responsibilities, sensible age and salary ranges, a
+future deadline) and that the company is live. Reference codes are
+sequential (`SG-V-0001`). A deadline is a Nepal calendar date: applications
+are accepted until 23:59 Nepal time that day, and the cron job then marks
+the vacancy `CLOSED`. Salaries are NPR and only shown when "disclosed".
+
+**Applications** (`POST /api/applications`) take exactly the fields the
+current form sends, so the site switches over by changing one URL in
+`ApplicationForm.tsx` (Phase 8). Checks: same-origin, honeypot, 10 per IP per
+hour, one application per email per position per 30 days, the vacancy must
+be open, age within the vacancy's range, CV checked by its bytes and
+extension (PDF, DOC, DOCX, JPG, PNG; 5 MB). Each gets a reference number per
+Nepal year (`SG-2026-000001`), a status history, and a retention date
+(`APPLICATION_RETENTION_DAYS`, default 730). The applicant gets a
+confirmation email and `HR_NOTIFICATION_EMAIL` a notification without
+personal details.
+
+**CVs are private.** With Cloudinary configured they are stored as
+`authenticated` raw files; otherwise in PostgreSQL (`CV_STORAGE` overrides).
+There is no public URL: HR downloads through
+`/api/admin/job-applications/:id/documents/:docId`, which checks the
+permission for that company, logs the download, and always sends the file as
+an attachment with a sandboxing CSP. No virus scanner is configured yet
+(`scanStatus = SKIPPED`).
+
+**Review**: statuses `SUBMITTED → UNDER_REVIEW → SHORTLISTED → INTERVIEW →
+OFFERED`, with `REJECTED` (re-openable) and `WITHDRAWN` (final). Every change
+is recorded with who/when/note; concurrent changes are refused. Viewing,
+downloading, exporting and deleting are all audited. CSV exports
+neutralise spreadsheet formulas. Expired applications are counted by the
+cron job but never deleted automatically.
+
+**Emails** go into `EmailOutbox` inside the same transaction as the change,
+are sent straight away when possible, and retried by the cron job with
+backoff (1, 2, 4 … 60 minutes; failed after 6 attempts). Resend's
+idempotency key prevents duplicates. One-time links are removed from the
+outbox once sent. Without `RESEND_API_KEY` emails simply stay queued.
+
+| Endpoint | Who | Purpose |
+|---|---|---|
+| `GET /api/vacancies[?careerArea=&company=]` | public | live vacancies |
+| `GET /api/vacancies/:slug` | public | one vacancy |
+| `POST /api/applications` | public | apply (multipart) |
+| `GET, POST /api/admin/vacancies` | `vacancy.read` / `vacancy.update` | list / create |
+| `GET, PATCH /api/admin/vacancies/:id` | `vacancy.read` / `vacancy.update` | view / edit |
+| `POST /api/admin/vacancies/:id/status` | `vacancy.publish` | publish, close, archive, restore |
+| `GET /api/admin/job-applications` | `application.read` | list, filter, paginate |
+| `GET /api/admin/job-applications/export` | `application.export` | CSV |
+| `GET, DELETE /api/admin/job-applications/:id` | `application.read` / `.delete` | view / delete |
+| `POST /api/admin/job-applications/:id/status` | `application.update` | change status |
+| `POST /api/admin/job-applications/:id/notes` | `application.update` | internal note |
+| `GET /api/admin/job-applications/:id/documents/:docId` | `application.read` | download CV |
+| `GET /api/cron/maintenance` | `Bearer CRON_SECRET` | emails, auto-close, cleanup |
+
+Schedule the cron endpoint every 5–15 minutes (Vercel Cron, a crontab with
+`curl -H "Authorization: Bearer $CRON_SECRET" https://site/api/cron/maintenance`,
+or an uptime monitor).
 
 ## Changing the schema
 

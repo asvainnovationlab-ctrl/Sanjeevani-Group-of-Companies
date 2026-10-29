@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db";
 import { recordAudit } from "@/server/audit";
 import { enqueueEmail } from "@/server/email/outbox";
+import { deliverSoon } from "@/server/email/sender";
 import { badRequest, unauthorized } from "@/server/http/errors";
 import { hashIdentifier, randomToken, sha256 } from "@/server/security/crypto";
 import { enforceRateLimit } from "@/server/security/rate-limit";
@@ -71,7 +72,7 @@ export async function issuePasswordToken(
   kind: "password-reset" | "user-invite",
   baseUrl: string,
   validMs: number,
-) {
+): Promise<string> {
   const token = randomToken(32);
   const now = new Date();
   await db.passwordResetToken.updateMany({ where: { userId: user.id, usedAt: null }, data: { usedAt: now } });
@@ -79,7 +80,7 @@ export async function issuePasswordToken(
     data: { userId: user.id, tokenHash: sha256(token), expiresAt: new Date(now.getTime() + validMs) },
   });
   const path = kind === "user-invite" ? "/admin/accept-invite" : "/admin/reset-password";
-  await enqueueEmail(
+  return enqueueEmail(
     {
       idempotencyKey: `${kind}:${row.id}`,
       template: kind,
@@ -99,10 +100,12 @@ export async function requestPasswordReset(email: string, meta: RequestMeta, bas
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || (user.status !== "ACTIVE" && user.status !== "INVITED")) return;
 
-  await prisma.$transaction(async (tx) => {
-    await issuePasswordToken(tx, user, "password-reset", baseUrl, RESET_TOKEN_MS);
+  const key = await prisma.$transaction(async (tx) => {
+    const queued = await issuePasswordToken(tx, user, "password-reset", baseUrl, RESET_TOKEN_MS);
     await recordAudit({ actorId: user.id, action: "auth.password_reset.request", entityType: "User", entityId: user.id, ipHash, userAgent: meta.userAgent }, tx);
+    return queued;
   });
+  await deliverSoon([key]);
 }
 
 // Used for both password resets and accepting an invite (which activates the
@@ -160,10 +163,10 @@ export async function changePassword(sessionUser: SessionUser, input: { currentP
   if (await verifyPassword(user.passwordHash, input.newPassword)) throw badRequest("Choose a password different from your current one.");
 
   const passwordHash = await hashPassword(input.newPassword);
-  await prisma.$transaction(async (tx) => {
+  const key = await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: user.id }, data: { passwordHash, passwordChangedAt: new Date() } });
     await revokeAllSessions(user.id, undefined, tx);
-    await enqueueEmail(
+    const queued = await enqueueEmail(
       {
         idempotencyKey: `password-changed:${user.id}:${Date.now()}`,
         template: "password-changed",
@@ -174,6 +177,8 @@ export async function changePassword(sessionUser: SessionUser, input: { currentP
       tx,
     );
     await recordAudit({ actorId: user.id, action: "auth.password.change", entityType: "User", entityId: user.id, ipHash, userAgent: meta.userAgent }, tx);
+    return queued;
   });
   await createSession(user.id, { ipHash, userAgent: meta.userAgent });
+  await deliverSoon([key]);
 }

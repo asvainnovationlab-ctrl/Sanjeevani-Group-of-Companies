@@ -5,6 +5,7 @@ import { badRequest, conflict, notFound } from "@/server/http/errors";
 import { issuePasswordToken } from "@/server/auth/service";
 import { revokeAllSessions, type SessionUser } from "@/server/auth/session";
 import { INVITE_TOKEN_MS } from "@/server/auth/session-rules";
+import { deliverSoon } from "@/server/email/sender";
 import { isGroupSuperAdmin, membershipProblem, type MembershipRequest } from "@/server/users/rules";
 
 // Admin user management. Routes check "user.manage" (group-wide) before
@@ -72,7 +73,7 @@ export async function inviteUser(
   baseUrl: string,
   meta: { ipHash: string; userAgent: string | null },
 ) {
-  return prisma.$transaction(async (tx) => {
+  const { user, key } = await prisma.$transaction(async (tx) => {
     if (await tx.user.findUnique({ where: { email: input.email }, select: { id: true } })) {
       throw conflict("An admin account with this email already exists.");
     }
@@ -81,13 +82,15 @@ export async function inviteUser(
       data: { email: input.email, name: input.name, status: "INVITED", memberships: { create: memberships } },
       select: userSelect,
     });
-    await issuePasswordToken(tx, user, "user-invite", baseUrl, INVITE_TOKEN_MS);
+    const key = await issuePasswordToken(tx, user, "user-invite", baseUrl, INVITE_TOKEN_MS);
     await recordAudit(
       { actorId: actor.id, action: "user.invite", entityType: "User", entityId: user.id, metadata: { email: user.email, memberships: input.memberships }, ...meta },
       tx,
     );
-    return user;
+    return { user, key };
   });
+  await deliverSoon([key]);
+  return user;
 }
 
 export async function updateUser(
