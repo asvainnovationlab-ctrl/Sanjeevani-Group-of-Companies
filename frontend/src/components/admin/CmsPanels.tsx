@@ -313,10 +313,8 @@ export function BusinessesPanel({ me }: { me: Me }) {
   const canUpdate = hasPermission(me, "company.update");
   const canPublish = hasPermission(me, "company.publish");
 
-  const [savedId, setSavedId] = useState<string | null>(null);
-
   async function act(fn: () => Promise<unknown>, message: string) {
-    setError(""); setNotice(""); setSavedId(null);
+    setError(""); setNotice("");
     try { await fn(); setNotice(message); await reload(); } catch (e) { setError((e as Error).message); }
   }
 
@@ -326,19 +324,24 @@ export function BusinessesPanel({ me }: { me: Me }) {
     }
   };
 
+  // "Save and publish" / "Save and unpublish" pass their action as the
+  // submit button's value. An archived company is restored before publishing.
   async function saveCompany(event: FormEvent) {
     event.preventDefault();
     if (!editing) return;
+    const then = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value ?? "";
     const body = toInput(COMPANY_FIELDS, editing.values);
     const { locations } = toInput(LOCATION_FIELDS, editing.locations) as { locations: unknown[] };
+    const name = String(editing.values.name || "Company");
     await act(async () => {
       const id = editing.id
         ? (await api<{ company: Company }>(`/api/admin/companies/${editing.id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: editing.updatedAt } })).company.id
         : (await api<{ company: Company }>("/api/admin/companies", { body })).company.id;
       await api(`/api/admin/companies/${id}/locations`, { method: "PUT", body: { locations } });
+      if (then === "publish" && currentCompany?.status === "ARCHIVED") await api(`/api/admin/companies/${id}/status`, { body: { action: "restore" } });
+      if (then) await api(`/api/admin/companies/${id}/status`, { body: { action: then } });
       setEditing(null);
-      setSavedId(id);
-    }, editing.id ? "Company saved." : "Company created as a draft. Publish it when its page is ready.");
+    }, then === "publish" ? `${name} saved and live on the website.` : then === "unpublish" ? `${name} saved and hidden from the website.` : editing.id ? `${name} saved.` : `${name} created as a draft. Publish it when its page is ready.`);
   }
 
   async function saveSector(event: FormEvent) {
@@ -352,7 +355,8 @@ export function BusinessesPanel({ me }: { me: Me }) {
     }, sectorForm.id ? "Category saved." : "Category added.");
   }
 
-  const status = (c: Company, action: string, message: string) => act(() => api(`/api/admin/companies/${c.id}/status`, { body: { action } }), message);
+  const currentCompany = editing?.id ? companies.find((c) => c.id === editing.id) : undefined;
+  const companyLive = currentCompany?.status === "PUBLISHED";
 
   function newCompany(sectorId: string | null) {
     const sector = sectors.find((s) => s.id === sectorId);
@@ -385,21 +389,6 @@ export function BusinessesPanel({ me }: { me: Me }) {
       {loadError && <p className="admin-message admin-error" role="alert">{loadError} <button type="button" className="admin-link-button" onClick={() => void reload()}>Try again</button></p>}
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
-      {(() => {
-        const c = savedId ? companies.find((x) => x.id === savedId) : undefined;
-        if (!c || editing) return null;
-        return (
-          <div className="adm-next-step">
-            <span>Next for <strong>{c.name}</strong>:</span>
-            <div className="admin-button-row">
-              {canPublish && c.status !== "PUBLISHED" && c.status !== "ARCHIVED" && <button type="button" className="admin-primary-button" onClick={() => status(c, "publish", `${c.name} is live.`)}>Publish now</button>}
-              <button type="button" className="admin-secondary-button" onClick={() => editCompany(c)}>Edit again</button>
-              {canPublish && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "archive", `${c.name} archived.`)}>Archive</button>}
-              {canCreate && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
-            </div>
-          </div>
-        );
-      })()}
 
       {sectorForm && (
         <form className="admin-business-form" onSubmit={saveSector}>
@@ -421,7 +410,12 @@ export function BusinessesPanel({ me }: { me: Me }) {
             <FieldInputs fields={COMPANY_TAIL} values={editing.values} onChange={(values) => setEditing({ ...editing, values })} lookups={lookups} altFrom={String(editing.values.name ?? "")} idPrefix="co-tail" />
           </div>
           {editing.id && <CompanyLeaders me={me} companyId={editing.id} />}
-          <div className="admin-form-actions"><button type="submit" className="admin-primary-button">Save</button><button type="button" className="admin-secondary-button" onClick={() => setEditing(null)}>Cancel</button></div>
+          <div className="admin-form-actions">
+            <button type="submit" className={canPublish && !companyLive ? "admin-secondary-button" : "admin-primary-button"}>{companyLive ? "Save changes" : "Save as draft"}</button>
+            {canPublish && !companyLive && <button type="submit" value="publish" className="admin-primary-button">Save and publish</button>}
+            {canPublish && companyLive && <button type="submit" value="unpublish" className="admin-secondary-button">Save and unpublish</button>}
+            <button type="button" className="admin-secondary-button" onClick={() => setEditing(null)}>Cancel</button>
+          </div>
         </form>
       )}
 
@@ -451,11 +445,7 @@ export function BusinessesPanel({ me }: { me: Me }) {
                       <td>{c.name}{c.website && <small>{c.website}</small>}<small>/businesses/{c.slug}</small></td>
                       <td><span className={`admin-badge admin-badge-${c.status.toLowerCase()}`}>{label(c.status)}</span></td>
                       <td className="admin-button-row">
-                        {canUpdate && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => editCompany(c)}>Edit</button>}
-                        {canPublish && c.status !== "PUBLISHED" && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "publish", `${c.name} is live.`)}>Publish</button>}
-                        {canPublish && c.status === "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "unpublish", `${c.name} is hidden from the website.`)}>Unpublish</button>}
-                        {canPublish && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "archive", `${c.name} archived.`)}>Archive</button>}
-                        {canPublish && c.status === "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "restore", `${c.name} restored as a draft.`)}>Restore</button>}
+                        {canUpdate && <button type="button" className="admin-secondary-button" onClick={() => editCompany(c)}>Edit</button>}
                         {canCreate && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
                       </td>
                     </tr>

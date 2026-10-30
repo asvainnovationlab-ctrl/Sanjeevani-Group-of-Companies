@@ -59,18 +59,33 @@ export default function ContentManager({ me, config, lookups }: { me: Me; config
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // The form's buttons say what happens after saving: nothing, publish,
+  // unpublish or send for review. An archived item is restored first, since
+  // archived content cannot be edited.
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!editing) return;
+    const then = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value ?? "";
     const body = toInput(config.fields, editing.values);
+    const base = `/api/admin/content/${config.type}`;
+    const flow = (id: string, action: string) => api<{ item: Item }>(`${base}/${id}/workflow`, { body: { action } });
+    const messages: Record<string, string> = { publish: "Saved and published.", unpublish: "Saved and taken off the website.", submit: "Saved and sent for review." };
     await act(async () => {
-      if (editing.id) await api(`/api/admin/content/${config.type}/${editing.id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: editing.updatedAt } });
-      else await api(`/api/admin/content/${config.type}`, { body });
+      let id = editing.id;
+      if (id) {
+        let updatedAt = editing.updatedAt;
+        if (current?.status === "ARCHIVED") updatedAt = (await flow(id, "restore")).item.updatedAt;
+        await api(`${base}/${id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: updatedAt } });
+      } else {
+        id = (await api<{ item: Item }>(base, { body })).item.id;
+      }
+      if (then) await flow(id, then);
       setEditing(null);
-    }, editing.id ? "Saved." : `Draft ${config.noun} created. Publish it when it is ready.`);
+    }, messages[then] ?? (editing.id ? "Saved." : `Draft ${config.noun} created. Publish it when it is ready.`));
   }
 
-  const flow = (item: Item, action: string, message: string) => act(() => api(`/api/admin/content/${config.type}/${item.id}/workflow`, { body: { action } }), message);
+  const current = editing?.id ? items.find((i) => i.id === editing.id) : undefined;
+  const live = current?.status === "PUBLISHED";
   const altFrom = String(editing?.values[config.altFrom ?? "title"] ?? "");
 
   return (
@@ -92,7 +107,10 @@ export default function ContentManager({ me, config, lookups }: { me: Me; config
             <FieldInputs fields={config.fields} values={editing.values} onChange={(values) => setEditing({ ...editing, values })} lookups={lookups} altFrom={altFrom} idPrefix={`cm-${config.type}`} />
           </div>
           <div className="admin-form-actions">
-            <button className="admin-primary-button" type="submit">Save</button>
+            <button className={canPublish && !live ? "admin-secondary-button" : "admin-primary-button"} type="submit">{live ? "Save changes" : "Save as draft"}</button>
+            {canPublish && !live && <button className="admin-primary-button" type="submit" value="publish">Save and publish</button>}
+            {canPublish && live && <button className="admin-secondary-button" type="submit" value="unpublish">Save and unpublish</button>}
+            {!canPublish && (!current || current.status === "DRAFT") && <button className="admin-secondary-button" type="submit" value="submit">Save and send for review</button>}
             <button className="admin-secondary-button" type="button" onClick={() => setEditing(null)}>Cancel</button>
           </div>
         </form>
@@ -110,13 +128,7 @@ export default function ContentManager({ me, config, lookups }: { me: Me; config
                 <td><span className={`admin-badge admin-badge-${item.status.toLowerCase()}`}>{label(item.status)}</span></td>
                 <td>{formatDate(item.updatedAt)}</td>
                 <td className="admin-button-row">
-                  {canEdit && item.status !== "ARCHIVED" && (item.status !== "PUBLISHED" || canPublish) && <button type="button" className="admin-secondary-button" onClick={() => startEdit(item)}>Edit</button>}
-                  {canEdit && !canPublish && item.status === "DRAFT" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "submit", "Sent for review.")}>Send for review</button>}
-                  {canPublish && ["DRAFT", "PENDING_REVIEW", "APPROVED"].includes(item.status) && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "publish", "Published.")}>Publish</button>}
-                  {canPublish && item.status === "PENDING_REVIEW" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "reject", "Sent back to draft.")}>Send back</button>}
-                  {canPublish && item.status === "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "unpublish", "Unpublished.")}>Unpublish</button>}
-                  {canPublish && item.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "archive", "Archived.")}>Archive</button>}
-                  {canPublish && item.status === "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "restore", "Restored as a draft.")}>Restore</button>}
+                  {canEdit && (canPublish || ["DRAFT", "PENDING_REVIEW", "APPROVED"].includes(item.status)) && <button type="button" className="admin-secondary-button" onClick={() => startEdit(item)}>Edit</button>}
                   {canPublish && (
                     <button type="button" className="admin-secondary-button" onClick={() => { if (window.confirm(`Delete this ${config.noun} permanently? It is removed from the website at once and cannot be restored here.`)) void act(() => api(`/api/admin/content/${config.type}/${item.id}`, { method: "DELETE" }), "Deleted."); }}>Delete</button>
                   )}

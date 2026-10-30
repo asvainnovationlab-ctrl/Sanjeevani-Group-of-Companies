@@ -35,7 +35,7 @@ const TABS: Tab[] = [
   { key: "approvals", label: "Approvals", title: "Publishing approvals", context: "Content waiting for a publisher", anyOf: ["content.publish", "leader.publish"], group: "Administration", icon: icon("M9 12l2 2 4-4M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z") },
   { key: "users", label: "Users and roles", title: "Users and roles", context: "Each person signs in with their own account", permission: "user.manage", group: "Administration", icon: icon("M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3 5.5") },
   { key: "audit", label: "Audit log", title: "Audit log", context: "Who did what, in Nepal time", permission: "audit.read", group: "Administration", icon: icon("M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4") },
-  { key: "settings", label: "Settings", title: "Settings", context: "Website details and your own account", permission: "settings.manage", group: "Administration", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
+  { key: "settings", label: "Settings", title: "Settings", context: "Contact details, social links and search text for the website", permission: "settings.manage", group: "Administration", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
   { key: "account", label: "My account", title: "My account", context: "", group: "Administration", icon: icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") },
 ];
 
@@ -165,13 +165,7 @@ export default function AdminConsole() {
           {current.key === "contact" && <ContactPanel key={company} me={me} companyId={company} />}
           {current.key === "users" && <UsersPanel me={me} />}
           {current.key === "audit" && <AuditPanel />}
-          {current.key === "settings" && (
-            <>
-              <SettingsPanel />
-              <h2 className="adm-section-title">Your account</h2>
-              <AccountPanel me={me} onSignedOut={() => setMe(null)} onEmailChanged={(email) => setMe({ ...me, user: { ...me.user, email } })} />
-            </>
-          )}
+          {current.key === "settings" && <SettingsPanel />}
           {current.key === "account" && <AccountPanel me={me} onSignedOut={() => setMe(null)} onEmailChanged={(email) => setMe({ ...me, user: { ...me.user, email } })} />}
         </div>
       </main>

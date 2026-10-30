@@ -212,16 +212,15 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
   }, [me, companyId]);
   useEffect(() => { void load(); }, [load]);
 
-  const [savedId, setSavedId] = useState<string | null>(null);
-
   async function act(fn: () => Promise<unknown>, message: string) {
-    setError(""); setNotice(""); setSavedId(null);
+    setError(""); setNotice("");
     try { await fn(); setNotice(message); await load(); } catch (e) { setError((e as Error).message); }
   }
 
-  const publishable = (v: VacancyRow) => v.status === "DRAFT" || v.status === "CLOSED";
   const deletable = (v: VacancyRow) => v._count.applications === 0;
-  const setStatus = (v: VacancyRow, action: string, message: string) => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action } }), message);
+  const canPublish = hasPermission(me, "vacancy.publish");
+  const current = editing?.id ? rows.find((r) => r.id === editing.id) : undefined;
+  const live = current?.status === "PUBLISHED";
   const remove = (v: VacancyRow) => {
     if (window.confirm(`Delete "${v.title}" permanently? This cannot be undone.`)) void act(() => api(`/api/admin/vacancies/${v.id}`, { method: "DELETE" }), "Vacancy deleted.");
   };
@@ -241,6 +240,8 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!editing) return;
+    // "Save and publish" / "Save and close" pass their action as the submit button's value.
+    const then = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value ?? "";
     const f = editing.form;
     const body = {
       companyId: f.companyId, careerAreaId: f.careerAreaId || null, skills: lines(f.skills), title: f.title, locationText: f.locationText, summary: f.summary, requiredEducation: f.requiredEducation, requiredExperience: f.requiredExperience,
@@ -252,9 +253,11 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
       const result = editing.id
         ? await api<{ vacancy: { id: string } }>(`/api/admin/vacancies/${editing.id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: editing.updatedAt } })
         : await api<{ vacancy: { id: string } }>("/api/admin/vacancies", { body });
+      const status = (action: string) => api(`/api/admin/vacancies/${result.vacancy.id}/status`, { body: { action } });
+      if (then === "publish" && current?.status === "ARCHIVED") await status("restore");
+      if (then) await status(then);
       setEditing(null);
-      setSavedId(result.vacancy.id);
-    }, editing.id ? "Vacancy saved." : "Draft vacancy created. Publish it when it is ready.");
+    }, then === "publish" ? "Vacancy saved and published. It is on the careers page now." : then === "close" ? "Vacancy saved and closed to new applications." : editing.id ? "Vacancy saved." : "Draft vacancy created. Publish it when it is ready.");
   }
 
   const set = (key: keyof VacancyForm) => (e: { target: { value: string; checked?: boolean; type?: string } }) =>
@@ -268,21 +271,6 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
       </div>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
-      {(() => {
-        const v = savedId ? rows.find((r) => r.id === savedId) : undefined;
-        if (!v || editing) return null;
-        return (
-          <div className="adm-next-step">
-            <span>Next for <strong>{v.title}</strong>:</span>
-            <div className="admin-button-row">
-              {hasPermission(me, "vacancy.publish") && publishable(v) && <button type="button" className="admin-primary-button" onClick={() => setStatus(v, "publish", "Vacancy published. It is on the careers page now.")}>Publish now</button>}
-              <button type="button" className="admin-secondary-button" onClick={() => edit(v)}>Edit again</button>
-              {hasPermission(me, "vacancy.publish") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => setStatus(v, "archive", "Vacancy archived.")}>Archive</button>}
-              {hasPermission(me, "vacancy.publish") && deletable(v) && <button type="button" className="admin-secondary-button" onClick={() => remove(v)}>Delete</button>}
-            </div>
-          </div>
-        );
-      })()}
       {editing && (
         <form className="admin-business-form" onSubmit={save}>
           <div className="admin-form-heading"><h3>{editing.id ? "Edit vacancy" : "New vacancy"}</h3><button className="admin-close-button" type="button" onClick={() => setEditing(null)} aria-label="Close">×</button></div>
@@ -306,7 +294,12 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
           <label className="admin-description-field">Responsibilities (one per line)<textarea value={editing.form.responsibilities} onChange={set("responsibilities")} /></label>
           <label className="admin-description-field">Skills (one per line)<textarea value={editing.form.skills} onChange={set("skills")} /></label>
           <label className="admin-description-field">Qualifications (one per line)<textarea value={editing.form.qualifications} onChange={set("qualifications")} /></label>
-          <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Save</button><button className="admin-secondary-button" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
+          <div className="admin-form-actions">
+            <button className={canPublish && !live ? "admin-secondary-button" : "admin-primary-button"} type="submit">{live ? "Save changes" : "Save as draft"}</button>
+            {canPublish && !live && <button className="admin-primary-button" type="submit" value="publish">Save and publish</button>}
+            {canPublish && live && <button className="admin-secondary-button" type="submit" value="close">Save and close vacancy</button>}
+            <button className="admin-secondary-button" type="button" onClick={() => setEditing(null)}>Cancel</button>
+          </div>
         </form>
       )}
       {rows.length === 0 ? <p className="admin-empty">{loading ? "Loading…" : "No vacancies yet."}</p> : (
@@ -320,16 +313,8 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
                 <td>{v.deadline ? formatDate(v.deadline, false) : "—"}</td>
                 <td>{v._count.applications}</td>
                 <td className="admin-button-row">
-                  {hasPermission(me, "vacancy.update") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => edit(v)}>Edit</button>}
-                  {hasPermission(me, "vacancy.publish") && (["DRAFT", "CLOSED"].includes(v.status) ? (
-                    <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action: "publish" } }), "Vacancy published.")}>Publish</button>
-                  ) : v.status === "PUBLISHED" ? (
-                    <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action: "close" } }), "Vacancy closed.")}>Close</button>
-                  ) : (
-                    <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action: "restore" } }), "Vacancy restored as a draft.")}>Restore</button>
-                  ))}
-                  {hasPermission(me, "vacancy.publish") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => setStatus(v, "archive", "Vacancy archived.")}>Archive</button>}
-                  {hasPermission(me, "vacancy.publish") && deletable(v) && <button type="button" className="admin-secondary-button" onClick={() => remove(v)}>Delete</button>}
+                  {hasPermission(me, "vacancy.update") && <button type="button" className="admin-secondary-button" onClick={() => edit(v)}>Edit</button>}
+                  {canPublish && deletable(v) && <button type="button" className="admin-secondary-button" onClick={() => remove(v)}>Delete</button>}
                 </td>
               </tr>
             ))}
