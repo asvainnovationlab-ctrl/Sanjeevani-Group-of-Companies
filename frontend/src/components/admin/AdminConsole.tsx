@@ -56,8 +56,9 @@ function useDarkMode() {
   return { dark, toggle };
 }
 
-// HR Managers use /hr; everyone else uses /admin. Signing in at the other
-// address moves the person to theirs, keeping any ?application= link.
+// HR Managers use /hr; everyone else uses /admin. An HR account that opens
+// /admin moves to /hr (keeping any ?application= link). /hr never forwards
+// to /admin: a non-HR session there is told so and offered a sign-out.
 const isHrOnly = (me: Me) => me.roles.length > 0 && me.roles.every((r) => r === "HR_MANAGER");
 
 export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | "hr" }) {
@@ -70,8 +71,7 @@ export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | 
   const load = useCallback(async () => {
     try {
       const result = await api<Me>("/api/auth/me");
-      const home = isHrOnly(result) ? "hr" : "admin";
-      if (home !== portal) { window.location.replace(`/${home}${window.location.search}`); return; }
+      if (portal === "admin" && isHrOnly(result)) { window.location.replace(`/hr${window.location.search}`); return; }
       setMe(result);
       const params = new URLSearchParams(window.location.search);
       const wanted: TabKey | null = params.has("application") ? "applications" : params.has("contact") ? "contact" : null;
@@ -91,6 +91,20 @@ export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | 
 
   if (me === undefined) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading the admin…</p></main>;
   if (me === null) return <SignIn onSignedIn={load} portal={portal} />;
+  if (portal === "hr" && !isHrOnly(me)) {
+    return (
+      <main className="adm adm-center">
+        <section className="adm-auth-card">
+          <Brand role="HR portal" />
+          <h1>This is the HR portal</h1>
+          <p className="adm-muted">You are signed in as {me.user.email} ({roleName(me.roles)}), which is not an HR account. Sign out to sign in with an HR account.</p>
+          <div className="admin-form-actions">
+            <button type="button" className="admin-primary-button" onClick={() => void signOut()}>Sign out</button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   const tabs = TABS.filter((t) => allowed(me, t));
   const current = tabs.find((t) => t.key === tab) ?? tabs[0];
