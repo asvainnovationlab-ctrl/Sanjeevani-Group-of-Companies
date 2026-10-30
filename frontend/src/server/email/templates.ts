@@ -5,7 +5,8 @@ export type EmailTemplate =
   | "password-reset"
   | "password-changed"
   | "application-received"
-  | "application-new";
+  | "application-new"
+  | "contact-new";
 
 type Payload = Record<string, unknown>;
 
@@ -90,6 +91,12 @@ export function renderEmail(template: EmailTemplate, payload: Payload): { html: 
         ] },
         { button: "Open in the admin", href: safeLink(str(payload, "link")) },
         { text: "The CV and contact details are only available in the admin, not in this email." },
+      ]);
+    case "contact-new":
+      return layout("New website enquiry", [
+        { rows: [["From", name], ["Subject", str(payload, "subject") || "(none)"], ["For", str(payload, "companyName")], ["Received", str(payload, "submittedAt")]] },
+        { button: "Read it in the admin", href: safeLink(str(payload, "link")) },
+        { text: "The message and contact details are only available in the admin, not in this email." },
       ]);
   }
 }

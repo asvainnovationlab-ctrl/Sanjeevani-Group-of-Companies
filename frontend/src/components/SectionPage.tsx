@@ -562,23 +562,40 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
     });
   }, [careerCompany, careerSearch, careerType]);
 
-  function submitContactForm(event: FormEvent<HTMLFormElement>) {
+  async function submitContactForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const name = String(form.get("name") ?? "").trim();
     const email = String(form.get("email") ?? "").trim();
     const phone = String(form.get("phone") ?? "").trim();
     const message = String(form.get("message") ?? "").trim();
-    const body = [
-      `Name: ${name}`,
-      `Email: ${email}`,
-      `Phone: ${phone || "Not provided"}`,
-      "",
-      message,
-    ].join("\n");
+    setContactNotice("Sending your message…");
 
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, message, website: String(form.get("website") ?? "") }),
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (response.ok) {
+        formElement.reset();
+        setContactNotice(result.message ?? "Thank you. Your message has been sent to our team.");
+        return;
+      }
+      // Validation problems and rate limits are shown; an unavailable server falls back to email.
+      if (response.status < 500) {
+        setContactNotice(result.error?.message ?? "Please check your details and try again.");
+        return;
+      }
+    } catch {
+      // network failure: fall through to the email draft
+    }
+
+    const body = [`Name: ${name}`, `Email: ${email}`, `Phone: ${phone || "Not provided"}`, "", message].join("\n");
     window.location.href = `mailto:info@sanjeevanigroup.com?subject=${encodeURIComponent("Website enquiry")}&body=${encodeURIComponent(body)}`;
-    setContactNotice("Your email application should open with your enquiry ready to send. If it does not, email info@sanjeevanigroup.com.");
+    setContactNotice("We could not send your message right now, so your email application should open with it ready to send. If it does not, email info@sanjeevanigroup.com.");
   }
 
   return (
@@ -1073,10 +1090,11 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
                   <label htmlFor="contact-phone">Phone <span>(optional)</span></label>
                   <input id="contact-phone" name="phone" type="tel" autoComplete="tel" placeholder="Enter phone" maxLength={40} />
                   <label htmlFor="contact-message">How can we help?</label>
-                  <textarea id="contact-message" name="message" placeholder="Write your message here" maxLength={4000} required />
+                  <textarea id="contact-message" name="message" placeholder="Write your message here" minLength={10} maxLength={4000} required />
+                  <input className="contact-honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
                   <button className="contact-submit" type="submit">Send message <span aria-hidden="true">↗</span></button>
                   {contactNotice && <p className="contact-notice" role="status">{contactNotice}</p>}
-                  <small>Your details are placed into an email draft and are not stored by this website.</small>
+                  <small>Your message is sent securely to our team and used only to reply to your enquiry. See our <a href="/privacy-policy">Privacy Policy</a>.</small>
                 </form>
               </div>
             </section>

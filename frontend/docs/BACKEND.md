@@ -14,7 +14,7 @@ it and what is done.
 | 4 | Company management and media uploads (Cloudinary) | **Done: API only, not yet run against a database or Cloudinary** |
 | 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | **Done: API only, not yet run against a database, Cloudinary or Resend** |
 | 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | **Done: API only, not yet run against a database** |
-| 7 | Contact messages, settings, exports | Not started |
+| 7 | Contact messages, settings, exports | **Done** (contact form on /contact now posts to the inbox) |
 | 8 | MongoDB import script, switch-over, production readiness | Not started |
 
 Until Phase 8 the live pages keep using MongoDB, and the current `/admin`
@@ -306,6 +306,26 @@ can't be archived without publishing a replacement.
 
 Not yet: the legal texts currently in `LegalDocument.tsx` are imported into
 the database during the switch-over (Phase 8).
+
+## Contact inbox, settings and audit log (Phase 7)
+
+- **Enquiries** (`POST /api/contact`, used by the /contact form): stored in
+  `ContactMessage`, honeypot + 5 per IP per hour, notification to
+  `CONTACT_NOTIFICATION_EMAIL` (or `HR_NOTIFICATION_EMAIL`) without the message
+  text. No confirmation is emailed to the sender, so the form can't be abused
+  to send mail to others. If the server is unreachable, the form falls back
+  to opening an email draft. Admin: `GET /api/admin/contact`,
+  `GET|PATCH /api/admin/contact/:id` (status NEW / IN_PROGRESS / RESOLVED /
+  SPAM, assignee), `GET /api/admin/contact/export` (CSV). Permissions
+  `contact.read` / `contact.update`, scoped by company.
+- **Settings** (`GET /api/settings` public, `GET|PUT /api/admin/settings` with
+  `settings.manage`): only these keys exist, each validated: `contact.email`,
+  `contact.phone`, `contact.address`, `social.facebook|youtube|linkedin|instagram`
+  (https only), `seo.defaultTitle`, `seo.defaultDescription`,
+  `careers.applicationsOpen`. `null` removes a key.
+- **Audit log viewer** (`GET /api/admin/audit`, `GET /api/admin/audit/export`,
+  `audit.read`): filter by action prefix, actor, entity, company, dates.
+  Company-scoped auditors only see their companies' entries.
 
 ## Changing the schema
 

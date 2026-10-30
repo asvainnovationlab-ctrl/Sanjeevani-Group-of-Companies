@@ -601,6 +601,7 @@ svg { display: block; }
 .contact-form input::placeholder, .contact-form textarea::placeholder { color: #788692; opacity: 1; }
 .contact-submit { min-height: 49px; margin-top: 1px; padding: 0 22px; display: inline-flex; align-self: flex-end; align-items: center; gap: 12px; border: 1px solid var(--brass); border-radius: 4px; background: var(--brass); color: #17291a; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: background .2s, transform .2s; }
 .contact-submit:hover { transform: translateY(-2px); background: #c59b55; }
+.contact-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .contact-notice { margin: 12px 0 0; color: #24543b; font-size: 11px; line-height: 1.6; }
 .contact-form > small { margin-top: 13px; color: #71806f; font-size: 10px; line-height: 1.6; }
 .career-board { min-height: 55vh; padding: 43px 0 82px; background: #f1f3f2; }
