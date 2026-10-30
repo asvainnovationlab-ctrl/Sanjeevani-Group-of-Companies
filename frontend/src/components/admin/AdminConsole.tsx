@@ -283,7 +283,8 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
 
   return (
     <>
-      <Welcome me={me} onOpen={onOpen} />
+      {/* Super Administrators see everything already; the banner is for scoped roles. */}
+      {!me.roles.includes("SUPER_ADMIN") && <Welcome me={me} onOpen={onOpen} />}
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {figures.length > 0 && (
         <ul className="adm-figures" aria-label="Work waiting">
