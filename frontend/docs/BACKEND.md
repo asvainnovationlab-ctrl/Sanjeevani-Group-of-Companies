@@ -15,7 +15,7 @@ it and what is done.
 | 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | **Done: API only, not yet run against a database, Cloudinary or Resend** |
 | 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | **Done: API only, not yet run against a database** |
 | 7 | Contact messages, settings, exports | **Done** (contact form on /contact now posts to the inbox) |
-| 8 | MongoDB import script, switch-over, production readiness | Not started |
+| 8 | Admin console, switch-over, production readiness | **In progress**: new `/admin` console done; public pages still read `src/data` |
 
 Until Phase 8 the live pages keep using MongoDB, and the current `/admin`
 page keeps its shared password. The new account APIs below only work once a
@@ -326,6 +326,30 @@ the database during the switch-over (Phase 8).
 - **Audit log viewer** (`GET /api/admin/audit`, `GET /api/admin/audit/export`,
   `audit.read`): filter by action prefix, actor, entity, company, dates.
   Company-scoped auditors only see their companies' entries.
+
+## Admin console (Phase 8)
+
+`/admin` is the new console (the shared-password Mongo admin moved to
+`/admin/legacy` until the switch-over). Sign-in uses individual accounts;
+"Forgot your password?" emails a reset link. Email links open
+`/admin/accept-invite` and `/admin/reset-password`. Tabs appear only for the
+permissions you hold:
+
+- **Applications**: search/filter, detail drawer with CV download, status
+  changes (only the allowed next steps), history, internal notes, CSV export,
+  delete.
+- **Vacancies**: create/edit (Nepal-date deadline, age and NPR salary range),
+  publish / close / archive / restore.
+- **Enquiries**: inbox with status changes and CSV export.
+- **Users**: invite, roles per group or company, suspend / reactivate.
+- **Audit log**, **Settings**, **My account** (change password).
+
+Companies, leaders, newsroom, homepage, FAQ and legal pages are managed
+through their APIs (above); their editing screens are not built yet.
+
+MongoDB import: not needed. The existing Mongo data was confirmed as
+disposable, and the database was filled from the site's own content
+(`npm run db:seed`).
 
 ## Changing the schema
 
