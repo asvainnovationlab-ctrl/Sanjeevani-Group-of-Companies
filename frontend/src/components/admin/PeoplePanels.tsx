@@ -175,7 +175,11 @@ const ROLES: { key: string; name: string; scope: "group" | "company" | "either" 
   { key: "AUDITOR", name: "Read-only Auditor", scope: "either" },
 ];
 
-function RolesEditor({ value, onChange, companies }: { value: Membership[]; onChange: (v: Membership[]) => void; companies: { id: string; name: string }[] }) {
+// Super and Group Administrator accounts are handled only by a Super
+// Administrator (the server refuses anyone else), so others are not offered them.
+const ADMIN_ROLES = ["SUPER_ADMIN", "GROUP_ADMIN"];
+
+function RolesEditor({ value, onChange, companies, canGrantAdmin }: { value: Membership[]; onChange: (v: Membership[]) => void; companies: { id: string; name: string }[]; canGrantAdmin: boolean }) {
   // A company role needs a company: pick the first one once the list has loaded.
   useEffect(() => {
     if (!companies.length) return;
@@ -193,7 +197,7 @@ function RolesEditor({ value, onChange, companies }: { value: Membership[]; onCh
               const companyId = role.scope === "group" ? null : role.scope === "company" ? m.companyId ?? companies[0]?.id ?? null : m.companyId;
               onChange(value.map((x, j) => (j === i ? { roleKey: role.key, companyId } : x)));
             }}>
-              {ROLES.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
+              {ROLES.filter((r) => canGrantAdmin || !ADMIN_ROLES.includes(r.key)).map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
             </select>
             <select aria-label="Applies to" value={m.companyId ?? ""} disabled={scope === "group"} onChange={(e) => onChange(value.map((x, j) => (j === i ? { ...x, companyId: e.target.value || null } : x)))}>
               {scope !== "company" && <option value="">Whole group</option>}
@@ -243,6 +247,7 @@ export function UsersPanel({ me }: { me: Me }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
+  const isSuper = me.roles.includes("SUPER_ADMIN");
 
   const load = useCallback(async () => {
     try {
@@ -272,7 +277,7 @@ export function UsersPanel({ me }: { me: Me }) {
             <label>Full name<input value={invite.name} onChange={(e) => setInvite({ ...invite, name: e.target.value })} required maxLength={120} /></label>
             <label>Email<input type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} required /></label>
           </div>
-          <RolesEditor value={invite.memberships} onChange={(memberships) => setInvite({ ...invite, memberships })} companies={companies} />
+          <RolesEditor value={invite.memberships} onChange={(memberships) => setInvite({ ...invite, memberships })} companies={companies} canGrantAdmin={isSuper} />
           <AccessPreview roles={invite.memberships.map((m) => m.roleKey)} />
           <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Send invitation</button></div>
         </form>
@@ -287,7 +292,7 @@ export function UsersPanel({ me }: { me: Me }) {
               <td>
                 {editingRoles?.id === u.id ? (
                   <>
-                    <RolesEditor value={editingRoles.memberships} onChange={(memberships) => setEditingRoles({ id: u.id, memberships })} companies={companies} />
+                    <RolesEditor value={editingRoles.memberships} onChange={(memberships) => setEditingRoles({ id: u.id, memberships })} companies={companies} canGrantAdmin={isSuper} />
                     <div className="admin-button-row">
                       <button type="button" className="admin-primary-button" onClick={() => act(async () => { await api(`/api/admin/users/${u.id}/memberships`, { method: "PUT", body: { memberships: editingRoles.memberships } }); setEditingRoles(null); }, "Roles updated.")}>Save roles</button>
                       <button type="button" className="admin-secondary-button" onClick={() => setEditingRoles(null)}>Cancel</button>
@@ -301,9 +306,11 @@ export function UsersPanel({ me }: { me: Me }) {
               <td><span className={`admin-badge admin-badge-${u.status.toLowerCase()}`}>{label(u.status)}</span>{u.lockedUntil && new Date(u.lockedUntil) > new Date() && <small>Locked after failed sign-ins</small>}</td>
               <td>{formatDate(u.lastLoginAt)}</td>
               <td className="admin-button-row">
+                {!isSuper && u.memberships.some((m) => ADMIN_ROLES.includes(m.role.key)) ? <small>Managed by a Super Administrator</small> : <>
                 <button type="button" className="admin-secondary-button" onClick={() => setEditingRoles({ id: u.id, memberships: u.memberships.map((m) => ({ roleKey: m.role.key, companyId: m.companyId })) })}>Roles</button>
                 {u.id !== me.user.id && u.status === "ACTIVE" && <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/users/${u.id}`, { method: "PATCH", body: { status: "SUSPENDED" } }), `${u.name} suspended and signed out.`)}>Suspend</button>}
                 {u.status === "SUSPENDED" && <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/users/${u.id}`, { method: "PATCH", body: { status: "ACTIVE" } }), `${u.name} reactivated.`)}>Reactivate</button>}
+                </>}
               </td>
             </tr>
           ))}

@@ -43,7 +43,7 @@ export default function SetPasswordForm({ mode }: { mode: "invite" | "reset" }) 
         ) : done ? (
           <>
             <p className="admin-message admin-notice" role="status">{done}</p>
-            <Link className="admin-primary-button" href="/admin">Go to sign in</Link>
+            <Link className="admin-primary-button" href="/admin/login">Go to sign in</Link>
           </>
         ) : (
           <>

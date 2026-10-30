@@ -29,7 +29,8 @@ describe("company-scoped access", () => {
     assert.equal(can(ctx, "content.publish", null), true);
     assert.deepEqual(companyScope(ctx, "vacancy.read"), { all: true });
     assert.deepEqual(companyWhere(ctx, "vacancy.read"), {});
-    assert.equal(can(ctx, "user.manage"), false);
+    assert.equal(can(ctx, "user.manage"), true); // limited to non-administrators by highRoleProblem
+    assert.equal(can(ctx, "role.manage"), false);
   });
 
   it("grants from several memberships combine", () => {

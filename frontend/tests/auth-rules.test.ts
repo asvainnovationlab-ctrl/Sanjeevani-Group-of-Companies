@@ -4,7 +4,7 @@ import { isSameOrigin } from "../src/server/auth/origin";
 import { hashPassword, passwordProblem, verifyPassword } from "../src/server/auth/password";
 import { SESSION_IDLE_MS, checkSession, isLocked, shouldTouch } from "../src/server/auth/session-rules";
 import { hashIdentifier, randomToken, safeEqual, sha256 } from "../src/server/security/crypto";
-import { isGroupSuperAdmin, membershipProblem } from "../src/server/users/rules";
+import { highRoleProblem, isGroupSuperAdmin, membershipProblem } from "../src/server/users/rules";
 
 const now = new Date("2026-10-29T06:00:00Z");
 const minutes = (n: number) => new Date(now.getTime() - n * 60 * 1000);
@@ -119,5 +119,17 @@ describe("membership rules", () => {
   it("detects a group-wide super admin", () => {
     assert.equal(isGroupSuperAdmin([{ roleKey: "SUPER_ADMIN", companyId: null }]), true);
     assert.equal(isGroupSuperAdmin([{ roleKey: "GROUP_ADMIN", companyId: null }]), false);
+  });
+  it("keeps the high-level roles in a Super Administrator's hands", () => {
+    const hr = [{ roleKey: "HR_MANAGER", companyId: "c1" }];
+    const group = [{ roleKey: "GROUP_ADMIN", companyId: null }];
+    const superAdmin = [{ roleKey: "SUPER_ADMIN", companyId: null }];
+    assert.equal(highRoleProblem(["GROUP_ADMIN"], [], hr), null);
+    assert.equal(highRoleProblem(["GROUP_ADMIN"], hr, [{ roleKey: "CONTENT_EDITOR", companyId: null }]), null);
+    assert.ok(highRoleProblem(["GROUP_ADMIN"], [], group));
+    assert.ok(highRoleProblem(["GROUP_ADMIN"], hr, superAdmin));
+    assert.ok(highRoleProblem(["GROUP_ADMIN"], superAdmin));
+    assert.ok(highRoleProblem(["GROUP_ADMIN"], group, hr));
+    assert.equal(highRoleProblem(["SUPER_ADMIN"], superAdmin, group), null);
   });
 });

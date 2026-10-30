@@ -1,6 +1,6 @@
-import AdminConsole from "@/components/admin/AdminConsole";
+import { redirect } from "next/navigation";
 
-// The HR portal: the same console, entered at /hr by HR Managers.
+// There is one sign-in for every role; /hr is kept so old links still work.
 export default function HrPage() {
-  return <AdminConsole portal="hr" />;
+  redirect("/admin/login");
 }

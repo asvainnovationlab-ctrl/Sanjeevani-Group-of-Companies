@@ -56,12 +56,17 @@ function useDarkMode() {
   return { dark, toggle };
 }
 
-// HR Managers use /hr; everyone else uses /admin. An HR account that opens
-// /admin moves to /hr (keeping any ?application= link). /hr never forwards
-// to /admin: a non-HR session there is told so and offered a sign-out.
-const isHrOnly = (me: Me) => me.roles.length > 0 && me.roles.every((r) => r === "HR_MANAGER");
+// Everyone signs in at /admin/login. What they see afterwards comes only from
+// the roles and companies the server returns for their account.
+const LOGIN = "/admin/login";
 
-export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | "hr" }) {
+// Only admin pages are allowed as the place to return to after signing in,
+// so a crafted ?next= cannot send someone to another site.
+export function safeNext(next: string | null): string {
+  return next && /^\/admin(?:[/?#]|$)/.test(next) && !next.startsWith(LOGIN) ? next : "/admin";
+}
+
+export default function AdminConsole() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [tab, setTab] = useState<TabKey>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,7 +76,6 @@ export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | 
   const load = useCallback(async () => {
     try {
       const result = await api<Me>("/api/auth/me");
-      if (portal === "admin" && isHrOnly(result)) { window.location.replace(`/hr${window.location.search}`); return; }
       setMe(result);
       const params = new URLSearchParams(window.location.search);
       const wanted: TabKey | null = params.has("application") ? "applications" : params.has("contact") ? "contact" : null;
@@ -80,7 +84,7 @@ export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | 
     } catch {
       setMe(null);
     }
-  }, [portal]);
+  }, []);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -90,21 +94,7 @@ export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | 
   }
 
   if (me === undefined) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading the admin…</p></main>;
-  if (me === null) return <SignIn onSignedIn={load} portal={portal} />;
-  if (portal === "hr" && !isHrOnly(me)) {
-    return (
-      <main className="adm adm-center">
-        <section className="adm-auth-card">
-          <Brand role="HR portal" />
-          <h1>This is the HR portal</h1>
-          <p className="adm-muted">You are signed in as {me.user.email} ({roleName(me.roles)}), which is not an HR account. Sign out to sign in with an HR account.</p>
-          <div className="admin-form-actions">
-            <button type="button" className="admin-primary-button" onClick={() => void signOut()}>Sign out</button>
-          </div>
-        </section>
-      </main>
-    );
-  }
+  if (me === null) return <ToLogin />;
 
   const tabs = TABS.filter((t) => allowed(me, t));
   const current = tabs.find((t) => t.key === tab) ?? tabs[0];
@@ -392,56 +382,99 @@ function Dashboard({ me, onOpen, companyId = "" }: { me: Me; onOpen: (tab: TabKe
 
 // -------------------------------------------------------------------- sign-in
 
-function SignIn({ onSignedIn, portal }: { onSignedIn: () => void; portal: "admin" | "hr" }) {
+// Sends a signed-out visitor to the login page, remembering where they were.
+function ToLogin() {
+  useEffect(() => {
+    const here = window.location.pathname + window.location.search;
+    window.location.replace(here === "/admin" ? LOGIN : `${LOGIN}?next=${encodeURIComponent(here)}`);
+  }, []);
+  return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Opening the sign-in page…</p></main>;
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const goOn = () => window.location.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
+
+// The one sign-in page for every role (/admin/login).
+export function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // Already signed in: go straight on.
+  useEffect(() => {
+    api<Me>("/api/auth/me").then(goOn).catch(() => setChecking(false));
+  }, []);
+
+  function validate() {
+    const problems: { email?: string; password?: string } = {};
+    if (!email.trim()) problems.email = "Enter your email address.";
+    else if (!EMAIL_PATTERN.test(email.trim())) problems.email = "Enter a valid email address, like name@example.com.";
+    if (!forgot && !password) problems.password = "Enter your password.";
+    setFieldErrors(problems);
+    return Object.keys(problems).length === 0;
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
     setNotice("");
+    if (!validate()) return;
     setBusy(true);
     try {
       if (forgot) {
-        const result = await api<{ message: string }>("/api/auth/password-reset", { body: { email } });
+        const result = await api<{ message: string }>("/api/auth/password-reset", { body: { email: email.trim() } });
         setNotice(result.message);
       } else {
-        await api("/api/auth/login", { body: { email, password } });
-        onSignedIn();
+        await api("/api/auth/login", { body: { email: email.trim(), password } });
+        goOn();
+        return;
       }
     } catch (e) {
-      setError(e instanceof ApiError && e.status === 503 ? "The admin is temporarily unavailable. Please try again shortly." : (e as Error).message);
-    } finally {
-      setBusy(false);
+      setError(e instanceof ApiError && e.status === 503 ? "Sign-in is temporarily unavailable. Please try again shortly." : (e as Error).message);
     }
+    setBusy(false);
   }
+
+  if (checking) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading…</p></main>;
 
   return (
     <main className="adm adm-center">
       <section className="adm-auth-card">
-        <Brand role={portal === "hr" ? "HR portal" : "Admin"} />
+        <Brand role="Admin" />
         <h1>{forgot ? "Reset your password" : "Sign in"}</h1>
-        <p className="adm-muted">{forgot ? "Enter your email and we will send you a reset link." : portal === "hr" ? "Use your HR account." : "Use your own admin account."}</p>
+        <p className="adm-muted">{forgot ? "Enter your email and we will send you a reset link." : "Sign in with your own account. You will see the sections your role allows."}</p>
         {error && <p className="admin-message admin-error" role="alert">{error}</p>}
         {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
-        <form onSubmit={submit} className="adm-auth-form">
-          <label htmlFor="admin-email">Email</label>
-          <input id="admin-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <form onSubmit={submit} className="adm-auth-form" noValidate>
+          <label htmlFor="admin-email">Email address</label>
+          <input id="admin-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={Boolean(fieldErrors.email)} aria-describedby={fieldErrors.email ? "admin-email-error" : undefined} readOnly={busy} />
+          {fieldErrors.email && <p id="admin-email-error" className="adm-field-error">{fieldErrors.email}</p>}
           {!forgot && (
             <>
               <label htmlFor="admin-password">Password</label>
-              <input id="admin-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <span className="adm-password">
+                <input id="admin-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={Boolean(fieldErrors.password)} aria-describedby={fieldErrors.password ? "admin-password-error" : undefined} readOnly={busy} />
+                <button type="button" className="adm-password-toggle" onClick={() => setShowPassword(!showPassword)} aria-pressed={showPassword} aria-controls="admin-password">
+                  {showPassword ? "Hide" : "Show"}<span className="visually-hidden"> password</span>
+                </button>
+              </span>
+              {fieldErrors.password && <p id="admin-password-error" className="adm-field-error">{fieldErrors.password}</p>}
             </>
           )}
-          <button className="admin-primary-button" type="submit" disabled={busy}>{busy ? "Please wait…" : forgot ? "Send reset link" : "Sign in"}</button>
+          <button className="admin-primary-button" type="submit" disabled={busy} aria-busy={busy}>
+            {busy && <span className="adm-spinner" aria-hidden="true" />}
+            {busy ? (forgot ? "Sending…" : "Signing in…") : forgot ? "Send reset link" : "Sign in"}
+          </button>
         </form>
         <div className="adm-auth-links">
-          <button className="admin-link-button" type="button" onClick={() => { setForgot(!forgot); setError(""); setNotice(""); }}>
-            {forgot ? "Back to sign in" : "Forgot your password?"}
+          <button className="admin-link-button" type="button" onClick={() => { setForgot(!forgot); setError(""); setNotice(""); setFieldErrors({}); }}>
+            {forgot ? "Back to sign in" : "Forgot password?"}
           </button>
           <Link className="admin-link-button" href="/">Back to website</Link>
         </div>

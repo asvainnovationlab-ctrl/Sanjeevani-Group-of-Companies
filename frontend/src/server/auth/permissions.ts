@@ -58,9 +58,10 @@ export const SYSTEM_ROLES: Record<string, { name: string; description: string; s
   },
   GROUP_ADMIN: {
     name: "Group Administrator",
-    description: "Manages group-wide information and the companies it is assigned.",
+    description: "Manages group-wide information, the companies and their users (not administrators).",
     scope: "group",
-    permissions: ALL.filter((key) => key !== "role.manage" && key !== "user.manage"),
+    // user.manage is limited by highRoleProblem: administrators stay with the Super Administrator.
+    permissions: ALL.filter((key) => key !== "role.manage"),
   },
   COMPANY_ADMIN: {
     name: "Company Administrator",

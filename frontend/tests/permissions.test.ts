@@ -13,11 +13,10 @@ describe("role permission matrix", () => {
     }
   });
 
-  it("only the super administrator manages users and roles", () => {
+  it("only the two administrator roles manage users, and only the super administrator roles", () => {
     for (const key of Object.keys(SYSTEM_ROLES)) {
-      const expected = key === "SUPER_ADMIN";
-      assert.equal(roleHasPermission(key, "user.manage"), expected, `${key} user.manage`);
-      assert.equal(roleHasPermission(key, "role.manage"), expected, `${key} role.manage`);
+      assert.equal(roleHasPermission(key, "user.manage"), key === "SUPER_ADMIN" || key === "GROUP_ADMIN", `${key} user.manage`);
+      assert.equal(roleHasPermission(key, "role.manage"), key === "SUPER_ADMIN", `${key} role.manage`);
     }
   });
 

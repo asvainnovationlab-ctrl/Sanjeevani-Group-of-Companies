@@ -93,6 +93,17 @@ body:has(.adm) .theme-switcher { display: none; }
 .adm-auth-form { display: grid; gap: var(--space-xs); margin-top: var(--space-xs); }
 .adm-auth-form label { margin-top: var(--space-xs); font-size: var(--text-sm); font-weight: 500; }
 .adm-auth-form .admin-primary-button { margin-top: var(--space-md); }
+.adm-password { position: relative; display: block; }
+.adm-password input { padding-right: 72px; }
+.adm-password-toggle { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); min-height: 30px; padding: 0 var(--space-xs); border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-ink); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.adm-password-toggle:hover { background: var(--color-paper-2); }
+.adm-password-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.adm-field-error { margin: 0; color: #b42318; font-size: var(--text-sm); }
+.adm-auth-form input[aria-invalid="true"] { border-color: #b42318; }
+.adm-auth-form .admin-primary-button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); }
+.adm-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: adm-spin .7s linear infinite; }
+@keyframes adm-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .adm-spinner { animation-duration: 2s; } }
 .adm-auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-sm); margin-top: var(--space-xs); }
 
 /* ---------------------------------------------- controls (shared by panels) */

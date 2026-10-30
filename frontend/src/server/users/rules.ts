@@ -23,3 +23,15 @@ export function membershipProblem(memberships: MembershipRequest[], knownCompany
 export function isGroupSuperAdmin(memberships: MembershipRequest[]): boolean {
   return memberships.some((m) => m.roleKey === "SUPER_ADMIN" && m.companyId === null);
 }
+
+// Super Administrator and Group Administrator are the high-level roles. Only a
+// Super Administrator may grant them, or change an account that holds one;
+// a Group Administrator manages everyone else.
+export const HIGH_ROLES = ["SUPER_ADMIN", "GROUP_ADMIN"];
+
+export function highRoleProblem(actorRoles: string[], target: MembershipRequest[], requested: MembershipRequest[] = []): string | null {
+  if (actorRoles.includes("SUPER_ADMIN")) return null;
+  if (target.some((m) => HIGH_ROLES.includes(m.roleKey))) return "Only a Super Administrator can change an administrator's account.";
+  if (requested.some((m) => HIGH_ROLES.includes(m.roleKey))) return "Only a Super Administrator can give the Super Administrator or Group Administrator role.";
+  return null;
+}

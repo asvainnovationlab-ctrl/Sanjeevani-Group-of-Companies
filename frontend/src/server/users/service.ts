@@ -1,15 +1,22 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db";
 import { recordAudit } from "@/server/audit";
-import { badRequest, conflict, notFound } from "@/server/http/errors";
+import { badRequest, conflict, forbidden, notFound } from "@/server/http/errors";
 import { issuePasswordToken } from "@/server/auth/service";
 import { revokeAllSessions, type SessionUser } from "@/server/auth/session";
 import { INVITE_TOKEN_MS } from "@/server/auth/session-rules";
 import { deliverSoon } from "@/server/email/sender";
-import { isGroupSuperAdmin, membershipProblem, type MembershipRequest } from "@/server/users/rules";
+import { highRoleProblem, isGroupSuperAdmin, membershipProblem, type MembershipRequest } from "@/server/users/rules";
 
 // Admin user management. Routes check "user.manage" (group-wide) before
-// calling these; the services enforce the invariants that must always hold.
+// calling these; the services enforce the invariants that must always hold,
+// including that only a Super Administrator handles administrator accounts.
+
+async function assertMayManage(db: Prisma.TransactionClient, actor: SessionUser, userId: string | null, requested: MembershipRequest[] = []) {
+  const target = userId ? (await db.membership.findMany({ where: { userId }, select: { companyId: true, role: { select: { key: true } } } })).map((m) => ({ roleKey: m.role.key, companyId: m.companyId })) : [];
+  const problem = highRoleProblem(actor.access.roles, target, requested);
+  if (problem) throw forbidden(problem);
+}
 
 // Serializable so two admins demoting each other at the same moment cannot
 // both pass the last-Super-Administrator check.
@@ -77,6 +84,7 @@ export async function inviteUser(
     if (await tx.user.findUnique({ where: { email: input.email }, select: { id: true } })) {
       throw conflict("An admin account with this email already exists.");
     }
+    await assertMayManage(tx, actor, null, input.memberships);
     const memberships = await validateMemberships(tx, input.memberships);
     const user = await tx.user.create({
       data: { email: input.email, name: input.name, status: "INVITED", memberships: { create: memberships } },
@@ -102,6 +110,7 @@ export async function updateUser(
   return prisma.$transaction(async (tx) => {
     const before = await tx.user.findUnique({ where: { id: userId }, select: { status: true, name: true, passwordHash: true } });
     if (!before) throw notFound("User not found.");
+    await assertMayManage(tx, actor, userId);
 
     if (input.status && input.status !== "ACTIVE") {
       if (userId === actor.id) throw badRequest("You cannot suspend or deactivate your own account.");
@@ -146,6 +155,7 @@ export async function setMemberships(
     const current = await tx.membership.findMany({ where: { userId }, select: { companyId: true, role: { select: { key: true } } } });
     const before = current.map((m) => ({ roleKey: m.role.key, companyId: m.companyId }));
     if (!(await tx.user.findUnique({ where: { id: userId }, select: { id: true } }))) throw notFound("User not found.");
+    await assertMayManage(tx, actor, userId, requested);
 
     if (isGroupSuperAdmin(before) && !isGroupSuperAdmin(requested) && (await isActiveSuperAdmin(tx, userId))) {
       await assertAnotherSuperAdmin(tx, userId);
