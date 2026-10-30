@@ -4,6 +4,7 @@ import { businesses } from "@/data/businesses";
 import { getCompanySlug } from "@/data/companyProfiles";
 import { allLeaders, getLeader } from "@/data/leaders";
 import { careerAreas, getCareerArea } from "@/data/careers";
+import { loadSiteVacancies } from "@/server/public/vacancies";
 
 // Sub-pages under two sections:
 //   /businesses/<slug>  company profiles. Slugs not in the bundled list still
@@ -33,7 +34,9 @@ export function generateMetadata({ params }: { params: { section: string; slug: 
   return { title: `${business?.name ?? "Our businesses"} | Sanjeevani Group of Companies` };
 }
 
-export default function SubPage({ params }: { params: { section: string; slug: string } }) {
+export const revalidate = 60;
+
+export default async function SubPage({ params }: { params: { section: string; slug: string } }) {
   if (params.section === "businesses") return <SectionPage section="businesses" companySlug={params.slug} />;
   if (params.section === "leadership") {
     const leader = getLeader(params.slug);
@@ -42,7 +45,7 @@ export default function SubPage({ params }: { params: { section: string; slug: s
   }
   if (params.section === "careers") {
     if (!getCareerArea(params.slug)) notFound();
-    return <SectionPage section="careers" careerAreaSlug={params.slug} />;
+    return <SectionPage section="careers" careerAreaSlug={params.slug} siteVacancies={await loadSiteVacancies()} />;
   }
   notFound();
 }

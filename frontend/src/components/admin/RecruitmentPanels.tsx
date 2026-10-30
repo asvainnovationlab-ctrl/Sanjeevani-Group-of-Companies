@@ -175,13 +175,13 @@ export function Pager({ page, pageSize, total, onPage }: { page: number; pageSiz
 
 type Company = { id: string; name: string; locations: { id: string; name: string }[] };
 type VacancyRow = {
-  id: string; title: string; referenceCode: string; status: string; slug: string; companyId: string; locationText: string; summary: string;
+  id: string; title: string; referenceCode: string; status: string; slug: string; companyId: string; careerAreaId: string | null; skills: string[]; locationText: string; summary: string;
   requiredEducation: string; requiredExperience: string; responsibilities: string[]; qualifications: string[]; minAge: number | null; maxAge: number | null;
   salaryMin: string | null; salaryMax: string | null; salaryDisclosed: boolean; deadline: string | null; openings: number; employmentType: string; updatedAt: string;
   company: { name: string }; _count: { applications: number };
 };
 
-const EMPTY_VACANCY = { companyId: "", title: "", locationText: "", summary: "", requiredEducation: "", requiredExperience: "", responsibilities: "", qualifications: "", minAge: "", maxAge: "", salaryMin: "", salaryMax: "", salaryDisclosed: false, deadline: "", openings: "1", employmentType: "FULL_TIME" };
+const EMPTY_VACANCY = { companyId: "", careerAreaId: "", skills: "", title: "", locationText: "", summary: "", requiredEducation: "", requiredExperience: "", responsibilities: "", qualifications: "", minAge: "", maxAge: "", salaryMin: "", salaryMax: "", salaryDisclosed: false, deadline: "", openings: "1", employmentType: "FULL_TIME" };
 type VacancyForm = typeof EMPTY_VACANCY;
 
 const toDay = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kathmandu" }).format(new Date(iso)) : "");
@@ -191,6 +191,7 @@ const lines = (v: string) => v.split("\n").map((s) => s.trim()).filter(Boolean);
 export function VacanciesPanel({ me }: { me: Me }) {
   const [rows, setRows] = useState<VacancyRow[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [areas, setAreas] = useState<{ id: string; title: string }[]>([]);
   const [editing, setEditing] = useState<{ id: string | null; updatedAt?: string; form: VacancyForm } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -198,7 +199,9 @@ export function VacanciesPanel({ me }: { me: Me }) {
 
   const load = useCallback(async () => {
     try {
-      setRows((await api<{ vacancies: VacancyRow[] }>("/api/admin/vacancies")).vacancies);
+      const result = await api<{ vacancies: VacancyRow[]; careerAreas: { id: string; title: string }[] }>("/api/admin/vacancies");
+      setRows(result.vacancies);
+      setAreas(result.careerAreas);
       if (hasPermission(me, "company.read")) setCompanies((await api<{ companies: Company[] }>("/api/admin/companies")).companies);
     } catch (e) {
       setError((e as Error).message);
@@ -217,7 +220,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
     setEditing({
       id: row.id, updatedAt: row.updatedAt,
       form: {
-        companyId: row.companyId, title: row.title, locationText: row.locationText, summary: row.summary, requiredEducation: row.requiredEducation, requiredExperience: row.requiredExperience,
+        companyId: row.companyId, careerAreaId: row.careerAreaId ?? "", skills: row.skills.join("\n"), title: row.title, locationText: row.locationText, summary: row.summary, requiredEducation: row.requiredEducation, requiredExperience: row.requiredExperience,
         responsibilities: row.responsibilities.join("\n"), qualifications: row.qualifications.join("\n"), minAge: row.minAge?.toString() ?? "", maxAge: row.maxAge?.toString() ?? "",
         salaryMin: row.salaryMin ? String(Number(row.salaryMin)) : "", salaryMax: row.salaryMax ? String(Number(row.salaryMax)) : "", salaryDisclosed: row.salaryDisclosed,
         deadline: toDay(row.deadline), openings: String(row.openings), employmentType: row.employmentType,
@@ -230,7 +233,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
     if (!editing) return;
     const f = editing.form;
     const body = {
-      companyId: f.companyId, title: f.title, locationText: f.locationText, summary: f.summary, requiredEducation: f.requiredEducation, requiredExperience: f.requiredExperience,
+      companyId: f.companyId, careerAreaId: f.careerAreaId || null, skills: lines(f.skills), title: f.title, locationText: f.locationText, summary: f.summary, requiredEducation: f.requiredEducation, requiredExperience: f.requiredExperience,
       responsibilities: lines(f.responsibilities), qualifications: lines(f.qualifications), minAge: numOrNull(f.minAge), maxAge: numOrNull(f.maxAge),
       salaryMin: numOrNull(f.salaryMin), salaryMax: numOrNull(f.salaryMax), salaryDisclosed: f.salaryDisclosed, deadline: f.deadline || null,
       openings: Number(f.openings) || 1, employmentType: f.employmentType,
@@ -249,7 +252,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
     <>
       <div className="admin-list-heading">
         <div><h2>Vacancies</h2><p>{loading ? "Loading…" : `${rows.length} vacancies · drafts are only visible here`}</p></div>
-        {hasPermission(me, "vacancy.update") && <button className="admin-primary-button" type="button" onClick={() => setEditing({ id: null, form: { ...EMPTY_VACANCY, companyId: companies[0]?.id ?? "" } })}>New vacancy <span aria-hidden="true">＋</span></button>}
+        {hasPermission(me, "vacancy.update") && <button className="admin-primary-button" type="button" onClick={() => setEditing({ id: null, form: { ...EMPTY_VACANCY, companyId: companies[0]?.id ?? "", careerAreaId: areas[0]?.id ?? "" } })}>New vacancy <span aria-hidden="true">＋</span></button>}
       </div>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
@@ -258,6 +261,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
           <div className="admin-form-heading"><h3>{editing.id ? "Edit vacancy" : "New vacancy"}</h3><button className="admin-close-button" type="button" onClick={() => setEditing(null)} aria-label="Close">×</button></div>
           <div className="admin-form-grid">
             <label>Company<select value={editing.form.companyId} onChange={set("companyId")} required>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+            <label>Career area (where it appears on /careers)<select value={editing.form.careerAreaId} onChange={set("careerAreaId")} required><option value="">Choose…</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}</select></label>
             <label>Position title<input value={editing.form.title} onChange={set("title")} required maxLength={160} /></label>
             <label>Location shown<input value={editing.form.locationText} onChange={set("locationText")} required maxLength={160} placeholder="Pokhara, Nepal" /></label>
             <label>Deadline (Nepal date)<input type="date" value={editing.form.deadline} onChange={set("deadline")} /></label>
@@ -273,6 +277,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
           </div>
           <label className="admin-description-field">Summary<textarea value={editing.form.summary} onChange={set("summary")} maxLength={600} /></label>
           <label className="admin-description-field">Responsibilities (one per line)<textarea value={editing.form.responsibilities} onChange={set("responsibilities")} /></label>
+          <label className="admin-description-field">Skills (one per line)<textarea value={editing.form.skills} onChange={set("skills")} /></label>
           <label className="admin-description-field">Qualifications (one per line)<textarea value={editing.form.qualifications} onChange={set("qualifications")} /></label>
           <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Save</button><button className="admin-secondary-button" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
         </form>

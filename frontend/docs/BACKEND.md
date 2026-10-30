@@ -15,7 +15,7 @@ it and what is done.
 | 5 | Vacancies and applications on PostgreSQL, private CV storage, emails (Resend) | **Done: API only, not yet run against a database, Cloudinary or Resend** |
 | 6 | Leaders, newsroom, homepage, FAQs, legal pages with review workflow | **Done: API only, not yet run against a database** |
 | 7 | Contact messages, settings, exports | **Done** (contact form on /contact now posts to the inbox) |
-| 8 | Admin console, switch-over, production readiness | **In progress**: new `/admin` console done; public pages still read `src/data` |
+| 8 | Admin console, switch-over, production readiness | **In progress**: `/admin` console and careers pages on PostgreSQL done; company, leader, newsroom and legal pages still read `src/data` |
 
 Until Phase 8 the live pages keep using MongoDB, and the current `/admin`
 page keeps its shared password. The new account APIs below only work once a
@@ -349,6 +349,16 @@ permissions you hold:
 
 Companies, leaders, newsroom, homepage, FAQ and legal pages are managed
 through their APIs (above); their editing screens are not built yet.
+
+**Careers pages now read PostgreSQL.** `/careers`, `/careers/<area>` and
+`/careers/<area>/<vacancy>` show the vacancies published in `/admin`
+(`src/server/public/vacancies.ts` maps them to the existing page components).
+Publishing, editing, closing or archiving refreshes the pages at once; they
+also refresh at most every 60 s. A vacancy needs a career area to appear.
+The application form posts to `/api/applications` and shows the reference
+number. The seeded sample vacancies are drafts, so the site shows none until
+HR publishes real ones. Without `DATABASE_URL` (local only) the pages fall
+back to the samples in `src/data/careers.ts`.
 
 MongoDB import: not needed. The existing Mongo data was confirmed as
 disposable, and the database was filled from the site's own content

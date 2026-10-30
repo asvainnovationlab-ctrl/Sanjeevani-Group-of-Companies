@@ -36,6 +36,7 @@ export default function ApplicationForm({ area, vacancy, hiddenUntilApply = fals
   const [shown, setShown] = useState(!hiddenUntilApply);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [reference, setReference] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvError, setCvError] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -120,9 +121,10 @@ export default function ApplicationForm({ area, vacancy, hiddenUntilApply = fals
     setStatus("sending");
     setMessage("");
     try {
-      const response = await fetch("/api/careers/applications", { method: "POST", body: new FormData(form) });
-      const result = (await response.json().catch(() => ({}))) as { message?: string };
-      if (!response.ok) throw new Error(result.message || "Your application could not be sent. Please try again.");
+      const response = await fetch("/api/applications", { method: "POST", body: new FormData(form) });
+      const result = (await response.json().catch(() => ({}))) as { referenceNumber?: string | null; error?: { message?: string } };
+      if (!response.ok) throw new Error(result.error?.message || "Your application could not be sent. Please try again.");
+      setReference(result.referenceNumber ?? "");
       setStatus("sent");
       setCvFile(null);
       form.reset();
@@ -158,6 +160,7 @@ export default function ApplicationForm({ area, vacancy, hiddenUntilApply = fals
             <span className="vc-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span>
             <h3>Application sent</h3>
             <p>Thank you. Your application{vacancy ? ` for ${vacancy.title}` : ""} has been received. The company will contact you if you are shortlisted.</p>
+            {reference && <p>Your reference number is <strong>{reference}</strong>. Please quote it if you contact us about this application.</p>}
             <button className="bx-button" type="button" onClick={() => setStatus("idle")}>Send another application</button>
           </div>
         ) : (

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import SectionPage from "@/components/SectionPage";
+import { loadSiteVacancies } from "@/server/public/vacancies";
 
 const sectionSlugs = [
   "our-story",
@@ -53,11 +54,15 @@ export function generateMetadata({ params }: { params: { section: string } }) {
     : { title: "Page not found | Sanjeevani Group" };
 }
 
-export default function GroupSectionPage({
+// Re-render at most once a minute so vacancy counts follow what HR publishes.
+export const revalidate = 60;
+
+export default async function GroupSectionPage({
   params,
 }: {
   params: { section: string };
 }) {
   if (!sectionSlugs.includes(params.section)) notFound();
-  return <SectionPage section={params.section} />;
+  const siteVacancies = params.section === "careers" ? await loadSiteVacancies() : undefined;
+  return <SectionPage section={params.section} siteVacancies={siteVacancies} />;
 }

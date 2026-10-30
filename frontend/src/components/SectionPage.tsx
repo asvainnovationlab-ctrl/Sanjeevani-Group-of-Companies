@@ -14,7 +14,7 @@ import LeaderProfile from "@/components/LeaderProfile";
 import NewsroomGallery from "@/components/NewsroomGallery";
 import CareerVacancies from "@/components/CareerVacancies";
 import VacancyDetail from "@/components/VacancyDetail";
-import { careerAreas, getAreaVacancies } from "@/data/careers";
+import { careerAreas, getAreaVacancies, type Vacancy } from "@/data/careers";
 import { chairmanSocials, leaderHref, leadershipBoard, leadershipTeam, type LeaderSocials } from "@/data/leaders";
 import LegalDocument from "@/components/LegalDocument";
 import BusinessNavMenu from "@/components/BusinessNavMenu";
@@ -429,7 +429,7 @@ const coreValues = [
   },
 ];
 
-export default function SectionPage({ section, companySlug, leaderSlug, careerAreaSlug, vacancyId }: { section: string; companySlug?: string; leaderSlug?: string; careerAreaSlug?: string; vacancyId?: string }) {
+export default function SectionPage({ section, companySlug, leaderSlug, careerAreaSlug, vacancyId, siteVacancies }: { section: string; companySlug?: string; leaderSlug?: string; careerAreaSlug?: string; vacancyId?: string; siteVacancies?: Vacancy[] }) {
   const page = pageContent[section === "our-story" ? "about-us" : section];
   const storyLayout = section === "our-story" || section === "about-us";
   const leadershipLayout = section === "leadership" || section === "chairman";
@@ -626,9 +626,9 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
         {companySlug ? (
           <CompanyProfile slug={companySlug} businesses={businesses} />
         ) : careerAreaSlug && vacancyId ? (
-          <VacancyDetail areaSlug={careerAreaSlug} vacancyId={vacancyId} />
+          <VacancyDetail areaSlug={careerAreaSlug} vacancyId={vacancyId} vacancies={siteVacancies} />
         ) : careerAreaSlug ? (
-          <CareerVacancies slug={careerAreaSlug} />
+          <CareerVacancies slug={careerAreaSlug} vacancies={siteVacancies} />
         ) : leaderSlug ? (
           <LeaderProfile slug={leaderSlug} socials={(name, links) => <LeaderSocialLinks className="leader-socials-light" name={name} socials={links} />} />
         ) : section === "privacy-policy" || section === "terms-of-use" ? (
@@ -760,7 +760,7 @@ export default function SectionPage({ section, companySlug, leaderSlug, careerAr
               </div>
               <ul className="cr-areas">
                 {visibleCareerAreas.map((area) => {
-                  const openRoles = getAreaVacancies(area.slug).length;
+                  const openRoles = siteVacancies ? siteVacancies.filter((v) => v.areaSlug === area.slug).length : getAreaVacancies(area.slug).length;
                   return (
                     <li className="cr-card" key={area.title}>
                       <div className="cr-card-photo">

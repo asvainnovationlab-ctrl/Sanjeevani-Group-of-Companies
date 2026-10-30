@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ApplicationForm from "@/components/ApplicationForm";
-import { getAreaVacancies, getCareerArea } from "@/data/careers";
+import { getAreaVacancies, getCareerArea, type Vacancy } from "@/data/careers";
 import { getCompanySlug } from "@/data/companyProfiles";
 
 // Line icons for the role cards (stroked, 24px).
@@ -14,9 +14,9 @@ const roleIcons = {
 // /careers/<area-slug>: a full-screen photo hero, then the area's open roles
 // as a short list. Each role opens its own detail page (/careers/<area>/<id>),
 // where the application form lives.
-export default function CareerVacancies({ slug }: { slug: string }) {
+export default function CareerVacancies({ slug, vacancies }: { slug: string; vacancies?: Vacancy[] }) {
   const area = getCareerArea(slug);
-  const areaVacancies = area ? getAreaVacancies(area.slug) : [];
+  const areaVacancies = area ? (vacancies ? vacancies.filter((v) => v.areaSlug === area.slug) : getAreaVacancies(area.slug)) : [];
 
   if (!area) {
     return (

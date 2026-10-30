@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requirePermission } from "@/server/auth/guard";
 import { handle, readJson } from "@/server/http/errors";
 import { requestMeta } from "@/server/http/request";
+import { refreshCareerPages } from "@/server/public/vacancies";
 import { getAdminVacancy, updateVacancy } from "@/server/recruitment/vacancies";
 import { vacancyUpdateSchema } from "@/server/validation/recruitment";
 
@@ -20,5 +21,7 @@ export const PATCH = handle(async (request: Request, { params }: Context) => {
   const id = z.string().uuid().parse(params.id);
   const input = vacancyUpdateSchema.parse(await readJson(request));
   const { ipHash, userAgent } = requestMeta(request);
-  return NextResponse.json({ vacancy: await updateVacancy(user, id, input, { ipHash, userAgent }) });
+  const vacancy = await updateVacancy(user, id, input, { ipHash, userAgent });
+  refreshCareerPages();
+  return NextResponse.json({ vacancy });
 });

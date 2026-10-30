@@ -1,6 +1,6 @@
 import Link from "next/link";
 import ApplicationForm from "@/components/ApplicationForm";
-import { getAreaVacancies, getCareerArea } from "@/data/careers";
+import { getAreaVacancies, getCareerArea, type Vacancy } from "@/data/careers";
 import { getCompanySlug } from "@/data/companyProfiles";
 
 // Icons for the Position details card (24px, filled).
@@ -15,9 +15,10 @@ const factIcons: Record<string, JSX.Element> = {
 
 // /careers/<area-slug>/<vacancy-id>: one role in full, with its position
 // details card and the application form below.
-export default function VacancyDetail({ areaSlug, vacancyId }: { areaSlug: string; vacancyId: string }) {
+export default function VacancyDetail({ areaSlug, vacancyId, vacancies }: { areaSlug: string; vacancyId: string; vacancies?: Vacancy[] }) {
   const area = getCareerArea(areaSlug);
-  const vacancy = area ? getAreaVacancies(area.slug).find((item) => item.id === vacancyId) : undefined;
+  const areaVacancies = area ? (vacancies ? vacancies.filter((v) => v.areaSlug === area.slug) : getAreaVacancies(area.slug)) : [];
+  const vacancy = areaVacancies.find((item) => item.id === vacancyId);
 
   if (!area || !vacancy) {
     return (
