@@ -56,7 +56,11 @@ function useDarkMode() {
   return { dark, toggle };
 }
 
-export default function AdminConsole() {
+// HR Managers use /hr; everyone else uses /admin. Signing in at the other
+// address moves the person to theirs, keeping any ?application= link.
+const isHrOnly = (me: Me) => me.roles.length > 0 && me.roles.every((r) => r === "HR_MANAGER");
+
+export default function AdminConsole({ portal = "admin" }: { portal?: "admin" | "hr" }) {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [tab, setTab] = useState<TabKey>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,6 +70,8 @@ export default function AdminConsole() {
   const load = useCallback(async () => {
     try {
       const result = await api<Me>("/api/auth/me");
+      const home = isHrOnly(result) ? "hr" : "admin";
+      if (home !== portal) { window.location.replace(`/${home}${window.location.search}`); return; }
       setMe(result);
       const params = new URLSearchParams(window.location.search);
       const wanted: TabKey | null = params.has("application") ? "applications" : params.has("contact") ? "contact" : null;
@@ -74,7 +80,7 @@ export default function AdminConsole() {
     } catch {
       setMe(null);
     }
-  }, []);
+  }, [portal]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -84,7 +90,7 @@ export default function AdminConsole() {
   }
 
   if (me === undefined) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading the admin…</p></main>;
-  if (me === null) return <SignIn onSignedIn={load} />;
+  if (me === null) return <SignIn onSignedIn={load} portal={portal} />;
 
   const tabs = TABS.filter((t) => allowed(me, t));
   const current = tabs.find((t) => t.key === tab) ?? tabs[0];
@@ -372,7 +378,7 @@ function Dashboard({ me, onOpen, companyId = "" }: { me: Me; onOpen: (tab: TabKe
 
 // -------------------------------------------------------------------- sign-in
 
-function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
+function SignIn({ onSignedIn, portal }: { onSignedIn: () => void; portal: "admin" | "hr" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [forgot, setForgot] = useState(false);
@@ -403,9 +409,9 @@ function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   return (
     <main className="adm adm-center">
       <section className="adm-auth-card">
-        <Brand role="Admin" />
+        <Brand role={portal === "hr" ? "HR portal" : "Admin"} />
         <h1>{forgot ? "Reset your password" : "Sign in"}</h1>
-        <p className="adm-muted">{forgot ? "Enter your email and we will send you a reset link." : "Use your own admin account."}</p>
+        <p className="adm-muted">{forgot ? "Enter your email and we will send you a reset link." : portal === "hr" ? "Use your HR account." : "Use your own admin account."}</p>
         {error && <p className="admin-message admin-error" role="alert">{error}</p>}
         {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
         <form onSubmit={submit} className="adm-auth-form">

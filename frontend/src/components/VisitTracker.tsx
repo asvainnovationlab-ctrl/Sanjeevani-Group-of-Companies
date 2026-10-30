@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export default function VisitTracker() {
   const pathname = usePathname();
   useEffect(() => {
-    if (!pathname || pathname.startsWith("/admin")) return;
+    if (!pathname || pathname.startsWith("/admin") || pathname.startsWith("/hr")) return;
     const body = JSON.stringify({ path: pathname });
     try {
       if (!navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }))) {
