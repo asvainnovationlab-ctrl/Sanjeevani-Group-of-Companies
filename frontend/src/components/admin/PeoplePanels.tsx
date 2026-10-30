@@ -2,6 +2,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { api, formatDate, hasPermission, label, type Me } from "@/components/admin/api";
 import { Pager } from "@/components/admin/RecruitmentPanels";
+import { roleAbilities, roleDescription, roleSections } from "@/components/admin/sections";
 
 // ------------------------------------------------------------------ enquiries
 
@@ -102,6 +103,12 @@ const ROLES: { key: string; name: string; scope: "group" | "company" | "either" 
 ];
 
 function RolesEditor({ value, onChange, companies }: { value: Membership[]; onChange: (v: Membership[]) => void; companies: { id: string; name: string }[] }) {
+  // A company role needs a company: pick the first one once the list has loaded.
+  useEffect(() => {
+    if (!companies.length) return;
+    const fixed = value.map((m) => (ROLES.find((r) => r.key === m.roleKey)?.scope === "company" && !m.companyId ? { ...m, companyId: companies[0].id } : m));
+    if (fixed.some((m, i) => m !== value[i])) onChange(fixed);
+  }, [companies, value, onChange]);
   return (
     <div className="admin-roles">
       {value.map((m, i) => {
@@ -120,10 +127,37 @@ function RolesEditor({ value, onChange, companies }: { value: Membership[]; onCh
               {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <button type="button" className="admin-close-button" aria-label="Remove role" onClick={() => onChange(value.filter((_, j) => j !== i))}>×</button>
+            <div className="adm-role-explain">
+              <p>{roleDescription(m.roleKey)}</p>
+              <p className="adm-chips">
+                {roleSections(m.roleKey).map((s) => <span key={s.key} className="adm-chip">{s.label}</span>)}
+              </p>
+              <p className="adm-muted">Can {roleAbilities(m.roleKey).join(", ")}, for {m.companyId ? companies.find((c) => c.id === m.companyId)?.name ?? "one company" : "the whole group"}.</p>
+            </div>
           </div>
         );
       })}
       <button type="button" className="admin-link-button" onClick={() => onChange([...value, { roleKey: "HR_MANAGER", companyId: companies[0]?.id ?? null }])}>+ Add a role</button>
+    </div>
+  );
+}
+
+// The sections a set of roles opens, as labels (Dashboard and My account are always there).
+function accessFor(roles: string[]) {
+  return [...new Set(roles.flatMap((r) => roleSections(r).map((s) => s.label)))];
+}
+
+function AccessPreview({ roles }: { roles: string[] }) {
+  const labels = accessFor(roles);
+  return (
+    <div className="adm-access-preview">
+      <strong>This person will see</strong>
+      <p className="adm-chips">
+        <span className="adm-chip">Dashboard</span>
+        {labels.map((l) => <span key={l} className="adm-chip">{l}</span>)}
+        <span className="adm-chip">My account</span>
+      </p>
+      {labels.length === 0 && <p className="adm-muted">Add a role to give access to more sections.</p>}
     </div>
   );
 }
@@ -166,12 +200,13 @@ export function UsersPanel({ me }: { me: Me }) {
             <label>Email<input type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} required /></label>
           </div>
           <RolesEditor value={invite.memberships} onChange={(memberships) => setInvite({ ...invite, memberships })} companies={companies} />
+          <AccessPreview roles={invite.memberships.map((m) => m.roleKey)} />
           <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Send invitation</button></div>
         </form>
       )}
-      {loading && <p className="admin-empty">Loading…</p>}
+      {loading && users.length === 0 && <p className="admin-empty">Loading…</p>}
       <table className="admin-table">
-        <thead><tr><th>User</th><th>Roles</th><th>Status</th><th>Last sign-in</th><th>Actions</th></tr></thead>
+        <thead><tr><th>User</th><th>Roles</th><th>Can open</th><th>Status</th><th>Last sign-in</th><th>Actions</th></tr></thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id}>
@@ -189,6 +224,7 @@ export function UsersPanel({ me }: { me: Me }) {
                   u.memberships.map((m, i) => <small key={i}>{m.role.name}, {m.company?.name ?? "whole group"}</small>)
                 )}
               </td>
+              <td><p className="adm-chips">{accessFor(u.memberships.map((m) => m.role.key)).map((label) => <span key={label} className="adm-chip">{label}</span>)}</p></td>
               <td><span className={`admin-badge admin-badge-${u.status.toLowerCase()}`}>{label(u.status)}</span>{u.lockedUntil && new Date(u.lockedUntil) > new Date() && <small>Locked after failed sign-ins</small>}</td>
               <td>{formatDate(u.lastLoginAt)}</td>
               <td className="admin-button-row">

@@ -964,3 +964,31 @@ model EmailOutbox {
 
   @@index([status, nextAttemptAt])
 }
+
+// ---------------------------------------------------------------- website traffic
+// Cookie-free visit counting for the admin dashboard. Days are Nepal calendar
+// dates. A visitor is a keyed hash of (day, IP, browser) that changes every
+// day, so nobody can be followed across days and no personal data is stored.
+
+model SiteTrafficDay {
+  day      DateTime @id @db.Date
+  views    Int      @default(0)
+  visitors Int      @default(0)
+}
+
+// Only needed to count each visitor once per day; pruned after two days.
+model SiteVisitorDay {
+  day         DateTime @db.Date
+  visitorHash String
+
+  @@id([day, visitorHash])
+}
+
+model SitePageDay {
+  day   DateTime @db.Date
+  path  String
+  views Int      @default(0)
+
+  @@id([day, path])
+  @@index([day])
+}

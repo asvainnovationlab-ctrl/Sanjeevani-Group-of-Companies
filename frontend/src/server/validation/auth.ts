@@ -28,3 +28,5 @@ export const updateUserSchema = z
 export const membershipsSchema = z.object({ memberships: z.array(membership).max(50) });
 
 export type MembershipInput = z.infer<typeof membership>;
+
+export const changeEmailSchema = z.object({ currentPassword: password, newEmail: email });

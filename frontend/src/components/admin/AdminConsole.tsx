@@ -6,8 +6,12 @@ import { api, ApiError, hasPermission, type Me } from "@/components/admin/api";
 import { AccountPanel, AuditPanel, SettingsPanel } from "@/components/admin/SystemPanels";
 import { ApplicationsPanel, VacanciesPanel } from "@/components/admin/RecruitmentPanels";
 import { ContactPanel, UsersPanel } from "@/components/admin/PeoplePanels";
+import TrafficChart from "@/components/admin/TrafficChart";
+import { SECTIONS, roleAbilities } from "@/components/admin/sections";
+import { SYSTEM_ROLES } from "@/server/auth/permissions";
+import { BusinessesPanel, LeadershipPanel, NewsroomPanel } from "@/components/admin/CmsPanels";
 
-type TabKey = "dashboard" | "applications" | "vacancies" | "contact" | "users" | "audit" | "settings" | "account";
+type TabKey = "dashboard" | "applications" | "vacancies" | "businesses" | "leadership" | "newsroom" | "contact" | "users" | "audit" | "settings" | "account";
 type Tab = { key: TabKey; label: string; title: string; context: string; permission?: string; icon: ReactNode };
 
 // Line icons, drawn on a 24px grid with the current text colour.
@@ -21,14 +25,18 @@ const TABS: Tab[] = [
   { key: "dashboard", label: "Dashboard", title: "Dashboard", context: "Today at a glance", icon: icon("M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z") },
   { key: "applications", label: "Applications", title: "Applications", context: "Every job application, newest first", permission: "application.read", icon: icon("M8 4h8l2 2v14H6V6zM9 10h6M9 14h6M9 18h3") },
   { key: "vacancies", label: "Vacancies", title: "Vacancies", context: "Drafts stay here until you publish them", permission: "vacancy.read", icon: icon("M4 8h16v11H4zM9 8V5h6v3M4 13h16") },
+  { key: "businesses", label: "Businesses", title: "Businesses", context: "Categories and every company's page", permission: "company.read", icon: icon("M4 20V8l6-4v16M10 20V10h10v10M4 20h16M13 13h1M17 13h1M13 16h1M17 16h1") },
+  { key: "leadership", label: "Leadership", title: "Leadership", context: "Chairman, board, managing directors and team", permission: "leader.update", icon: icon("M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z") },
+  { key: "newsroom", label: "Newsroom", title: "Newsroom", context: "Press releases, events, notices, videos and gallery", permission: "content.update", icon: icon("M5 5h12v14H6a1 1 0 0 1-1-1zM17 9h2v9a1 1 0 0 1-2 0M8 9h6M8 12h6M8 15h4") },
   { key: "contact", label: "Enquiries", title: "Enquiries", context: "Messages from the contact page", permission: "contact.read", icon: icon("M4 6h16v12H4zM4 7l8 6 8-6") },
   { key: "users", label: "Users", title: "Users", context: "Each person signs in with their own account", permission: "user.manage", icon: icon("M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3 5.5") },
   { key: "audit", label: "Audit log", title: "Audit log", context: "Who did what, in Nepal time", permission: "audit.read", icon: icon("M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4") },
-  { key: "settings", label: "Settings", title: "Settings", context: "Contact details and links shown on the website", permission: "settings.manage", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
+  { key: "settings", label: "Settings", title: "Settings", context: "Website details and your own account", permission: "settings.manage", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
   { key: "account", label: "My account", title: "My account", context: "", icon: icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") },
 ];
 
-const roleName = (roles: string[]) => roles.map((r) => r.charAt(0) + r.slice(1).toLowerCase().replace(/_/g, " ")).join(", ") || "No role yet";
+const roleLabel = (role: string) => SYSTEM_ROLES[role]?.name ?? role.charAt(0) + role.slice(1).toLowerCase().replace(/_/g, " ");
+const roleName = (roles: string[]) => roles.map(roleLabel).join(", ") || "No role yet";
 
 function useDarkMode() {
   const [dark, setDark] = useState(false);
@@ -96,19 +104,28 @@ export default function AdminConsole() {
           ))}
         </nav>
         <div className="adm-sidebar-foot">
-          <p className="adm-signed-in">Signed in as <strong>{me.user.name}</strong><span>{me.user.email}</span></p>
-          <button type="button" className="adm-foot-action" onClick={toggle} aria-pressed={dark}>
-            {icon(dark ? "M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" : "M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z")}
-            <span>{dark ? "Light mode" : "Dark mode"}</span>
-          </button>
-          <button type="button" className="adm-foot-action" onClick={signOut}>
-            {icon("M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10")}
-            <span>Log out</span>
-          </button>
-          <Link className="adm-foot-action" href="/">
-            {icon("M3 11l9-7 9 7M5 10v10h14V10")}
-            <span>View website</span>
-          </Link>
+          <div className="adm-profile">
+            <span className="adm-avatar" aria-hidden="true"><GroupEmblem /></span>
+            <span className="adm-profile-text">
+              <span className="adm-profile-label">Signed in as</span>
+              <strong>{me.user.name}</strong>
+              <span className="adm-profile-email">{me.user.email}</span>
+            </span>
+          </div>
+          <div className="adm-foot-actions">
+            <button type="button" className="adm-foot-action" onClick={toggle} aria-pressed={dark}>
+              {icon(dark ? "M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" : "M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z")}
+              <span>{dark ? "Light" : "Dark"}</span>
+            </button>
+            <Link className="adm-foot-action" href="/">
+              {icon("M3 11l9-7 9 7M5 10v10h14V10")}
+              <span>Website</span>
+            </Link>
+            <button type="button" className="adm-foot-action adm-foot-logout" onClick={signOut}>
+              {icon("M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10")}
+              <span>Log out</span>
+            </button>
+          </div>
         </div>
       </aside>
       {menuOpen && <button type="button" className="adm-scrim" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
@@ -122,11 +139,20 @@ export default function AdminConsole() {
           {current.key === "dashboard" && <Dashboard me={me} onOpen={go} />}
           {current.key === "applications" && <ApplicationsPanel me={me} />}
           {current.key === "vacancies" && <VacanciesPanel me={me} />}
+          {current.key === "businesses" && <BusinessesPanel me={me} />}
+          {current.key === "leadership" && <LeadershipPanel me={me} />}
+          {current.key === "newsroom" && <NewsroomPanel me={me} />}
           {current.key === "contact" && <ContactPanel me={me} />}
           {current.key === "users" && <UsersPanel me={me} />}
           {current.key === "audit" && <AuditPanel />}
-          {current.key === "settings" && <SettingsPanel />}
-          {current.key === "account" && <AccountPanel me={me} onSignedOut={() => setMe(null)} />}
+          {current.key === "settings" && (
+            <>
+              <SettingsPanel />
+              <h2 className="adm-section-title">Your account</h2>
+              <AccountPanel me={me} onSignedOut={() => setMe(null)} onEmailChanged={(email) => setMe({ ...me, user: { ...me.user, email } })} />
+            </>
+          )}
+          {current.key === "account" && <AccountPanel me={me} onSignedOut={() => setMe(null)} onEmailChanged={(email) => setMe({ ...me, user: { ...me.user, email } })} />}
         </div>
       </main>
     </div>
@@ -149,6 +175,62 @@ function Brand({ role }: { role?: string }) {
 
 type Figure = { key: string; label: string; value: number | null; note: string; tab: TabKey };
 
+function greeting() {
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kathmandu", hour: "numeric", hour12: false }).format(new Date()));
+  return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+}
+
+// The top of each person's dashboard: who they are, what they look after,
+// and the sections their role opens. Nothing here is shown without access.
+function Welcome({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
+  const [scope, setScope] = useState<string | null>(null);
+  const grants = Object.values(me.permissions);
+  const groupWide = grants.some((g) => g === "all");
+
+  useEffect(() => {
+    if (groupWide) { setScope("The whole Sanjeevani Group"); return; }
+    const ids = [...new Set(grants.flatMap((g) => (Array.isArray(g) ? g : [])))];
+    if (ids.length === 0) { setScope("No company assigned yet"); return; }
+    if (!hasPermission(me, "company.read")) { setScope(`${ids.length} ${ids.length === 1 ? "company" : "companies"}`); return; }
+    api<{ companies: { id: string; name: string }[] }>("/api/admin/companies")
+      .then((r) => setScope(r.companies.filter((c) => ids.includes(c.id)).map((c) => c.name).join(", ") || `${ids.length} companies`))
+      .catch(() => setScope(`${ids.length} ${ids.length === 1 ? "company" : "companies"}`));
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- recompute only when the signed-in person changes
+  }, [me]);
+
+  const sections = SECTIONS.filter((s) => hasPermission(me, s.permission));
+  const abilities = [...new Set(me.roles.flatMap((r) => roleAbilities(r)))];
+  return (
+    <section className="adm-welcome" aria-labelledby="adm-welcome-title">
+      <div className="adm-welcome-head">
+        <div>
+          <p className="adm-welcome-greeting">{greeting()},</p>
+          <h2 id="adm-welcome-title">{me.user.name}</h2>
+          <div className="adm-role-chips">
+            {me.roles.map((r) => <span key={r} className="adm-role-chip">{roleLabel(r)}</span>)}
+          </div>
+        </div>
+        <dl className="adm-welcome-facts">
+          <div><dt>You look after</dt><dd>{scope ?? "…"}</dd></div>
+          {abilities.length > 0 && <div><dt>You can</dt><dd>{abilities.join(", ")}</dd></div>}
+        </dl>
+      </div>
+      {sections.length > 0 && (
+        <ul className="adm-workspace" aria-label="Your workspace">
+          {sections.map((s) => (
+            <li key={s.key}>
+              <button type="button" onClick={() => onOpen(s.key as TabKey)}>
+                <span className="adm-workspace-icon" aria-hidden="true">{TABS.find((t) => t.key === s.key)?.icon}</span>
+                <span className="adm-workspace-text"><strong>{s.label}</strong><span>{s.text}</span></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
   const [figures, setFigures] = useState<Figure[]>([]);
   const [error, setError] = useState("");
@@ -159,6 +241,7 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
     if (hasPermission(me, "application.read")) wanted.push({ key: "applications", label: "New applications", value: null, note: "Waiting for a first review", tab: "applications" });
     if (hasPermission(me, "contact.read")) wanted.push({ key: "contact", label: "New enquiries", value: null, note: "Not answered yet", tab: "contact" });
     if (hasPermission(me, "vacancy.read")) wanted.push({ key: "vacancies", label: "Live vacancies", value: null, note: "", tab: "vacancies" });
+    if (hasPermission(me, "content.update")) wanted.push({ key: "newsroom", label: "Newsroom drafts", value: null, note: "", tab: "newsroom" });
     if (hasPermission(me, "user.manage")) wanted.push({ key: "users", label: "Admin users", value: null, note: "", tab: "users" });
     setFigures(wanted);
 
@@ -172,6 +255,13 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
       tasks.push(api<{ vacancies: { status: string }[] }>("/api/admin/vacancies").then((r) => {
         const drafts = r.vacancies.filter((v) => v.status === "DRAFT").length;
         fill("vacancies", r.vacancies.filter((v) => v.status === "PUBLISHED").length, drafts ? `${drafts} draft${drafts === 1 ? "" : "s"} not published` : "No drafts waiting");
+      }));
+    }
+    if (wanted.some((f) => f.key === "newsroom")) {
+      tasks.push(Promise.all(["news", "events", "notices"].map((t) => api<{ items: { status: string }[] }>(`/api/admin/content/${t}`))).then((lists) => {
+        const all = lists.flatMap((l) => l.items);
+        const waiting = all.filter((i) => i.status === "PENDING_REVIEW").length;
+        fill("newsroom", all.filter((i) => i.status === "DRAFT").length, waiting ? `${waiting} waiting for review` : "Nothing waiting for review");
       }));
     }
     if (wanted.some((f) => f.key === "users")) {
@@ -193,13 +283,17 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
 
   return (
     <>
+      <Welcome me={me} onOpen={onOpen} />
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {figures.length > 0 && (
         <ul className="adm-figures" aria-label="Work waiting">
           {figures.map((f) => (
             <li key={f.key}>
               <button type="button" className="adm-figure" onClick={() => onOpen(f.tab)} aria-busy={f.value === null}>
-                <span className="adm-figure-label">{f.label}</span>
+                <span className="adm-figure-head">
+                  <span className="adm-figure-label">{f.label}</span>
+                  <span className="adm-figure-icon" aria-hidden="true">{TABS.find((t) => t.key === f.tab)?.icon}</span>
+                </span>
                 <span className="adm-figure-value num">{f.value ?? <span className="adm-skeleton" aria-hidden="true" />}</span>
                 {f.note && f.value !== null && <span className="adm-figure-note">{f.note}</span>}
               </button>
@@ -207,6 +301,7 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
           ))}
         </ul>
       )}
+      {(hasPermission(me, "settings.manage") || hasPermission(me, "audit.read")) && <TrafficChart />}
       {steps.length > 0 && (
         <section className="adm-card adm-steps" aria-labelledby="adm-steps-title">
           <h2 id="adm-steps-title">Getting started</h2>

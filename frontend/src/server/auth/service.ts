@@ -3,7 +3,7 @@ import { prisma } from "@/server/db";
 import { recordAudit } from "@/server/audit";
 import { enqueueEmail } from "@/server/email/outbox";
 import { deliverSoon } from "@/server/email/sender";
-import { badRequest, unauthorized } from "@/server/http/errors";
+import { badRequest, conflict, unauthorized } from "@/server/http/errors";
 import { hashIdentifier, randomToken, sha256 } from "@/server/security/crypto";
 import { enforceRateLimit } from "@/server/security/rate-limit";
 import { hashPassword, passwordProblem, verifyAgainstDummy, verifyPassword } from "@/server/auth/password";
@@ -181,4 +181,25 @@ export async function changePassword(sessionUser: SessionUser, input: { currentP
   });
   await createSession(user.id, { ipHash, userAgent: meta.userAgent });
   await deliverSoon([key]);
+}
+
+// Changes the signed-in user's sign-in email. The current password is
+// required, so an unattended session cannot be used to take over the account.
+export async function changeEmail(sessionUser: SessionUser, input: { currentPassword: string; newEmail: string }, meta: RequestMeta) {
+  const ipHash = hashIdentifier(meta.ip);
+  await enforceRateLimit(`email-change:user:${sessionUser.id}`, 5, 15 * MINUTE);
+
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } });
+  if (!user.passwordHash || !(await verifyPassword(user.passwordHash, input.currentPassword))) {
+    throw badRequest("Your current password is incorrect.");
+  }
+  if (input.newEmail === user.email) throw badRequest("That is already your email address.");
+  if (await prisma.user.findUnique({ where: { email: input.newEmail }, select: { id: true } })) {
+    throw conflict("Another admin account already uses that email address.");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { email: input.newEmail } });
+    await recordAudit({ actorId: user.id, action: "auth.email.change", entityType: "User", entityId: user.id, metadata: { before: user.email, after: input.newEmail }, ipHash, userAgent: meta.userAgent }, tx);
+  });
+  return { email: input.newEmail };
 }

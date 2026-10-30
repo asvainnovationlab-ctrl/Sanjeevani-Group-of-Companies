@@ -268,3 +268,17 @@ export async function closeExpiredVacancies(now = new Date()) {
   }
   return expired.length;
 }
+
+// Deletes a vacancy that is not live and nobody has applied to. A vacancy
+// with applications is archived instead, so applicants' records keep their link.
+export async function deleteVacancy(user: SessionUser, id: string, meta: Meta) {
+  const vacancy = await prisma.vacancy.findUnique({ where: { id }, select: { companyId: true, status: true, title: true, referenceCode: true, _count: { select: { applications: true } } } });
+  if (!vacancy || !can(user.access, "vacancy.read", vacancy.companyId)) throw notFound("Vacancy not found.");
+  if (!can(user.access, "vacancy.publish", vacancy.companyId)) throw forbidden();
+  if (vacancy.status === "PUBLISHED") throw badRequest("Close or archive the vacancy before deleting it.");
+  if (vacancy._count.applications > 0) throw badRequest(`${vacancy._count.applications} people applied to this vacancy, so it cannot be deleted. Archive it instead.`);
+  await prisma.$transaction(async (tx) => {
+    await tx.vacancy.delete({ where: { id } });
+    await recordAudit({ actorId: user.id, action: "vacancy.delete", entityType: "Vacancy", entityId: id, companyId: vacancy.companyId, metadata: { referenceCode: vacancy.referenceCode, title: vacancy.title }, ...meta }, tx);
+  });
+}

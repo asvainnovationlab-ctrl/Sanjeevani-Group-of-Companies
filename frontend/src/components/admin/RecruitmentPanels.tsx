@@ -212,10 +212,19 @@ export function VacanciesPanel({ me }: { me: Me }) {
   }, [me]);
   useEffect(() => { void load(); }, [load]);
 
+  const [savedId, setSavedId] = useState<string | null>(null);
+
   async function act(fn: () => Promise<unknown>, message: string) {
-    setError(""); setNotice("");
+    setError(""); setNotice(""); setSavedId(null);
     try { await fn(); setNotice(message); await load(); } catch (e) { setError((e as Error).message); }
   }
+
+  const publishable = (v: VacancyRow) => v.status === "DRAFT" || v.status === "CLOSED";
+  const deletable = (v: VacancyRow) => v.status !== "PUBLISHED" && v._count.applications === 0;
+  const setStatus = (v: VacancyRow, action: string, message: string) => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action } }), message);
+  const remove = (v: VacancyRow) => {
+    if (window.confirm(`Delete "${v.title}" permanently? This cannot be undone.`)) void act(() => api(`/api/admin/vacancies/${v.id}`, { method: "DELETE" }), "Vacancy deleted.");
+  };
 
   function edit(row: VacancyRow) {
     setEditing({
@@ -240,9 +249,11 @@ export function VacanciesPanel({ me }: { me: Me }) {
       openings: Number(f.openings) || 1, employmentType: f.employmentType,
     };
     await act(async () => {
-      if (editing.id) await api(`/api/admin/vacancies/${editing.id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: editing.updatedAt } });
-      else await api("/api/admin/vacancies", { body });
+      const result = editing.id
+        ? await api<{ vacancy: { id: string } }>(`/api/admin/vacancies/${editing.id}`, { method: "PATCH", body: { ...body, expectedUpdatedAt: editing.updatedAt } })
+        : await api<{ vacancy: { id: string } }>("/api/admin/vacancies", { body });
       setEditing(null);
+      setSavedId(result.vacancy.id);
     }, editing.id ? "Vacancy saved." : "Draft vacancy created. Publish it when it is ready.");
   }
 
@@ -257,6 +268,21 @@ export function VacanciesPanel({ me }: { me: Me }) {
       </div>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
+      {(() => {
+        const v = savedId ? rows.find((r) => r.id === savedId) : undefined;
+        if (!v || editing) return null;
+        return (
+          <div className="adm-next-step">
+            <span>Next for <strong>{v.title}</strong>:</span>
+            <div className="admin-button-row">
+              {hasPermission(me, "vacancy.publish") && publishable(v) && <button type="button" className="admin-primary-button" onClick={() => setStatus(v, "publish", "Vacancy published. It is on the careers page now.")}>Publish now</button>}
+              <button type="button" className="admin-secondary-button" onClick={() => edit(v)}>Edit again</button>
+              {hasPermission(me, "vacancy.publish") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => setStatus(v, "archive", "Vacancy archived.")}>Archive</button>}
+              {hasPermission(me, "vacancy.publish") && deletable(v) && <button type="button" className="admin-secondary-button" onClick={() => remove(v)}>Delete</button>}
+            </div>
+          </div>
+        );
+      })()}
       {editing && (
         <form className="admin-business-form" onSubmit={save}>
           <div className="admin-form-heading"><h3>{editing.id ? "Edit vacancy" : "New vacancy"}</h3><button className="admin-close-button" type="button" onClick={() => setEditing(null)} aria-label="Close">×</button></div>
@@ -302,7 +328,8 @@ export function VacanciesPanel({ me }: { me: Me }) {
                   ) : (
                     <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action: "restore" } }), "Vacancy restored as a draft.")}>Restore</button>
                   ))}
-                  {hasPermission(me, "vacancy.publish") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action: "archive" } }), "Vacancy archived.")}>Archive</button>}
+                  {hasPermission(me, "vacancy.publish") && v.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => setStatus(v, "archive", "Vacancy archived.")}>Archive</button>}
+                  {hasPermission(me, "vacancy.publish") && deletable(v) && <button type="button" className="admin-secondary-button" onClick={() => remove(v)}>Delete</button>}
                 </td>
               </tr>
             ))}

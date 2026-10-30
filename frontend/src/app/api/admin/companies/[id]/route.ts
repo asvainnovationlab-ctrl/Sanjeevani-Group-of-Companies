@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission, requireUser } from "@/server/auth/guard";
-import { getAdminCompany, updateCompany } from "@/server/companies/service";
+import { deleteCompany, getAdminCompany, updateCompany } from "@/server/companies/service";
 import { handle, readJson } from "@/server/http/errors";
 import { requestMeta } from "@/server/http/request";
 import { companyUpdateSchema } from "@/server/validation/company";
@@ -23,4 +23,12 @@ export const PATCH = handle(async (request: Request, { params }: Context) => {
   const { ipHash, userAgent } = requestMeta(request);
   const company = await updateCompany(user, id, input, { ipHash, userAgent });
   return NextResponse.json({ company });
+});
+
+// Only for companies that are not live and have no vacancies or applications.
+export const DELETE = handle(async (request: Request, { params }: Context) => {
+  const user = await requirePermission(request, "company.create");
+  const { ipHash, userAgent } = requestMeta(request);
+  await deleteCompany(user, z.string().uuid().parse(params.id), { ipHash, userAgent });
+  return NextResponse.json({ ok: true });
 });

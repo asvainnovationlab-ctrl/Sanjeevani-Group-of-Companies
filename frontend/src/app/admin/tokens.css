@@ -1,25 +1,25 @@
 /* Admin tokens. Scoped to .adm so the public site's own tokens never change. */
 .adm {
   --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
-  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.125rem; --text-xl: 1.266rem; --text-2xl: 1.424rem; --text-3xl: 1.602rem; --text-figure: 2.25rem;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.125rem; --text-xl: 1.266rem; --text-2xl: 1.424rem; --text-3xl: 1.602rem; --text-title: 2rem; --text-figure: 2.5rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-micro: 120ms; --dur-short: 220ms;
   --z-sticky: 200; --z-drawer: 400; --z-scrim: 390;
-  --sidebar: 264px;
-  --radius-card: 14px; --radius-control: 10px; --radius-pill: 999px; --rule-hair: 1px;
+  --sidebar: 272px;
+  --radius-card: 18px; --radius-control: 12px; --radius-pill: 999px; --rule-hair: 1px;
 
-  --color-paper: #f7f8f3;
+  --color-paper: #f4f6f0;
   --color-paper-2: #ffffff;
-  --color-paper-3: #eef3e7;
-  --color-ink: #1d2b20;
-  --color-ink-2: #203c29;
-  --color-muted: #56655a;
-  --color-rule: #dde5d6;
-  --color-rule-strong: #c4d1bd;
-  --color-field-edge: #869482;
+  --color-paper-3: #edf2e6;
+  --color-ink: #13231a;
+  --color-ink-2: #1f3326;
+  --color-muted: #5a6a5e;
+  --color-rule: #e3e9dd;
+  --color-rule-strong: #cfd9c8;
+  --color-field-edge: #8a9886;
   --color-accent: #3a7020;
   --color-accent-2: #4f8f2a;
-  --color-accent-soft: #e2efd2;
+  --color-accent-soft: #e6f1d8;
   --color-accent-ink: #ffffff;
   --color-current: #2f5c1a;
   --color-focus: #2f5c1a;
@@ -30,21 +30,44 @@
   --color-warn-ink: #6b4d17;
   --color-warn-soft: #f6ecd8;
   --color-scrim: rgba(11, 27, 16, 0.45);
+  /* Chart series, validated for colour-blind separation and contrast on the card surface. */
+  --color-series-1: #3a7020;
+  --color-series-2: #2f6fb0;
+  --color-series-fill: 0.22;
   --shadow-drawer: 0 18px 48px rgba(11, 27, 16, 0.16);
+
+  /* Premium layer: forest-green sidebar, layered soft shadows, brand gradient. */
+  --color-side: #0e2618;
+  --color-side-2: #163b25;
+  --color-side-ink: #ffffff;
+  --color-side-muted: rgba(232, 240, 227, 0.7);
+  --color-side-hover: rgba(255, 255, 255, 0.07);
+  --color-side-active: rgba(181, 224, 138, 0.15);
+  --color-side-accent: #b5e08a;
+  --color-side-rule: rgba(255, 255, 255, 0.09);
+  --color-glow: rgba(140, 198, 63, 0.14);
+  --color-logout: #ffb4a8;
+  --color-logout-soft: rgba(255, 120, 100, 0.14);
+  --gradient-primary: linear-gradient(135deg, #4f8f2a 0%, #2f5c1a 100%);
+  --gradient-figure: linear-gradient(90deg, #8cc63f, #3a7020);
+  --shadow-card: 0 1px 2px rgba(14, 38, 24, 0.04), 0 10px 30px rgba(14, 38, 24, 0.06);
+  --shadow-raised: 0 2px 6px rgba(14, 38, 24, 0.06), 0 22px 48px rgba(14, 38, 24, 0.12);
+  --shadow-button: 0 6px 18px rgba(47, 92, 26, 0.28);
+  --ring: 0 0 0 4px rgba(79, 143, 42, 0.16);
 
   --font-body: "Inter", system-ui, sans-serif;
   --font-display: "Poppins", "Inter", sans-serif;
 }
 
 :root[data-theme="dark"] .adm {
-  --color-paper: #0d110d;
-  --color-paper-2: #141a13;
-  --color-paper-3: #1c241b;
+  --color-paper: #0b100c;
+  --color-paper-2: #131a14;
+  --color-paper-3: #1b241c;
   --color-ink: #e6ede1;
   --color-ink-2: #f0f6ea;
   --color-muted: #a4b09f;
-  --color-rule: #2a3428;
-  --color-rule-strong: #3a4637;
+  --color-rule: #263026;
+  --color-rule-strong: #364234;
   --color-field-edge: #6f7d6b;
   --color-accent: #8cc63f;
   --color-accent-2: #a9d97b;
@@ -59,5 +82,19 @@
   --color-warn-ink: #e8c98b;
   --color-warn-soft: #33281a;
   --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-series-1: #6aa12c;
+  --color-series-2: #5590d0;
+  --color-series-fill: 0.3;
   --shadow-drawer: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --color-side: #070e09;
+  --color-side-2: #0c1a10;
+  --color-side-hover: rgba(255, 255, 255, 0.06);
+  --color-side-active: rgba(140, 198, 63, 0.16);
+  --color-side-rule: rgba(255, 255, 255, 0.07);
+  --color-glow: rgba(140, 198, 63, 0.08);
+  --gradient-primary: linear-gradient(135deg, #8cc63f 0%, #5d9a2a 100%);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 18px 40px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 6px 18px rgba(0, 0, 0, 0.4);
+  --ring: 0 0 0 4px rgba(140, 198, 63, 0.2);
 }

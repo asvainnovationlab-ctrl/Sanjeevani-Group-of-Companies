@@ -111,12 +111,15 @@ export function SettingsPanel() {
 
 // ------------------------------------------------------------------- account
 
-export function AccountPanel({ me, onSignedOut }: { me: Me; onSignedOut: () => void }) {
+export function AccountPanel({ me, onSignedOut, onEmailChanged }: { me: Me; onSignedOut: () => void; onEmailChanged?: (email: string) => void }) {
   const [currentPassword, setCurrent] = useState("");
   const [newPassword, setNew] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [email, setEmail] = useState({ newEmail: "", currentPassword: "" });
+  const [emailError, setEmailError] = useState("");
+  const [emailNotice, setEmailNotice] = useState("");
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -131,18 +134,46 @@ export function AccountPanel({ me, onSignedOut }: { me: Me; onSignedOut: () => v
     }
   }
 
+  async function submitEmail(event: FormEvent) {
+    event.preventDefault();
+    setEmailError(""); setEmailNotice("");
+    try {
+      const r = await api<{ message: string; email: string }>("/api/auth/email", { body: email });
+      setEmailNotice(r.message);
+      setEmail({ newEmail: "", currentPassword: "" });
+      onEmailChanged?.(r.email);
+    } catch (e) {
+      setEmailError((e as Error).message);
+      if ((e as { status?: number }).status === 401) onSignedOut();
+    }
+  }
+
   return (
-    <form className="admin-business-form" onSubmit={submit}>
-      <div className="admin-form-heading"><h3>My account</h3></div>
-      <p className="adm-muted">Signed in as {me.user.name}</p>
-      {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-      {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
-      <div className="admin-form-grid">
-        <label>Current password<input type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} required /></label>
-        <label>New password (12+ characters)<input type="password" autoComplete="new-password" minLength={12} maxLength={128} value={newPassword} onChange={(e) => setNew(e.target.value)} required /></label>
-        <label>Repeat new password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirm} onChange={(e) => setConfirm(e.target.value)} required /></label>
-      </div>
-      <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Change password</button></div>
-    </form>
+    <div className="adm-account">
+      <form className="admin-business-form" onSubmit={submitEmail}>
+        <div className="admin-form-heading"><h3>Change email</h3></div>
+        <p className="adm-muted">You sign in with <strong>{me.user.email}</strong>. Enter your password to change it.</p>
+        {emailError && <p className="admin-message admin-error" role="alert">{emailError}</p>}
+        {emailNotice && <p className="admin-message admin-notice" role="status">{emailNotice}</p>}
+        <div className="admin-form-grid">
+          <label className="adm-field" htmlFor="acc-new-email"><span className="adm-field-label">New email</span><input id="acc-new-email" type="email" autoComplete="email" value={email.newEmail} onChange={(e) => setEmail({ ...email, newEmail: e.target.value })} required maxLength={254} /></label>
+          <label className="adm-field" htmlFor="acc-email-password"><span className="adm-field-label">Current password</span><input id="acc-email-password" type="password" autoComplete="current-password" value={email.currentPassword} onChange={(e) => setEmail({ ...email, currentPassword: e.target.value })} required /></label>
+        </div>
+        <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Change email</button></div>
+      </form>
+
+      <form className="admin-business-form" onSubmit={submit}>
+        <div className="admin-form-heading"><h3>Change password</h3></div>
+        <p className="adm-muted">Use at least 12 characters. Other devices are signed out when it changes.</p>
+        {error && <p className="admin-message admin-error" role="alert">{error}</p>}
+        {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
+        <div className="admin-form-grid">
+          <label className="adm-field" htmlFor="acc-current"><span className="adm-field-label">Current password</span><input id="acc-current" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} required /></label>
+          <label className="adm-field" htmlFor="acc-new"><span className="adm-field-label">New password</span><input id="acc-new" type="password" autoComplete="new-password" minLength={12} maxLength={128} value={newPassword} onChange={(e) => setNew(e.target.value)} required /></label>
+          <label className="adm-field" htmlFor="acc-repeat"><span className="adm-field-label">Repeat new password</span><input id="acc-repeat" type="password" autoComplete="new-password" minLength={12} maxLength={128} value={confirm} onChange={(e) => setConfirm(e.target.value)} required /></label>
+        </div>
+        <div className="admin-form-actions"><button className="admin-primary-button" type="submit">Change password</button></div>
+      </form>
+    </div>
   );
 }

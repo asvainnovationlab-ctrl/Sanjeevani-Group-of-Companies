@@ -6,6 +6,7 @@ import "./leaders.css";
 import "./careers.css";
 import "./gallery.css";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import VisitTracker from "@/components/VisitTracker";
 
 export const metadata: Metadata = {
   title: "Sanjeevani Group of Companies | One horizon, many ambitions",
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-body">
         <ThemeSwitcher />
+        <VisitTracker />
         {children}
       </body>
     </html>

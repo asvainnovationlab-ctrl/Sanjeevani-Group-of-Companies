@@ -263,3 +263,19 @@ export async function listCompanyRevisions(user: SessionUser, id: string) {
     select: { id: true, createdAt: true, createdById: true, snapshot: true },
   });
 }
+
+// Deletes a company that is not live and has no vacancies or applications
+// (those keep their history). Its locations, roles and memberships go with it.
+export async function deleteCompany(user: SessionUser, id: string, meta: Meta) {
+  if (!can(user.access, "company.create")) throw forbidden();
+  const company = await prisma.company.findUnique({ where: { id }, select: { name: true, status: true, _count: { select: { vacancies: true, applications: true } } } });
+  if (!company) throw notFound("Company not found.");
+  if (company.status === "PUBLISHED") throw badRequest("Unpublish or archive the company before deleting it.");
+  if (company._count.vacancies > 0 || company._count.applications > 0) {
+    throw badRequest(`${company.name} still has ${company._count.vacancies} vacancies and ${company._count.applications} applications. Archive it instead, or delete those first.`);
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.company.delete({ where: { id } });
+    await recordAudit({ actorId: user.id, action: "company.delete", entityType: "Company", entityId: id, metadata: { name: company.name }, ...meta }, tx);
+  });
+}

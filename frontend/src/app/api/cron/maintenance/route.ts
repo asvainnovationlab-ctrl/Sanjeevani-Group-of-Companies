@@ -7,6 +7,7 @@ import { refreshCareerPages } from "@/server/public/vacancies";
 import { closeExpiredVacancies } from "@/server/recruitment/vacancies";
 import { safeEqual } from "@/server/security/crypto";
 import { pruneRateLimits } from "@/server/security/rate-limit";
+import { pruneVisitorHashes } from "@/server/traffic/service";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,10 @@ export const GET = handle(async (request: Request) => {
   const closedVacancies = await closeExpiredVacancies(now);
   if (closedVacancies > 0) refreshCareerPages();
   await pruneRateLimits();
+  const prunedVisitorHashes = await pruneVisitorHashes(now);
   const sessions = await prisma.session.deleteMany({ where: { OR: [{ expiresAt: { lt: new Date(now.getTime() - 7 * 86400000) } }, { revokedAt: { lt: new Date(now.getTime() - 7 * 86400000) } }] } });
   const tokens = await prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: new Date(now.getTime() - 7 * 86400000) } } });
   const applicationsPastRetention = await countApplicationsPastRetention(now);
 
-  return NextResponse.json({ emails, closedVacancies, deletedSessions: sessions.count, deletedTokens: tokens.count, applicationsPastRetention });
+  return NextResponse.json({ emails, closedVacancies, deletedSessions: sessions.count, deletedTokens: tokens.count, applicationsPastRetention, prunedVisitorHashes });
 });
