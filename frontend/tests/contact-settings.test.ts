@@ -38,3 +38,19 @@ describe("site settings", () => {
     assert.equal(settingsUpdateSchema.safeParse({ "careers.applicationsOpen": "yes" }).success, false);
   });
 });
+
+describe("email provider choice", () => {
+  // Imported lazily so the SMTP client is only loaded by this test.
+  const pick = async (env: Record<string, string>) => (await import("../src/server/email/sender")).emailProvider(env as NodeJS.ProcessEnv);
+  it("prefers SMTP (Gmail) when its credentials are set", async () => {
+    assert.equal(await pick({ SMTP_USER: "a@gmail.com", SMTP_PASS: "x", RESEND_API_KEY: "re_x", EMAIL_FROM: "a@b.c" }), "smtp");
+  });
+  it("falls back to Resend, or nothing", async () => {
+    assert.equal(await pick({ RESEND_API_KEY: "re_x", EMAIL_FROM: "a@b.c" }), "resend");
+    assert.equal(await pick({}), null);
+  });
+  it("EMAIL_PROVIDER forces a choice only when that provider is configured", async () => {
+    assert.equal(await pick({ EMAIL_PROVIDER: "resend", SMTP_USER: "a", SMTP_PASS: "b", RESEND_API_KEY: "re_x", EMAIL_FROM: "a@b.c" }), "resend");
+    assert.equal(await pick({ EMAIL_PROVIDER: "smtp", RESEND_API_KEY: "re_x", EMAIL_FROM: "a@b.c" }), null);
+  });
+});

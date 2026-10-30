@@ -21,9 +21,9 @@ const nextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next-build",
   poweredByHeader: false,
   experimental: {
-    // Native password-hashing module: load it from node_modules at runtime
-    // instead of bundling it.
-    serverComponentsExternalPackages: ["@node-rs/argon2"],
+    // Native password hashing and the SMTP client: load them from node_modules
+    // at runtime instead of bundling them.
+    serverComponentsExternalPackages: ["@node-rs/argon2", "nodemailer"],
   },
   async headers() {
     return [

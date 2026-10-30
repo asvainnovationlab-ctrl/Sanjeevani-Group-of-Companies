@@ -226,7 +226,10 @@ downloading, exporting and deleting are all audited. CSV exports
 neutralise spreadsheet formulas. Expired applications are counted by the
 cron job but never deleted automatically.
 
-**Emails** go into `EmailOutbox` inside the same transaction as the change,
+**Emails** are sent through SMTP when `SMTP_USER`/`SMTP_PASS` are set (a
+Gmail account with an App Password works without owning a domain, ~500 per
+day; From is that Gmail address), otherwise through Resend (needs a verified
+domain). `EMAIL_PROVIDER=smtp|resend` forces one. They go into `EmailOutbox` inside the same transaction as the change,
 are sent straight away when possible, and retried by the cron job with
 backoff (1, 2, 4 … 60 minutes; failed after 6 attempts). Resend's
 idempotency key prevents duplicates. One-time links are removed from the
