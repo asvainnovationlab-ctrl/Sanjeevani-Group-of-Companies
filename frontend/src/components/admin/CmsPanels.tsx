@@ -125,7 +125,7 @@ const NEWSROOM: Record<string, ContentConfig> = {
       { k: "excerpt", label: "Summary", type: "textarea", help: "Shown in the newsroom list." },
       { k: "body", label: "Full text", type: "blocks", help: "Leave a blank line between paragraphs." },
       { k: "tags", label: "Tags", type: "lines", help: "One per line." },
-      { k: "publishAt", label: "Publish on (optional)", type: "datetime", help: "Leave empty to publish as soon as you press Publish." },
+      { k: "publishAt", label: "Publish on (optional)", type: "datetime", help: "Leave empty to publish as soon as you press Save and publish." },
     ],
   },
   events: {

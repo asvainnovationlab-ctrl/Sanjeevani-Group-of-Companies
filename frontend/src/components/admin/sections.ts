@@ -5,7 +5,7 @@ import { SYSTEM_ROLES } from "@/server/auth/permissions";
 export const SECTIONS = [
   { key: "applications", label: "Applications", permission: "application.read", text: "Review job applications and CVs" },
   { key: "vacancies", label: "Vacancies", permission: "vacancy.read", text: "Post and manage job openings" },
-  { key: "businesses", label: "Businesses", permission: "company.read", text: "Company pages and categories" },
+  { key: "businesses", label: "Companies", permission: "company.read", text: "Company pages and categories" },
   { key: "leadership", label: "Leadership", permission: "leader.update", text: "Leader profiles and messages" },
   { key: "newsroom", label: "Newsroom", permission: "content.update", text: "News, events, notices and gallery" },
   { key: "contact", label: "Enquiries", permission: "contact.read", text: "Messages from the contact page" },

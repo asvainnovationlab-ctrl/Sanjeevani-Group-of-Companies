@@ -322,7 +322,7 @@ function Dashboard({ me, onOpen, companyId = "" }: { me: Me; onOpen: (tab: TabKe
   }, [me, companyId, scope]);
 
   const steps = [
-    hasPermission(me, "vacancy.update") && { title: "Publish a vacancy", text: "Add it under Vacancies, choose its career area, then press Publish. It shows on the careers page at once.", tab: "vacancies" as TabKey },
+    hasPermission(me, "vacancy.update") && { title: "Publish a vacancy", text: "Add it under Vacancies, choose its career area, then press Save and publish. It shows on the careers page at once.", tab: "vacancies" as TabKey },
     hasPermission(me, "application.read") && { title: "Review applications", text: "Open one to read it, download the CV and move it to the next stage.", tab: "applications" as TabKey },
     hasPermission(me, "user.manage") && { title: "Give your team their own accounts", text: "Each person gets a role for the whole group or for one company.", tab: "users" as TabKey },
     hasPermission(me, "settings.manage") && { title: "Check the contact details", text: "The email, phone and social links shown on the website.", tab: "settings" as TabKey },
