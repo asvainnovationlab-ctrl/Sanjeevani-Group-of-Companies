@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 
 export const GET = handle(async (request: Request) => {
   const user = await requirePermission(request, "contact.read", "any");
-  const { status, q } = contactListQuery.parse(Object.fromEntries(new URL(request.url).searchParams));
+  const { status, q, companyId } = contactListQuery.parse(Object.fromEntries(new URL(request.url).searchParams));
   const { ipHash, userAgent } = requestMeta(request);
-  const csv = await exportContactCsv(user, { status, q }, { ipHash, userAgent });
+  const csv = await exportContactCsv(user, { status, q, companyId }, { ipHash, userAgent });
   return new Response("﻿" + csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

@@ -37,6 +37,7 @@ export const contactUpdateSchema = z
 
 export const contactListQuery = z.object({
   status: z.enum(["NEW", "IN_PROGRESS", "RESOLVED", "SPAM"]).optional(),
+  companyId: z.string().uuid().optional(), // narrows within the user's own scope, never widens it
   q: z.string().trim().max(100).optional(),
   page: z.coerce.number().int().min(1).max(10000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
@@ -68,11 +69,12 @@ export async function submitContact(input: z.infer<typeof contactFormSchema>, me
   await deliverSoon(keys);
 }
 
-function where(user: SessionUser, query: { status?: string; q?: string }): Prisma.ContactMessageWhereInput {
+function where(user: SessionUser, query: { status?: string; q?: string; companyId?: string }): Prisma.ContactMessageWhereInput {
   return {
     AND: [
       companyWhere(user.access, "contact.read"),
       query.status ? { status: query.status as Prisma.EnumContactMessageStatusFilter["equals"] } : {},
+      query.companyId ? { companyId: query.companyId } : {},
       query.q ? { OR: [{ name: { contains: query.q, mode: "insensitive" } }, { email: { contains: query.q, mode: "insensitive" } }, { subject: { contains: query.q, mode: "insensitive" } }] } : {},
     ],
   };
@@ -120,7 +122,7 @@ export async function updateContactMessage(user: SessionUser, id: string, input:
   return row;
 }
 
-export async function exportContactCsv(user: SessionUser, query: { status?: string; q?: string }, meta: Meta) {
+export async function exportContactCsv(user: SessionUser, query: { status?: string; q?: string; companyId?: string }, meta: Meta) {
   const rows = await prisma.contactMessage.findMany({ where: where(user, query), include: { company: { select: { name: true } } }, orderBy: { createdAt: "desc" }, take: 5000 });
   await recordAudit({ actorId: user.id, action: "contact.export", entityType: "ContactMessage", metadata: { count: rows.length, filters: query }, ...meta });
   return toCsv(

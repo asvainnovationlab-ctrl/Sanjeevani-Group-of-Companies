@@ -410,3 +410,29 @@ pg_restore --clean --no-owner --dbname="$DATABASE_URL_UNPOOLED" sanjeevani-YYYY-
 - Extra integrity rules added to the first migration: one group-wide
   membership per user and role, one published version per legal document,
   valid age and salary ranges, openings > 0.
+
+## Multi-company admin (company switcher, approvals, pages)
+
+- **Company switcher** (Dashboard, Applications, Vacancies, Enquiries): lists only the
+  companies the signed-in person may read. The chosen `companyId` is sent to the API,
+  where it is combined (AND) with the person's own scope, so it can only narrow results;
+  passing another company's id returns nothing rather than that company's data.
+- **Publishing approvals**: one queue of everything in review (pages, news, events,
+  notices, galleries, videos, leaders) for people with publish rights. Approving runs
+  the normal workflow endpoint, which re-checks the publish permission.
+- **Pages**: website pages (title, web address, introduction, content blocks, SEO fields)
+  through the same draft, review and publish workflow. Public rendering of these pages
+  is not wired into the site yet.
+- **Sidebar groups**: Overview, Organization, Website, Recruitment, Communications,
+  Administration; each person only sees items their role allows.
+
+### Authorization test (live)
+
+`scripts/e2e/authz.cjs` checks, against a running server and the real database, that:
+company scope cannot be widened by changing ids; another company's application, CV and
+vacancy return 404; HR cannot publish content; editors cannot publish through the API;
+auditors cannot modify; suspended users are signed out at once; anonymous requests get
+401. It creates throwaway `@e2e.invalid` users and removes everything it creates.
+
+    npm run admin:create -- --email super@e2e.invalid --name E2E   # throwaway admin
+    BASE=http://localhost:3000 E2E_ADMIN_PASSWORD=... node --env-file=.env.local scripts/e2e/authz.cjs

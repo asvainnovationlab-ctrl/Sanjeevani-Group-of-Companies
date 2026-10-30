@@ -399,6 +399,14 @@ body:has(.adm) .theme-switcher { display: none; }
 .adm-access-preview { display: grid; gap: var(--space-xs); padding: var(--space-md); border-radius: var(--radius-control); background: var(--color-accent-soft); font-size: var(--text-sm); }
 .adm-access-preview .adm-chip { background: var(--color-paper-2); }
 
+/* ------------------------------------------------ grouped nav + switcher */
+.adm-nav { gap: var(--space-md); }
+.adm-nav-group { display: grid; gap: var(--space-3xs); }
+.adm-nav-group-label { padding: 0 var(--space-md) var(--space-2xs); color: var(--color-side-muted); font-size: var(--text-xs); font-weight: 600; opacity: 0.8; }
+.adm-page-head > div { display: grid; gap: var(--space-2xs); min-width: 0; }
+.adm-switcher { display: grid; gap: var(--space-2xs); min-width: 240px; color: var(--color-muted); font-size: var(--text-xs); font-weight: 600; }
+.adm-switcher select { min-height: 40px; font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); }
+
 @media (prefers-reduced-motion: reduce) {
   .adm *, .adm *::before, .adm *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   .adm-figure:hover { transform: none; }

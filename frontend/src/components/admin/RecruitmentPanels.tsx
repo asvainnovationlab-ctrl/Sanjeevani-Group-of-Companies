@@ -17,7 +17,7 @@ type ApplicationDetail = ApplicationRow & {
   notes: { id: string; body: string; createdAt: string; author: { name: string } | null }[];
 };
 
-export function ApplicationsPanel({ me }: { me: Me }) {
+export function ApplicationsPanel({ me, companyId = "" }: { me: Me; companyId?: string }) {
   const [filters, setFilters] = useState({ q: "", status: "" });
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ total: number; items: ApplicationRow[] }>({ total: 0, items: [] });
@@ -25,7 +25,7 @@ export function ApplicationsPanel({ me }: { me: Me }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const query = new URLSearchParams({ ...(filters.q ? { q: filters.q } : {}), ...(filters.status ? { status: filters.status } : {}) }).toString();
+  const query = new URLSearchParams({ ...(filters.q ? { q: filters.q } : {}), ...(filters.status ? { status: filters.status } : {}), ...(companyId ? { companyId } : {}) }).toString();
   const load = useCallback(async () => {
     try {
       setData(await api(`/api/admin/job-applications?${query}&page=${page}&pageSize=25`));
@@ -189,7 +189,7 @@ const toDay = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-CA", { 
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 const lines = (v: string) => v.split("\n").map((s) => s.trim()).filter(Boolean);
 
-export function VacanciesPanel({ me }: { me: Me }) {
+export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: string }) {
   const [rows, setRows] = useState<VacancyRow[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [areas, setAreas] = useState<{ id: string; title: string }[]>([]);
@@ -200,7 +200,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
 
   const load = useCallback(async () => {
     try {
-      const result = await api<{ vacancies: VacancyRow[]; careerAreas: { id: string; title: string }[] }>("/api/admin/vacancies");
+      const result = await api<{ vacancies: VacancyRow[]; careerAreas: { id: string; title: string }[] }>(`/api/admin/vacancies${companyId ? `?companyId=${companyId}` : ""}`);
       setRows(result.vacancies);
       setAreas(result.careerAreas);
       if (hasPermission(me, "company.read")) setCompanies((await api<{ companies: Company[] }>("/api/admin/companies")).companies);
@@ -209,7 +209,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
     } finally {
       setLoading(false);
     }
-  }, [me]);
+  }, [me, companyId]);
   useEffect(() => { void load(); }, [load]);
 
   const [savedId, setSavedId] = useState<string | null>(null);

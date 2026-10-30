@@ -9,10 +9,13 @@ import { ContactPanel, UsersPanel } from "@/components/admin/PeoplePanels";
 import TrafficChart from "@/components/admin/TrafficChart";
 import { SECTIONS, roleAbilities } from "@/components/admin/sections";
 import { SYSTEM_ROLES } from "@/server/auth/permissions";
-import { BusinessesPanel, LeadershipPanel, NewsroomPanel } from "@/components/admin/CmsPanels";
+import { BusinessesPanel, LeadershipPanel, NewsroomPanel, PagesPanel } from "@/components/admin/CmsPanels";
+import ApprovalsPanel from "@/components/admin/ApprovalsPanel";
 
-type TabKey = "dashboard" | "applications" | "vacancies" | "businesses" | "leadership" | "newsroom" | "contact" | "users" | "audit" | "settings" | "account";
-type Tab = { key: TabKey; label: string; title: string; context: string; permission?: string; icon: ReactNode };
+type TabKey = "dashboard" | "applications" | "vacancies" | "businesses" | "leadership" | "pages" | "newsroom" | "approvals" | "contact" | "users" | "audit" | "settings" | "account";
+type Group = "Overview" | "Organization" | "Website" | "Recruitment" | "Communications" | "Administration";
+type Tab = { key: TabKey; label: string; title: string; context: string; permission?: string; anyOf?: string[]; group: Group; scoped?: boolean; icon: ReactNode };
+const GROUPS: Group[] = ["Overview", "Organization", "Website", "Recruitment", "Communications", "Administration"];
 
 // Line icons, drawn on a 24px grid with the current text colour.
 const icon = (d: string) => (
@@ -22,18 +25,22 @@ const icon = (d: string) => (
 );
 
 const TABS: Tab[] = [
-  { key: "dashboard", label: "Dashboard", title: "Dashboard", context: "Today at a glance", icon: icon("M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z") },
-  { key: "applications", label: "Applications", title: "Applications", context: "Every job application, newest first", permission: "application.read", icon: icon("M8 4h8l2 2v14H6V6zM9 10h6M9 14h6M9 18h3") },
-  { key: "vacancies", label: "Vacancies", title: "Vacancies", context: "Drafts stay here until you publish them", permission: "vacancy.read", icon: icon("M4 8h16v11H4zM9 8V5h6v3M4 13h16") },
-  { key: "businesses", label: "Businesses", title: "Businesses", context: "Categories and every company's page", permission: "company.read", icon: icon("M4 20V8l6-4v16M10 20V10h10v10M4 20h16M13 13h1M17 13h1M13 16h1M17 16h1") },
-  { key: "leadership", label: "Leadership", title: "Leadership", context: "Chairman, board, managing directors and team", permission: "leader.update", icon: icon("M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z") },
-  { key: "newsroom", label: "Newsroom", title: "Newsroom", context: "Press releases, events, notices, videos and gallery", permission: "content.update", icon: icon("M5 5h12v14H6a1 1 0 0 1-1-1zM17 9h2v9a1 1 0 0 1-2 0M8 9h6M8 12h6M8 15h4") },
-  { key: "contact", label: "Enquiries", title: "Enquiries", context: "Messages from the contact page", permission: "contact.read", icon: icon("M4 6h16v12H4zM4 7l8 6 8-6") },
-  { key: "users", label: "Users", title: "Users", context: "Each person signs in with their own account", permission: "user.manage", icon: icon("M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3 5.5") },
-  { key: "audit", label: "Audit log", title: "Audit log", context: "Who did what, in Nepal time", permission: "audit.read", icon: icon("M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4") },
-  { key: "settings", label: "Settings", title: "Settings", context: "Website details and your own account", permission: "settings.manage", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
-  { key: "account", label: "My account", title: "My account", context: "", icon: icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") },
+  { key: "dashboard", label: "Dashboard", title: "Dashboard", context: "Today at a glance", group: "Overview", scoped: true, icon: icon("M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z") },
+  { key: "applications", label: "Applications", title: "Applications", context: "Every job application, newest first", permission: "application.read", group: "Recruitment", scoped: true, icon: icon("M8 4h8l2 2v14H6V6zM9 10h6M9 14h6M9 18h3") },
+  { key: "vacancies", label: "Vacancies", title: "Vacancies", context: "Drafts stay here until you publish them", permission: "vacancy.read", group: "Recruitment", scoped: true, icon: icon("M4 8h16v11H4zM9 8V5h6v3M4 13h16") },
+  { key: "businesses", label: "Companies", title: "Companies", context: "Categories and every company's page", permission: "company.read", group: "Organization", icon: icon("M4 20V8l6-4v16M10 20V10h10v10M4 20h16M13 13h1M17 13h1M13 16h1M17 16h1") },
+  { key: "leadership", label: "Leadership", title: "Leadership", context: "Chairman, board, managing directors and team", permission: "leader.update", group: "Organization", icon: icon("M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z") },
+  { key: "pages", label: "Pages", title: "Website pages", context: "Pages you can edit without touching code", permission: "content.update", group: "Website", icon: icon("M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6") },
+  { key: "newsroom", label: "Newsroom", title: "Newsroom", context: "Press releases, events, notices, videos and gallery", permission: "content.update", group: "Website", icon: icon("M5 5h12v14H6a1 1 0 0 1-1-1zM17 9h2v9a1 1 0 0 1-2 0M8 9h6M8 12h6M8 15h4") },
+  { key: "contact", label: "Enquiries", title: "Enquiries", context: "Messages from the contact page", permission: "contact.read", group: "Communications", scoped: true, icon: icon("M4 6h16v12H4zM4 7l8 6 8-6") },
+  { key: "approvals", label: "Approvals", title: "Publishing approvals", context: "Content waiting for a publisher", anyOf: ["content.publish", "leader.publish"], group: "Administration", icon: icon("M9 12l2 2 4-4M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z") },
+  { key: "users", label: "Users and roles", title: "Users and roles", context: "Each person signs in with their own account", permission: "user.manage", group: "Administration", icon: icon("M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3 5.5") },
+  { key: "audit", label: "Audit log", title: "Audit log", context: "Who did what, in Nepal time", permission: "audit.read", group: "Administration", icon: icon("M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4") },
+  { key: "settings", label: "Settings", title: "Settings", context: "Website details and your own account", permission: "settings.manage", group: "Administration", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
+  { key: "account", label: "My account", title: "My account", context: "", group: "Administration", icon: icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") },
 ];
+
+const allowed = (me: Me, t: Tab) => (t.anyOf ? t.anyOf.some((p) => hasPermission(me, p)) : !t.permission || hasPermission(me, t.permission));
 
 const roleLabel = (role: string) => SYSTEM_ROLES[role]?.name ?? role.charAt(0) + role.slice(1).toLowerCase().replace(/_/g, " ");
 const roleName = (roles: string[]) => roles.map(roleLabel).join(", ") || "No role yet";
@@ -54,6 +61,7 @@ export default function AdminConsole() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const [tab, setTab] = useState<TabKey>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [company, setCompany] = useState("");
   const { dark, toggle } = useDarkMode();
 
   const load = useCallback(async () => {
@@ -62,8 +70,8 @@ export default function AdminConsole() {
       setMe(result);
       const params = new URLSearchParams(window.location.search);
       const wanted: TabKey | null = params.has("application") ? "applications" : params.has("contact") ? "contact" : null;
-      const allowed = TABS.filter((t) => !t.permission || hasPermission(result, t.permission)).map((t) => t.key);
-      setTab(wanted && allowed.includes(wanted) ? wanted : "dashboard");
+      const open = TABS.filter((t) => allowed(result, t)).map((t) => t.key);
+      setTab(wanted && open.includes(wanted) ? wanted : "dashboard");
     } catch {
       setMe(null);
     }
@@ -79,7 +87,7 @@ export default function AdminConsole() {
   if (me === undefined) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading the admin…</p></main>;
   if (me === null) return <SignIn onSignedIn={load} />;
 
-  const tabs = TABS.filter((t) => !t.permission || hasPermission(me, t.permission));
+  const tabs = TABS.filter((t) => allowed(me, t));
   const current = tabs.find((t) => t.key === tab) ?? tabs[0];
   const go = (key: TabKey) => { setTab(key); setMenuOpen(false); };
 
@@ -96,12 +104,21 @@ export default function AdminConsole() {
       <aside id="adm-sidebar" className="adm-sidebar" aria-label="Admin">
         <div className="adm-sidebar-brand"><Brand role={roleName(me.roles)} /></div>
         <nav className="adm-nav" aria-label="Admin sections">
-          {tabs.map((t) => (
-            <button key={t.key} type="button" className="adm-nav-item" aria-current={t.key === current.key ? "page" : undefined} onClick={() => go(t.key)}>
-              {t.icon}
-              <span>{t.label}</span>
-            </button>
-          ))}
+          {GROUPS.map((g) => {
+            const items = tabs.filter((t) => t.group === g);
+            if (!items.length) return null;
+            return (
+              <div key={g} className="adm-nav-group" role="group" aria-label={g}>
+                <span className="adm-nav-group-label" aria-hidden="true">{g}</span>
+                {items.map((t) => (
+                  <button key={t.key} type="button" className="adm-nav-item" aria-current={t.key === current.key ? "page" : undefined} onClick={() => go(t.key)}>
+                    {t.icon}
+                    <span>{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <div className="adm-sidebar-foot">
           <div className="adm-profile">
@@ -132,17 +149,22 @@ export default function AdminConsole() {
 
       <main className="adm-main">
         <header className="adm-page-head">
-          <h1>{current.title}</h1>
-          <p className="adm-muted">{current.key === "account" ? me.user.email : current.context}</p>
+          <div>
+            <h1>{current.title}</h1>
+            <p className="adm-muted">{current.key === "account" ? me.user.email : current.context}</p>
+          </div>
+          {current.scoped && <CompanySwitcher me={me} value={company} onChange={setCompany} />}
         </header>
         <div className="adm-view">
-          {current.key === "dashboard" && <Dashboard me={me} onOpen={go} />}
-          {current.key === "applications" && <ApplicationsPanel me={me} />}
-          {current.key === "vacancies" && <VacanciesPanel me={me} />}
+          {current.key === "dashboard" && <Dashboard key={company} me={me} onOpen={go} companyId={company} />}
+          {current.key === "applications" && <ApplicationsPanel key={company} me={me} companyId={company} />}
+          {current.key === "vacancies" && <VacanciesPanel key={company} me={me} companyId={company} />}
+          {current.key === "pages" && <PagesPanel me={me} />}
+          {current.key === "approvals" && <ApprovalsPanel me={me} />}
           {current.key === "businesses" && <BusinessesPanel me={me} />}
           {current.key === "leadership" && <LeadershipPanel me={me} />}
           {current.key === "newsroom" && <NewsroomPanel me={me} />}
-          {current.key === "contact" && <ContactPanel me={me} />}
+          {current.key === "contact" && <ContactPanel key={company} me={me} companyId={company} />}
           {current.key === "users" && <UsersPanel me={me} />}
           {current.key === "audit" && <AuditPanel />}
           {current.key === "settings" && (
@@ -156,6 +178,26 @@ export default function AdminConsole() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Narrows the dashboard and lists to one company. Only companies the person may
+// see are offered, and the server applies the choice inside their own scope.
+function CompanySwitcher({ me, value, onChange }: { me: Me; value: string; onChange: (id: string) => void }) {
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!hasPermission(me, "company.read")) return;
+    api<{ companies: { id: string; name: string }[] }>("/api/admin/companies").then((r) => setCompanies(r.companies)).catch(() => setCompanies([]));
+  }, [me]);
+  if (companies.length < 2 && !value) return null;
+  return (
+    <label className="adm-switcher">
+      <span>Company</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">All companies</option>
+        {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+    </label>
   );
 }
 
@@ -231,7 +273,8 @@ function Welcome({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
   );
 }
 
-function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
+function Dashboard({ me, onOpen, companyId = "" }: { me: Me; onOpen: (tab: TabKey) => void; companyId?: string }) {
+  const scope = companyId ? `&companyId=${companyId}` : "";
   const [figures, setFigures] = useState<Figure[]>([]);
   const [error, setError] = useState("");
 
@@ -242,6 +285,8 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
     if (hasPermission(me, "contact.read")) wanted.push({ key: "contact", label: "New enquiries", value: null, note: "Not answered yet", tab: "contact" });
     if (hasPermission(me, "vacancy.read")) wanted.push({ key: "vacancies", label: "Live vacancies", value: null, note: "", tab: "vacancies" });
     if (hasPermission(me, "content.update")) wanted.push({ key: "newsroom", label: "Newsroom drafts", value: null, note: "", tab: "newsroom" });
+    if (hasPermission(me, "company.read") && !companyId) wanted.push({ key: "companies", label: "Companies", value: null, note: "", tab: "businesses" });
+    if (hasPermission(me, "content.publish") || hasPermission(me, "leader.publish")) wanted.push({ key: "approvals", label: "Waiting for approval", value: null, note: "Drafts sent for review", tab: "approvals" });
     if (hasPermission(me, "user.manage")) wanted.push({ key: "users", label: "Admin users", value: null, note: "", tab: "users" });
     setFigures(wanted);
 
@@ -249,10 +294,10 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
       if (live) setFigures((all) => all.map((f) => (f.key === key ? { ...f, value, note: note ?? f.note } : f)));
     };
     const tasks: Promise<unknown>[] = [];
-    if (wanted.some((f) => f.key === "applications")) tasks.push(api<{ total: number }>("/api/admin/job-applications?status=SUBMITTED&pageSize=1").then((r) => fill("applications", r.total)));
-    if (wanted.some((f) => f.key === "contact")) tasks.push(api<{ total: number }>("/api/admin/contact?status=NEW&pageSize=1").then((r) => fill("contact", r.total)));
+    if (wanted.some((f) => f.key === "applications")) tasks.push(api<{ total: number }>(`/api/admin/job-applications?status=SUBMITTED&pageSize=1${scope}`).then((r) => fill("applications", r.total)));
+    if (wanted.some((f) => f.key === "contact")) tasks.push(api<{ total: number }>(`/api/admin/contact?status=NEW&pageSize=1${scope}`).then((r) => fill("contact", r.total)));
     if (wanted.some((f) => f.key === "vacancies")) {
-      tasks.push(api<{ vacancies: { status: string }[] }>("/api/admin/vacancies").then((r) => {
+      tasks.push(api<{ vacancies: { status: string }[] }>(`/api/admin/vacancies${companyId ? `?companyId=${companyId}` : ""}`).then((r) => {
         const drafts = r.vacancies.filter((v) => v.status === "DRAFT").length;
         fill("vacancies", r.vacancies.filter((v) => v.status === "PUBLISHED").length, drafts ? `${drafts} draft${drafts === 1 ? "" : "s"} not published` : "No drafts waiting");
       }));
@@ -264,6 +309,16 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
         fill("newsroom", all.filter((i) => i.status === "DRAFT").length, waiting ? `${waiting} waiting for review` : "Nothing waiting for review");
       }));
     }
+    if (wanted.some((f) => f.key === "companies")) {
+      tasks.push(api<{ companies: { status: string }[] }>("/api/admin/companies").then((r) => {
+        const live = r.companies.filter((c) => c.status === "PUBLISHED").length;
+        fill("companies", r.companies.length, `${live} live on the website`);
+      }));
+    }
+    if (wanted.some((f) => f.key === "approvals")) {
+      const types = [...(hasPermission(me, "content.publish") ? ["pages", "news", "events", "notices", "galleries", "videos"] : []), ...(hasPermission(me, "leader.publish") ? ["leaders"] : [])];
+      tasks.push(Promise.all(types.map((t) => api<{ items: unknown[] }>(`/api/admin/content/${t}?status=PENDING_REVIEW`))).then((lists) => fill("approvals", lists.reduce((n, l) => n + l.items.length, 0))));
+    }
     if (wanted.some((f) => f.key === "users")) {
       tasks.push(api<{ users: { status: string }[] }>("/api/admin/users").then((r) => {
         const invited = r.users.filter((u) => u.status === "INVITED").length;
@@ -272,7 +327,7 @@ function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
     }
     Promise.all(tasks).catch((e: Error) => live && setError(e.message));
     return () => { live = false; };
-  }, [me]);
+  }, [me, companyId, scope]);
 
   const steps = [
     hasPermission(me, "vacancy.update") && { title: "Publish a vacancy", text: "Add it under Vacancies, choose its career area, then press Publish. It shows on the careers page at once.", tab: "vacancies" as TabKey },

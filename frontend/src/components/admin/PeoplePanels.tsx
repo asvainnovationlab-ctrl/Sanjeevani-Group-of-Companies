@@ -8,7 +8,7 @@ import { roleAbilities, roleDescription, roleSections } from "@/components/admin
 
 type Message = { id: string; name: string; email: string; phone: string | null; subject: string | null; status: string; createdAt: string; company: { name: string } | null; message?: string };
 
-export function ContactPanel({ me }: { me: Me }) {
+export function ContactPanel({ me, companyId = "" }: { me: Me; companyId?: string }) {
   const [status, setStatus] = useState("NEW");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ total: number; items: Message[] }>({ total: 0, items: [] });
@@ -17,8 +17,8 @@ export function ContactPanel({ me }: { me: Me }) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    try { setData(await api(`/api/admin/contact?${status ? `status=${status}&` : ""}page=${page}`)); } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
-  }, [status, page]);
+    try { setData(await api(`/api/admin/contact?${status ? `status=${status}&` : ""}${companyId ? `companyId=${companyId}&` : ""}page=${page}`)); } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
+  }, [status, page, companyId]);
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {

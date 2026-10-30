@@ -102,6 +102,26 @@ export function LeadershipPanel({ me }: { me: Me }) {
   return <ContentManager me={me} config={LEADER} lookups={lookups} />;
 }
 
+// --------------------------------------------------------------------- pages
+
+const PAGE: ContentConfig = {
+  type: "pages", noun: "page", update: "content.update", publish: "content.publish",
+  title: (i) => String(i.title),
+  meta: (i) => `/${String(i.key)}`,
+  fields: [
+    { k: "title", label: "Page title", type: "text", required: true, wide: true },
+    { k: "key", label: "Web address", type: "text", required: true, help: "Lowercase words joined by hyphens, e.g. about-us" },
+    { k: "intro", label: "Introduction", type: "textarea", help: "One or two sentences under the title." },
+    { k: "body", label: "Page content", type: "blocks", help: "Leave a blank line between paragraphs." },
+    { k: "seoTitle", label: "Search engine title", type: "text", help: "Up to 70 characters. The page title is used when empty." },
+    { k: "seoDescription", label: "Search engine description", type: "textarea", help: "Up to 160 characters." },
+  ],
+};
+
+export function PagesPanel({ me }: { me: Me }) {
+  return <ContentManager me={me} config={PAGE} lookups={{ companies: [], sectors: [] }} />;
+}
+
 // ------------------------------------------------------------------ newsroom
 
 const companyField: Field = { k: "companyId", label: "Company", type: "select", options: "companies", empty: "Sanjeevani Group (all)" };
