@@ -58,9 +58,9 @@ export function editProblem(status: PublishStatus, canPublish: boolean): string 
   return null;
 }
 
-// Content may only be deleted while it was never public or is archived.
-export function deleteProblem(status: PublishStatus, everPublished: boolean): string | null {
-  if (status === "PUBLISHED") return "Unpublish or archive this item before deleting it.";
-  if (everPublished && status !== "ARCHIVED") return "This item has been public before; archive it instead of deleting it.";
+// Anything can be deleted (a wrong upload should go, not linger as archived).
+// Only publishers may delete, every delete is audited, and the item's earlier
+// versions stay in ContentRevision. Kept as a hook for future rules.
+export function deleteProblem(_status: PublishStatus, _everPublished: boolean): string | null {
   return null;
 }

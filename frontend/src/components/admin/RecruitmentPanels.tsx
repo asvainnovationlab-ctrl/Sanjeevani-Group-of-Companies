@@ -220,7 +220,7 @@ export function VacanciesPanel({ me, companyId = "" }: { me: Me; companyId?: str
   }
 
   const publishable = (v: VacancyRow) => v.status === "DRAFT" || v.status === "CLOSED";
-  const deletable = (v: VacancyRow) => v.status !== "PUBLISHED" && v._count.applications === 0;
+  const deletable = (v: VacancyRow) => v._count.applications === 0;
   const setStatus = (v: VacancyRow, action: string, message: string) => act(() => api(`/api/admin/vacancies/${v.id}/status`, { body: { action } }), message);
   const remove = (v: VacancyRow) => {
     if (window.confirm(`Delete "${v.title}" permanently? This cannot be undone.`)) void act(() => api(`/api/admin/vacancies/${v.id}`, { method: "DELETE" }), "Vacancy deleted.");

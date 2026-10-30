@@ -18,6 +18,7 @@ export type ContentConfig = {
   title: (item: Item) => string;
   meta?: (item: Item) => ReactNode;
   defaults?: Record<string, unknown>;
+  newDefaults?: (items: Item[]) => Record<string, unknown>; // defaults that depend on existing records
   altFrom?: string; // field used to describe uploaded images
   filter?: (item: Item) => boolean; // show only part of the type, e.g. gallery videos
   heading?: string; // shown above the list when several managers share a screen
@@ -51,7 +52,7 @@ export default function ContentManager({ me, config, lookups }: { me: Me; config
   }
 
   function startNew() {
-    setEditing({ id: null, values: fromItem(config.fields, config.defaults ?? null) });
+    setEditing({ id: null, values: fromItem(config.fields, { ...(config.defaults ?? {}), ...(config.newDefaults?.(items) ?? {}) }) });
   }
   function startEdit(item: Item) {
     setEditing({ id: item.id, updatedAt: item.updatedAt, values: fromItem(config.fields, item) });
@@ -116,8 +117,8 @@ export default function ContentManager({ me, config, lookups }: { me: Me; config
                   {canPublish && item.status === "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "unpublish", "Unpublished.")}>Unpublish</button>}
                   {canPublish && item.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "archive", "Archived.")}>Archive</button>}
                   {canPublish && item.status === "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => flow(item, "restore", "Restored as a draft.")}>Restore</button>}
-                  {canPublish && (item.status === "ARCHIVED" || (item.status === "DRAFT" && !item.publishedAt)) && (
-                    <button type="button" className="admin-secondary-button" onClick={() => { if (window.confirm(`Delete this ${config.noun} permanently?`)) void act(() => api(`/api/admin/content/${config.type}/${item.id}`, { method: "DELETE" }), "Deleted."); }}>Delete</button>
+                  {canPublish && (
+                    <button type="button" className="admin-secondary-button" onClick={() => { if (window.confirm(`Delete this ${config.noun} permanently? It is removed from the website at once and cannot be restored here.`)) void act(() => api(`/api/admin/content/${config.type}/${item.id}`, { method: "DELETE" }), "Deleted."); }}>Delete</button>
                   )}
                 </td>
               </tr>

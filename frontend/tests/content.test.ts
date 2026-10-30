@@ -29,11 +29,10 @@ describe("editorial workflow", () => {
     assert.ok(editProblem("ARCHIVED", true));
     assert.equal(editProblem("DRAFT", false), null);
   });
-  it("only deletes content that was never public, or is archived", () => {
-    assert.equal(deleteProblem("DRAFT", false), null);
-    assert.ok(deleteProblem("PUBLISHED", true));
-    assert.ok(deleteProblem("DRAFT", true));
-    assert.equal(deleteProblem("ARCHIVED", true), null);
+  it("lets publishers delete content in any state", () => {
+    for (const status of ["DRAFT", "PENDING_REVIEW", "APPROVED", "PUBLISHED", "ARCHIVED"] as const) {
+      assert.equal(deleteProblem(status, true), null, status);
+    }
   });
 });
 

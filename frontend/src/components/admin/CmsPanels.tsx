@@ -58,6 +58,11 @@ const LEADER: ContentConfig = {
   title: (i) => String(i.name),
   meta: (i) => ((i.assignments as { title: string; company: { name: string } | null }[]) ?? []).map((a) => `${a.title}, ${a.company?.name ?? "Sanjeevani Group"}`).join("; "),
   defaults: { assignments: [{ companyId: null, title: "", tier: "TEAM", isManagingDirector: false }] },
+  // A new leader starts with the Chairman's portrait as a stand-in; replace it when the real photo is ready.
+  newDefaults: (items) => {
+    const chairman = items.find((i) => i.isChairman === true && i.photoId);
+    return chairman ? { photoId: chairman.photoId, photo: chairman.photo } : {};
+  },
   fields: [
     { k: "name", label: "Full name", type: "text", required: true },
     { k: "photoId", label: "Photo", type: "image", rel: "photo", folder: "leaders", help: "A clear portrait, ideally square." },
@@ -316,7 +321,7 @@ export function BusinessesPanel({ me }: { me: Me }) {
   }
 
   const removeCompany = (c: Company) => {
-    if (window.confirm(`Delete ${c.name} permanently? Its offices and roles are deleted with it. This cannot be undone.`)) {
+    if (window.confirm(`Delete ${c.name} permanently? Its page, offices, vacancies and leadership roles are removed from the website at once. This cannot be undone.`)) {
       void act(() => api(`/api/admin/companies/${c.id}`, { method: "DELETE" }), `${c.name} deleted.`);
     }
   };
@@ -390,7 +395,7 @@ export function BusinessesPanel({ me }: { me: Me }) {
               {canPublish && c.status !== "PUBLISHED" && c.status !== "ARCHIVED" && <button type="button" className="admin-primary-button" onClick={() => status(c, "publish", `${c.name} is live.`)}>Publish now</button>}
               <button type="button" className="admin-secondary-button" onClick={() => editCompany(c)}>Edit again</button>
               {canPublish && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "archive", `${c.name} archived.`)}>Archive</button>}
-              {canCreate && c.status !== "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
+              {canCreate && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
             </div>
           </div>
         );
@@ -451,7 +456,7 @@ export function BusinessesPanel({ me }: { me: Me }) {
                         {canPublish && c.status === "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "unpublish", `${c.name} is hidden from the website.`)}>Unpublish</button>}
                         {canPublish && c.status !== "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "archive", `${c.name} archived.`)}>Archive</button>}
                         {canPublish && c.status === "ARCHIVED" && <button type="button" className="admin-secondary-button" onClick={() => status(c, "restore", `${c.name} restored as a draft.`)}>Restore</button>}
-                        {canCreate && c.status !== "PUBLISHED" && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
+                        {canCreate && <button type="button" className="admin-secondary-button" onClick={() => removeCompany(c)}>Delete</button>}
                       </td>
                     </tr>
                   ))}
