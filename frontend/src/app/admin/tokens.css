@@ -1,0 +1,63 @@
+/* Admin tokens. Scoped to .adm so the public site's own tokens never change. */
+.adm {
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.125rem; --text-xl: 1.266rem; --text-2xl: 1.424rem; --text-3xl: 1.602rem; --text-figure: 2.25rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms; --dur-short: 220ms;
+  --z-sticky: 200; --z-drawer: 400; --z-scrim: 390;
+  --sidebar: 264px;
+  --radius-card: 14px; --radius-control: 10px; --radius-pill: 999px; --rule-hair: 1px;
+
+  --color-paper: #f7f8f3;
+  --color-paper-2: #ffffff;
+  --color-paper-3: #eef3e7;
+  --color-ink: #1d2b20;
+  --color-ink-2: #203c29;
+  --color-muted: #56655a;
+  --color-rule: #dde5d6;
+  --color-rule-strong: #c4d1bd;
+  --color-field-edge: #869482;
+  --color-accent: #3a7020;
+  --color-accent-2: #4f8f2a;
+  --color-accent-soft: #e2efd2;
+  --color-accent-ink: #ffffff;
+  --color-current: #2f5c1a;
+  --color-focus: #2f5c1a;
+  --color-error: #b42318;
+  --color-error-soft: #fdecea;
+  --color-notice: #2f5f18;
+  --color-notice-soft: #e9f4df;
+  --color-warn-ink: #6b4d17;
+  --color-warn-soft: #f6ecd8;
+  --color-scrim: rgba(11, 27, 16, 0.45);
+  --shadow-drawer: 0 18px 48px rgba(11, 27, 16, 0.16);
+
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Poppins", "Inter", sans-serif;
+}
+
+:root[data-theme="dark"] .adm {
+  --color-paper: #0d110d;
+  --color-paper-2: #141a13;
+  --color-paper-3: #1c241b;
+  --color-ink: #e6ede1;
+  --color-ink-2: #f0f6ea;
+  --color-muted: #a4b09f;
+  --color-rule: #2a3428;
+  --color-rule-strong: #3a4637;
+  --color-field-edge: #6f7d6b;
+  --color-accent: #8cc63f;
+  --color-accent-2: #a9d97b;
+  --color-accent-soft: #223318;
+  --color-accent-ink: #0d110d;
+  --color-current: #c4e58a;
+  --color-focus: #c4e58a;
+  --color-error: #ff8a7a;
+  --color-error-soft: #3a1714;
+  --color-notice: #a9d97b;
+  --color-notice-soft: #1d2a14;
+  --color-warn-ink: #e8c98b;
+  --color-warn-soft: #33281a;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --shadow-drawer: 0 18px 48px rgba(0, 0, 0, 0.5);
+}

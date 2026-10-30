@@ -41,7 +41,7 @@ export function ApplicationsPanel({ me }: { me: Me }) {
   return (
     <>
       <div className="admin-list-heading">
-        <div><h2>Job applications</h2><p>{loading ? "Loading…" : `${data.total} matching · newest first`}</p></div>
+        <div><h2>Job applications</h2><p>{loading ? "Loading…" : `${data.total} matching`}</p></div>
         {hasPermission(me, "application.export") && <a className="admin-secondary-button" href={`/api/admin/job-applications/export?${query}`}>Export CSV</a>}
       </div>
       <div className="admin-toolbar">
@@ -98,28 +98,29 @@ function ApplicationDrawer({ id, me, onClose, onChanged }: { id: string; me: Me;
   return (
     <aside className="admin-drawer" aria-label="Application details">
       <div className="admin-drawer-head">
-        <h3>{app ? `${app.fullName} · ${app.referenceNumber}` : "Loading…"}</h3>
+        <h3>{app ? app.fullName : "Loading…"}</h3>
         <button className="admin-close-button" type="button" onClick={onClose} aria-label="Close">×</button>
       </div>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {app && (
         <>
           <dl className="admin-facts">
-            <dt>Position</dt><dd>{app.vacancyTitle} · {app.company?.name ?? "Group"}</dd>
+            <dt>Reference</dt><dd>{app.referenceNumber}</dd>
+            <dt>Position</dt><dd>{app.vacancyTitle}, {app.company?.name ?? "Group"}</dd>
             <dt>Status</dt><dd>{label(app.status)}</dd>
             <dt>Email</dt><dd><a href={`mailto:${app.email}`}>{app.email}</a></dd>
             <dt>Phone</dt><dd><a href={`tel:${app.phone}`}>{app.phone}</a></dd>
-            <dt>Age / gender</dt><dd>{app.age}{app.gender ? ` · ${app.gender}` : ""}</dd>
+            <dt>Age / gender</dt><dd>{app.age}{app.gender ? `, ${app.gender}` : ""}</dd>
             <dt>Address</dt><dd>{app.address}</dd>
             <dt>Education</dt><dd>{app.education}</dd>
-            <dt>Experience</dt><dd>{Number(app.experienceYears)} years{app.currentEmployer ? ` · now at ${app.currentEmployer}` : ""}</dd>
+            <dt>Experience</dt><dd>{Number(app.experienceYears)} years{app.currentEmployer ? `, now at ${app.currentEmployer}` : ""}</dd>
             <dt>Expected salary</dt><dd>{app.expectedSalary ?? "—"}</dd>
             <dt>Received</dt><dd>{formatDate(app.createdAt)}</dd>
           </dl>
           {app.coverLetter && <><h4>Cover letter</h4><p className="admin-cover-letter">{app.coverLetter}</p></>}
           <h4>Documents</h4>
           <ul className="admin-plain-list">
-            {app.documents.map((d) => <li key={d.id}><a href={`/api/admin/job-applications/${app.id}/documents/${d.id}`}>{d.originalName}</a> · {Math.ceil(d.bytes / 1024)} KB</li>)}
+            {app.documents.map((d) => <li key={d.id}><a href={`/api/admin/job-applications/${app.id}/documents/${d.id}`}>{d.originalName}</a> ({Math.ceil(d.bytes / 1024)} KB)</li>)}
           </ul>
           {canUpdate && allowedNextStatuses(app.status).length > 0 && (
             <>
@@ -136,11 +137,11 @@ function ApplicationDrawer({ id, me, onClose, onChanged }: { id: string; me: Me;
           )}
           <h4>History</h4>
           <ul className="admin-plain-list">
-            {app.statusHistory.map((h) => <li key={h.id}>{formatDate(h.createdAt)} · {h.fromStatus ? `${label(h.fromStatus)} → ` : ""}{label(h.toStatus)}{h.changedBy ? ` · ${h.changedBy.name}` : ""}{h.note ? ` · “${h.note}”` : ""}</li>)}
+            {app.statusHistory.map((h) => <li key={h.id}><strong>{h.fromStatus ? `${label(h.fromStatus)} to ${label(h.toStatus).toLowerCase()}` : label(h.toStatus)}</strong><small>{formatDate(h.createdAt)}{h.changedBy ? `, by ${h.changedBy.name}` : ""}</small>{h.note && <small>“{h.note}”</small>}</li>)}
           </ul>
           <h4>Internal notes</h4>
           <ul className="admin-plain-list">
-            {app.notes.map((n) => <li key={n.id}><strong>{n.author?.name ?? "Former user"}</strong> · {formatDate(n.createdAt)}<br />{n.body}</li>)}
+            {app.notes.map((n) => <li key={n.id}><strong>{n.author?.name ?? "Former user"}</strong><small>{formatDate(n.createdAt)}</small>{n.body}</li>)}
           </ul>
           {canUpdate && (
             <form onSubmit={(e: FormEvent) => { e.preventDefault(); void act(async () => { await api(`/api/admin/job-applications/${app.id}/notes`, { body: { body: note } }); setNote(""); }); }}>
@@ -251,7 +252,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
   return (
     <>
       <div className="admin-list-heading">
-        <div><h2>Vacancies</h2><p>{loading ? "Loading…" : `${rows.length} vacancies · drafts are only visible here`}</p></div>
+        <div><h2>Vacancies</h2><p>{loading ? "Loading…" : `${rows.length} vacancies`}</p></div>
         {hasPermission(me, "vacancy.update") && <button className="admin-primary-button" type="button" onClick={() => setEditing({ id: null, form: { ...EMPTY_VACANCY, companyId: companies[0]?.id ?? "", careerAreaId: areas[0]?.id ?? "" } })}>New vacancy <span aria-hidden="true">＋</span></button>}
       </div>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
@@ -288,7 +289,7 @@ export function VacanciesPanel({ me }: { me: Me }) {
           <tbody>
             {rows.map((v) => (
               <tr key={v.id}>
-                <td>{v.title}<small>{v.company.name} · {v.referenceCode}</small></td>
+                <td>{v.title}<small>{v.company.name}</small><small>{v.referenceCode}</small></td>
                 <td><span className={`admin-badge admin-badge-${v.status.toLowerCase()}`}>{label(v.status)}</span></td>
                 <td>{v.deadline ? formatDate(v.deadline, false) : "—"}</td>
                 <td>{v._count.applications}</td>

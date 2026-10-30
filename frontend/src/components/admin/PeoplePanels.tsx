@@ -186,7 +186,7 @@ export function UsersPanel({ me }: { me: Me }) {
                     </div>
                   </>
                 ) : (
-                  u.memberships.map((m, i) => <small key={i}>{m.role.name} · {m.company?.name ?? "whole group"}</small>)
+                  u.memberships.map((m, i) => <small key={i}>{m.role.name}, {m.company?.name ?? "whole group"}</small>)
                 )}
               </td>
               <td><span className={`admin-badge admin-badge-${u.status.toLowerCase()}`}>{label(u.status)}</span>{u.lockedUntil && new Date(u.lockedUntil) > new Date() && <small>Locked after failed sign-ins</small>}</td>

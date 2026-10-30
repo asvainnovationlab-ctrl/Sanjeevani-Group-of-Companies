@@ -1,35 +1,61 @@
 "use client";
 import Link from "next/link";
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
+import GroupEmblem from "@/components/GroupEmblem";
 import { api, ApiError, hasPermission, type Me } from "@/components/admin/api";
 import { AccountPanel, AuditPanel, SettingsPanel } from "@/components/admin/SystemPanels";
 import { ApplicationsPanel, VacanciesPanel } from "@/components/admin/RecruitmentPanels";
 import { ContactPanel, UsersPanel } from "@/components/admin/PeoplePanels";
 
-type Tab = { key: string; label: string; permission?: string };
+type TabKey = "dashboard" | "applications" | "vacancies" | "contact" | "users" | "audit" | "settings" | "account";
+type Tab = { key: TabKey; label: string; title: string; context: string; permission?: string; icon: ReactNode };
+
+// Line icons, drawn on a 24px grid with the current text colour.
+const icon = (d: string) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={d} />
+  </svg>
+);
 
 const TABS: Tab[] = [
-  { key: "applications", label: "Applications", permission: "application.read" },
-  { key: "vacancies", label: "Vacancies", permission: "vacancy.read" },
-  { key: "contact", label: "Enquiries", permission: "contact.read" },
-  { key: "users", label: "Users", permission: "user.manage" },
-  { key: "audit", label: "Audit log", permission: "audit.read" },
-  { key: "settings", label: "Settings", permission: "settings.manage" },
-  { key: "account", label: "My account" },
+  { key: "dashboard", label: "Dashboard", title: "Dashboard", context: "Today at a glance", icon: icon("M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z") },
+  { key: "applications", label: "Applications", title: "Applications", context: "Every job application, newest first", permission: "application.read", icon: icon("M8 4h8l2 2v14H6V6zM9 10h6M9 14h6M9 18h3") },
+  { key: "vacancies", label: "Vacancies", title: "Vacancies", context: "Drafts stay here until you publish them", permission: "vacancy.read", icon: icon("M4 8h16v11H4zM9 8V5h6v3M4 13h16") },
+  { key: "contact", label: "Enquiries", title: "Enquiries", context: "Messages from the contact page", permission: "contact.read", icon: icon("M4 6h16v12H4zM4 7l8 6 8-6") },
+  { key: "users", label: "Users", title: "Users", context: "Each person signs in with their own account", permission: "user.manage", icon: icon("M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.5a6 6 0 0 1 3 5.5") },
+  { key: "audit", label: "Audit log", title: "Audit log", context: "Who did what, in Nepal time", permission: "audit.read", icon: icon("M12 7v5l3 2M21 12a9 9 0 1 1-3-6.7M21 4v4h-4") },
+  { key: "settings", label: "Settings", title: "Settings", context: "Contact details and links shown on the website", permission: "settings.manage", icon: icon("M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z") },
+  { key: "account", label: "My account", title: "My account", context: "", icon: icon("M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0") },
 ];
+
+const roleName = (roles: string[]) => roles.map((r) => r.charAt(0) + r.slice(1).toLowerCase().replace(/_/g, " ")).join(", ") || "No role yet";
+
+function useDarkMode() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(document.documentElement.dataset.theme === "dark"); }, []);
+  const toggle = () => {
+    const next = dark ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { window.localStorage.setItem("sanjeevani-theme", next); } catch { /* storage blocked: the choice lasts this visit */ }
+    setDark(!dark);
+  };
+  return { dark, toggle };
+}
 
 export default function AdminConsole() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
-  const [tab, setTab] = useState("account");
+  const [tab, setTab] = useState<TabKey>("dashboard");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { dark, toggle } = useDarkMode();
 
   const load = useCallback(async () => {
     try {
       const result = await api<Me>("/api/auth/me");
       setMe(result);
-      const first = TABS.find((t) => !t.permission || hasPermission(result, t.permission));
-      const wanted = new URLSearchParams(window.location.search).has("application") ? "applications" : new URLSearchParams(window.location.search).has("contact") ? "contact" : null;
+      const params = new URLSearchParams(window.location.search);
+      const wanted: TabKey | null = params.has("application") ? "applications" : params.has("contact") ? "contact" : null;
       const allowed = TABS.filter((t) => !t.permission || hasPermission(result, t.permission)).map((t) => t.key);
-      setTab(wanted && allowed.includes(wanted) ? wanted : first?.key ?? "account");
+      setTab(wanted && allowed.includes(wanted) ? wanted : "dashboard");
     } catch {
       setMe(null);
     }
@@ -42,40 +68,166 @@ export default function AdminConsole() {
     setMe(null);
   }
 
-  if (me === undefined) return <main className="admin-shell admin-login-shell"><p>Loading…</p></main>;
+  if (me === undefined) return <main className="adm adm-center" aria-busy="true"><p className="adm-muted">Loading the admin…</p></main>;
   if (me === null) return <SignIn onSignedIn={load} />;
 
   const tabs = TABS.filter((t) => !t.permission || hasPermission(me, t.permission));
+  const current = tabs.find((t) => t.key === tab) ?? tabs[0];
+  const go = (key: TabKey) => { setTab(key); setMenuOpen(false); };
+
   return (
-    <main className="admin-shell">
-      <header className="admin-header">
-        <div>
-          <Link className="admin-home-link" href="/">← Sanjeevani Group</Link>
-          <p className="section-overline">ADMIN</p>
-          <h1>Welcome, {me.user.name}</h1>
-          <p>{me.roles.map((r) => r.replace(/_/g, " ").toLowerCase()).join(", ") || "No role assigned yet"}</p>
-        </div>
-        <button className="admin-secondary-button" type="button" onClick={signOut}>Sign out</button>
+    <div className="adm adm-app" data-menu={menuOpen ? "open" : "closed"}>
+      <header className="adm-topbar">
+        <Brand />
+        <button type="button" className="adm-icon-button" aria-expanded={menuOpen} aria-controls="adm-sidebar" onClick={() => setMenuOpen(!menuOpen)}>
+          {icon(menuOpen ? "M6 6l12 12M18 6L6 18" : "M4 7h16M4 12h16M4 17h16")}
+          <span className="visually-hidden">{menuOpen ? "Close menu" : "Open menu"}</span>
+        </button>
       </header>
-      <nav className="admin-tabs" aria-label="Admin sections">
-        {tabs.map((t) => (
-          <button key={t.key} type="button" className={t.key === tab ? "is-active" : ""} aria-current={t.key === tab ? "page" : undefined} onClick={() => setTab(t.key)}>
-            {t.label}
+
+      <aside id="adm-sidebar" className="adm-sidebar" aria-label="Admin">
+        <div className="adm-sidebar-brand"><Brand role={roleName(me.roles)} /></div>
+        <nav className="adm-nav" aria-label="Admin sections">
+          {tabs.map((t) => (
+            <button key={t.key} type="button" className="adm-nav-item" aria-current={t.key === current.key ? "page" : undefined} onClick={() => go(t.key)}>
+              {t.icon}
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="adm-sidebar-foot">
+          <p className="adm-signed-in">Signed in as <strong>{me.user.name}</strong><span>{me.user.email}</span></p>
+          <button type="button" className="adm-foot-action" onClick={toggle} aria-pressed={dark}>
+            {icon(dark ? "M12 4V2M12 22v-2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" : "M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z")}
+            <span>{dark ? "Light mode" : "Dark mode"}</span>
           </button>
-        ))}
-      </nav>
-      <section className="admin-content">
-        {tab === "applications" && <ApplicationsPanel me={me} />}
-        {tab === "vacancies" && <VacanciesPanel me={me} />}
-        {tab === "contact" && <ContactPanel me={me} />}
-        {tab === "users" && <UsersPanel me={me} />}
-        {tab === "audit" && <AuditPanel />}
-        {tab === "settings" && <SettingsPanel />}
-        {tab === "account" && <AccountPanel me={me} onSignedOut={() => setMe(null)} />}
-      </section>
-    </main>
+          <button type="button" className="adm-foot-action" onClick={signOut}>
+            {icon("M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10")}
+            <span>Log out</span>
+          </button>
+          <Link className="adm-foot-action" href="/">
+            {icon("M3 11l9-7 9 7M5 10v10h14V10")}
+            <span>View website</span>
+          </Link>
+        </div>
+      </aside>
+      {menuOpen && <button type="button" className="adm-scrim" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
+
+      <main className="adm-main">
+        <header className="adm-page-head">
+          <h1>{current.title}</h1>
+          <p className="adm-muted">{current.key === "account" ? me.user.email : current.context}</p>
+        </header>
+        <div className="adm-view">
+          {current.key === "dashboard" && <Dashboard me={me} onOpen={go} />}
+          {current.key === "applications" && <ApplicationsPanel me={me} />}
+          {current.key === "vacancies" && <VacanciesPanel me={me} />}
+          {current.key === "contact" && <ContactPanel me={me} />}
+          {current.key === "users" && <UsersPanel me={me} />}
+          {current.key === "audit" && <AuditPanel />}
+          {current.key === "settings" && <SettingsPanel />}
+          {current.key === "account" && <AccountPanel me={me} onSignedOut={() => setMe(null)} />}
+        </div>
+      </main>
+    </div>
   );
 }
+
+function Brand({ role }: { role?: string }) {
+  return (
+    <span className="adm-brand">
+      <span className="adm-brand-mark"><GroupEmblem /></span>
+      <span className="adm-brand-text">
+        <strong>Sanjeevani Group</strong>
+        <span>{role ?? "Admin"}</span>
+      </span>
+    </span>
+  );
+}
+
+// ------------------------------------------------------------------ dashboard
+
+type Figure = { key: string; label: string; value: number | null; note: string; tab: TabKey };
+
+function Dashboard({ me, onOpen }: { me: Me; onOpen: (tab: TabKey) => void }) {
+  const [figures, setFigures] = useState<Figure[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    const wanted: Figure[] = [];
+    if (hasPermission(me, "application.read")) wanted.push({ key: "applications", label: "New applications", value: null, note: "Waiting for a first review", tab: "applications" });
+    if (hasPermission(me, "contact.read")) wanted.push({ key: "contact", label: "New enquiries", value: null, note: "Not answered yet", tab: "contact" });
+    if (hasPermission(me, "vacancy.read")) wanted.push({ key: "vacancies", label: "Live vacancies", value: null, note: "", tab: "vacancies" });
+    if (hasPermission(me, "user.manage")) wanted.push({ key: "users", label: "Admin users", value: null, note: "", tab: "users" });
+    setFigures(wanted);
+
+    const fill = (key: string, value: number, note?: string) => {
+      if (live) setFigures((all) => all.map((f) => (f.key === key ? { ...f, value, note: note ?? f.note } : f)));
+    };
+    const tasks: Promise<unknown>[] = [];
+    if (wanted.some((f) => f.key === "applications")) tasks.push(api<{ total: number }>("/api/admin/job-applications?status=SUBMITTED&pageSize=1").then((r) => fill("applications", r.total)));
+    if (wanted.some((f) => f.key === "contact")) tasks.push(api<{ total: number }>("/api/admin/contact?status=NEW&pageSize=1").then((r) => fill("contact", r.total)));
+    if (wanted.some((f) => f.key === "vacancies")) {
+      tasks.push(api<{ vacancies: { status: string }[] }>("/api/admin/vacancies").then((r) => {
+        const drafts = r.vacancies.filter((v) => v.status === "DRAFT").length;
+        fill("vacancies", r.vacancies.filter((v) => v.status === "PUBLISHED").length, drafts ? `${drafts} draft${drafts === 1 ? "" : "s"} not published` : "No drafts waiting");
+      }));
+    }
+    if (wanted.some((f) => f.key === "users")) {
+      tasks.push(api<{ users: { status: string }[] }>("/api/admin/users").then((r) => {
+        const invited = r.users.filter((u) => u.status === "INVITED").length;
+        fill("users", r.users.filter((u) => u.status === "ACTIVE").length, invited ? `${invited} invitation${invited === 1 ? "" : "s"} pending` : "All accounts active");
+      }));
+    }
+    Promise.all(tasks).catch((e: Error) => live && setError(e.message));
+    return () => { live = false; };
+  }, [me]);
+
+  const steps = [
+    hasPermission(me, "vacancy.update") && { title: "Publish a vacancy", text: "Add it under Vacancies, choose its career area, then press Publish. It shows on the careers page at once.", tab: "vacancies" as TabKey },
+    hasPermission(me, "application.read") && { title: "Review applications", text: "Open one to read it, download the CV and move it to the next stage.", tab: "applications" as TabKey },
+    hasPermission(me, "user.manage") && { title: "Give your team their own accounts", text: "Each person gets a role for the whole group or for one company.", tab: "users" as TabKey },
+    hasPermission(me, "settings.manage") && { title: "Check the contact details", text: "The email, phone and social links shown on the website.", tab: "settings" as TabKey },
+  ].filter(Boolean) as { title: string; text: string; tab: TabKey }[];
+
+  return (
+    <>
+      {error && <p className="admin-message admin-error" role="alert">{error}</p>}
+      {figures.length > 0 && (
+        <ul className="adm-figures" aria-label="Work waiting">
+          {figures.map((f) => (
+            <li key={f.key}>
+              <button type="button" className="adm-figure" onClick={() => onOpen(f.tab)} aria-busy={f.value === null}>
+                <span className="adm-figure-label">{f.label}</span>
+                <span className="adm-figure-value num">{f.value ?? <span className="adm-skeleton" aria-hidden="true" />}</span>
+                {f.note && f.value !== null && <span className="adm-figure-note">{f.note}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {steps.length > 0 && (
+        <section className="adm-card adm-steps" aria-labelledby="adm-steps-title">
+          <h2 id="adm-steps-title">Getting started</h2>
+          <ol>
+            {steps.map((s) => (
+              <li key={s.title}>
+                <div>
+                  <h3>{s.title}</h3>
+                  <p className="adm-muted">{s.text}</p>
+                </div>
+                <button type="button" className="admin-secondary-button" onClick={() => onOpen(s.tab)}>Open</button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+    </>
+  );
+}
+
+// -------------------------------------------------------------------- sign-in
 
 function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   const [email, setEmail] = useState("");
@@ -106,15 +258,14 @@ function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   }
 
   return (
-    <main className="admin-shell admin-login-shell">
-      <section className="admin-login-card">
-        <Link className="admin-home-link" href="/">← Back to website</Link>
-        <p className="section-overline">SANJEEVANI GROUP / ADMIN</p>
-        <h1>{forgot ? "Reset your password" : "Admin sign in"}</h1>
-        <p>{forgot ? "Enter your email and we will send you a reset link." : "Sign in with your own admin account."}</p>
+    <main className="adm adm-center">
+      <section className="adm-auth-card">
+        <Brand role="Admin" />
+        <h1>{forgot ? "Reset your password" : "Sign in"}</h1>
+        <p className="adm-muted">{forgot ? "Enter your email and we will send you a reset link." : "Use your own admin account."}</p>
         {error && <p className="admin-message admin-error" role="alert">{error}</p>}
         {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
-        <form onSubmit={submit}>
+        <form onSubmit={submit} className="adm-auth-form">
           <label htmlFor="admin-email">Email</label>
           <input id="admin-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
           {!forgot && (
@@ -125,9 +276,12 @@ function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
           )}
           <button className="admin-primary-button" type="submit" disabled={busy}>{busy ? "Please wait…" : forgot ? "Send reset link" : "Sign in"}</button>
         </form>
-        <button className="admin-link-button" type="button" onClick={() => { setForgot(!forgot); setError(""); setNotice(""); }}>
-          {forgot ? "Back to sign in" : "Forgot your password?"}
-        </button>
+        <div className="adm-auth-links">
+          <button className="admin-link-button" type="button" onClick={() => { setForgot(!forgot); setError(""); setNotice(""); }}>
+            {forgot ? "Back to sign in" : "Forgot your password?"}
+          </button>
+          <Link className="admin-link-button" href="/">Back to website</Link>
+        </div>
       </section>
     </main>
   );

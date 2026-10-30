@@ -23,7 +23,7 @@ export function AuditPanel() {
   return (
     <>
       <div className="admin-list-heading">
-        <div><h2>Audit log</h2><p>{loading ? "Loading…" : `${data.total} entries · who did what, and when (Nepal time)`}</p></div>
+        <div><h2>Audit log</h2><p>{loading ? "Loading…" : `${data.total} entries`}</p></div>
         <a className="admin-secondary-button" href={`/api/admin/audit/export?${query}`}>Export CSV</a>
       </div>
       <div className="admin-toolbar">
@@ -134,7 +134,7 @@ export function AccountPanel({ me, onSignedOut }: { me: Me; onSignedOut: () => v
   return (
     <form className="admin-business-form" onSubmit={submit}>
       <div className="admin-form-heading"><h3>My account</h3></div>
-      <p>{me.user.name} · {me.user.email}</p>
+      <p className="adm-muted">Signed in as {me.user.name}</p>
       {error && <p className="admin-message admin-error" role="alert">{error}</p>}
       {notice && <p className="admin-message admin-notice" role="status">{notice}</p>}
       <div className="admin-form-grid">

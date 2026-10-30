@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import GroupEmblem from "@/components/GroupEmblem";
 import { api } from "@/components/admin/api";
 
 // Used by /admin/accept-invite and /admin/reset-password: both set a
@@ -30,10 +31,12 @@ export default function SetPasswordForm({ mode }: { mode: "invite" | "reset" }) 
   }
 
   return (
-    <main className="admin-shell admin-login-shell">
-      <section className="admin-login-card">
-        <Link className="admin-home-link" href="/">← Back to website</Link>
-        <p className="section-overline">SANJEEVANI GROUP / ADMIN</p>
+    <main className="adm adm-center">
+      <section className="adm-auth-card">
+        <span className="adm-brand">
+          <span className="adm-brand-mark"><GroupEmblem /></span>
+          <span className="adm-brand-text"><strong>Sanjeevani Group</strong><span>Admin</span></span>
+        </span>
         <h1>{mode === "invite" ? "Activate your account" : "Choose a new password"}</h1>
         {!token ? (
           <p className="admin-message admin-error" role="alert">This link is incomplete. Open the link from your email again, or ask for a new one.</p>
@@ -44,9 +47,9 @@ export default function SetPasswordForm({ mode }: { mode: "invite" | "reset" }) 
           </>
         ) : (
           <>
-            <p>Use at least 12 characters. A few unrelated words make a strong, memorable password.</p>
+            <p className="adm-muted">Use at least 12 characters. A few unrelated words make a strong, memorable password.</p>
             {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="adm-auth-form">
               <label htmlFor="new-password">New password</label>
               <input id="new-password" type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} required />
               <label htmlFor="confirm-password">Repeat password</label>
@@ -55,6 +58,7 @@ export default function SetPasswordForm({ mode }: { mode: "invite" | "reset" }) 
             </form>
           </>
         )}
+        <div className="adm-auth-links"><Link className="admin-link-button" href="/">Back to website</Link></div>
       </section>
     </main>
   );
