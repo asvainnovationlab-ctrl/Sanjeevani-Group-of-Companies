@@ -192,6 +192,15 @@ model Company {
   bannerId        String?         @db.Uuid
   banner          MediaAsset?     @relation("CompanyBanner", fields: [bannerId], references: [id], onDelete: SetNull)
   featured        Boolean         @default(false)
+  mission         String?
+  vision          String?
+  services        String[]        @default([])
+  facebookUrl     String?
+  linkedinUrl     String?
+  instagramUrl    String?
+  youtubeUrl      String?
+  seoTitle        String?
+  seoDescription  String?
   sortOrder       Int             @default(0)
   status          PublishStatus   @default(DRAFT)
   publishedAt     DateTime?

@@ -39,6 +39,8 @@ export const slugSchema = z
 
 const currentYear = new Date().getFullYear();
 
+const httpsUrl = z.string().trim().url("Enter a full link starting with https://").refine((v) => v.startsWith("https://"), "Use an https:// link.").nullable().optional();
+
 const companyFields = {
   name: z.string().trim().min(2, "Enter the company name.").max(160),
   slug: slugSchema,
@@ -54,6 +56,15 @@ const companyFields = {
   bannerId: z.string().uuid().nullable().optional(),
   featured: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(10000).optional(),
+  mission: z.string().trim().max(2000).nullable().optional(),
+  vision: z.string().trim().max(2000).nullable().optional(),
+  services: z.array(z.string().trim().min(1).max(200)).max(30).optional(),
+  facebookUrl: httpsUrl,
+  linkedinUrl: httpsUrl,
+  instagramUrl: httpsUrl,
+  youtubeUrl: httpsUrl,
+  seoTitle: z.string().trim().max(70).nullable().optional(),
+  seoDescription: z.string().trim().max(160).nullable().optional(),
 };
 
 const companyBase = z.object(companyFields);

@@ -13,7 +13,8 @@ export type Field =
   | { k: string; label: string; type: "select"; options: Option[] | "companies" | "sectors"; required?: boolean; empty?: string; help?: string }
   | { k: string; label: string; type: "checkbox"; help?: string }
   | { k: string; label: string; type: "image"; rel: string; folder: string; help?: string }
-  | { k: string; label: string; type: "rows"; fields: Field[]; blank: Record<string, unknown>; add: string; help?: string };
+  | { k: string; label: string; type: "rows"; fields: Field[]; blank: Record<string, unknown>; add: string; help?: string }
+  | { k: string; label: string; type: "section"; help?: string }; // a heading that groups the fields after it
 
 export type Lookups = { companies: Option[]; sectors: Option[] };
 type Values = Record<string, unknown>;
@@ -39,6 +40,7 @@ export function fromItem(fields: Field[], item: Values | null): Values {
       case "checkbox": out[f.k] = Boolean(v); break;
       case "image": out[f.k] = { id: v ?? null, url: (item?.[f.rel] as { url?: string } | null)?.url ?? null }; break;
       case "rows": out[f.k] = Array.isArray(v) ? (v as Values[]).map((row) => fromItem(f.fields, row)) : []; break;
+      case "section": break;
       default: out[f.k] = asText(v);
     }
   }
@@ -64,6 +66,7 @@ export function toInput(fields: Field[], values: Values): Values {
       case "checkbox": out[f.k] = Boolean(v); break;
       case "image": out[f.k] = (v as { id: string | null } | undefined)?.id ?? null; break;
       case "rows": out[f.k] = ((v as Values[]) ?? []).map((row) => toInput(f.fields, row)); break;
+      case "section": break;
       case "select": out[f.k] = asText(v) === "" ? null : v; break;
       default: {
         const t = asText(v).trim();
@@ -120,6 +123,9 @@ export function FieldInputs({ fields, values, onChange, lookups, altFrom, idPref
       {fields.map((f) => {
         const id = `${idPrefix}-${f.k}`;
         const help = f.help ? <small className="adm-muted">{f.help}</small> : null;
+        if (f.type === "section") {
+          return <div key={f.k} className="adm-form-section adm-field-wide"><h4>{f.label}</h4>{help}</div>;
+        }
         if (f.type === "checkbox") {
           return <label key={f.k} className="admin-publish-field adm-field-wide"><input id={id} type="checkbox" checked={Boolean(values[f.k])} onChange={(e) => set(f.k, e.target.checked)} /> {f.label}</label>;
         }

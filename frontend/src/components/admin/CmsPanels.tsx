@@ -102,26 +102,6 @@ export function LeadershipPanel({ me }: { me: Me }) {
   return <ContentManager me={me} config={LEADER} lookups={lookups} />;
 }
 
-// --------------------------------------------------------------------- pages
-
-const PAGE: ContentConfig = {
-  type: "pages", noun: "page", update: "content.update", publish: "content.publish",
-  title: (i) => String(i.title),
-  meta: (i) => `/${String(i.key)}`,
-  fields: [
-    { k: "title", label: "Page title", type: "text", required: true, wide: true },
-    { k: "key", label: "Web address", type: "text", required: true, help: "Lowercase words joined by hyphens, e.g. about-us" },
-    { k: "intro", label: "Introduction", type: "textarea", help: "One or two sentences under the title." },
-    { k: "body", label: "Page content", type: "blocks", help: "Leave a blank line between paragraphs." },
-    { k: "seoTitle", label: "Search engine title", type: "text", help: "Up to 70 characters. The page title is used when empty." },
-    { k: "seoDescription", label: "Search engine description", type: "textarea", help: "Up to 160 characters." },
-  ],
-};
-
-export function PagesPanel({ me }: { me: Me }) {
-  return <ContentManager me={me} config={PAGE} lookups={{ companies: [], sectors: [] }} />;
-}
-
 // ------------------------------------------------------------------ newsroom
 
 const companyField: Field = { k: "companyId", label: "Company", type: "select", options: "companies", empty: "Sanjeevani Group (all)" };
@@ -238,24 +218,44 @@ export function NewsroomPanel({ me }: { me: Me }) {
 
 // ---------------------------------------------------------------- businesses
 
-const COMPANY_FIELDS: Field[] = [
+const COMPANY_HEAD: Field[] = [
+  { k: "s-basics", label: "Basic details", type: "section" },
   { k: "name", label: "Company name", type: "text", required: true },
   { k: "sectorId", label: "Category", type: "select", options: "sectors", empty: "No category" },
-  { k: "sectorLabel", label: "Label on cards", type: "text", required: true, help: "e.g. Healthcare or Agriculture" },
+  { k: "sectorLabel", label: "Sector shown on the page", type: "text", required: true, help: "e.g. Healthcare, Education or Agriculture" },
   { k: "category", label: "Kind", type: "select", options: [["HEALTHCARE", "Healthcare"], ["EDUCATION", "Education"], ["AGRICULTURE", "Agriculture"], ["OTHER", "Other"]], required: true },
-  { k: "website", label: "Website", type: "text", help: "e.g. www.example.com" },
+  { k: "establishedYear", label: "Established (year)", type: "number" },
+  { k: "s-images", label: "Logo and photo", type: "section", help: "The page photo is the large picture at the top of the company page." },
+  { k: "logoId", label: "Logo", type: "image", rel: "logo", folder: "companies" },
+  { k: "bannerId", label: "Page photo", type: "image", rel: "banner", folder: "companies" },
+  { k: "s-about", label: "About the company", type: "section", help: "Shown in the page introduction and the Overview section." },
+  { k: "description", label: "Overview", type: "textarea", required: true },
+  { k: "mission", label: "Mission", type: "textarea" },
+  { k: "vision", label: "Vision", type: "textarea" },
+  { k: "services", label: "Services or departments", type: "lines", help: "One per line." },
+  { k: "s-contact", label: "Get in touch", type: "section", help: "Contact details shown at the bottom of the company page." },
   { k: "email", label: "Email", type: "email" },
   { k: "phone", label: "Phone", type: "text" },
-  { k: "establishedYear", label: "Established (year)", type: "number" },
-  { k: "logoId", label: "Logo", type: "image", rel: "logo", folder: "companies" },
-  { k: "bannerId", label: "Page photo", type: "image", rel: "banner", folder: "companies", help: "The large photo at the top of the company page." },
-  { k: "description", label: "About the company", type: "textarea", required: true },
+  { k: "website", label: "Website", type: "text", help: "e.g. www.example.com" },
+];
+const COMPANY_TAIL: Field[] = [
+  { k: "s-social", label: "Social media", type: "section" },
+  { k: "facebookUrl", label: "Facebook", type: "url" },
+  { k: "linkedinUrl", label: "LinkedIn", type: "url" },
+  { k: "instagramUrl", label: "Instagram", type: "url" },
+  { k: "youtubeUrl", label: "YouTube", type: "url" },
+  { k: "s-seo", label: "Search engines", type: "section", help: "Optional. The company name and overview are used when these are empty." },
+  { k: "seoTitle", label: "Search title", type: "text", help: "Up to 70 characters." },
+  { k: "seoDescription", label: "Search description", type: "textarea", help: "Up to 160 characters." },
+  { k: "s-display", label: "Display", type: "section" },
   { k: "featured", label: "Feature this company", type: "checkbox" },
   { k: "sortOrder", label: "Order in lists", type: "number" },
 ];
+// All company fields, for converting to and from the API in one go.
+const COMPANY_FIELDS: Field[] = [...COMPANY_HEAD, ...COMPANY_TAIL];
 const LOCATION_FIELDS: Field[] = [
   {
-    k: "locations", label: "Offices and contact (Get in touch)", type: "rows", add: "Add a location",
+    k: "locations", label: "Offices and addresses", type: "rows", add: "Add a location",
     blank: { name: "Head office", addressLine: "", municipality: "", district: "", province: "", phone: "", email: "", isPrimary: false },
     fields: [
       { k: "name", label: "Name", type: "text", required: true },
@@ -269,6 +269,34 @@ const LOCATION_FIELDS: Field[] = [
     ],
   },
 ];
+
+// The people shown in the Leadership section of this company's page. They are
+// managed under Leadership, where one person can hold roles in several companies.
+function CompanyLeaders({ me, companyId }: { me: Me; companyId: string }) {
+  const [rows, setRows] = useState<{ id: string; name: string; status: string; title: string; md: boolean }[] | null>(null);
+  useEffect(() => {
+    if (!hasPermission(me, "leader.update")) { setRows([]); return; }
+    api<{ items: { id: string; name: string; status: string; assignments: { companyId: string | null; title: string; isManagingDirector: boolean }[] }[] }>("/api/admin/content/leaders")
+      .then((r) => setRows(r.items.flatMap((l) => l.assignments.filter((a) => a.companyId === companyId).map((a) => ({ id: l.id, name: l.name, status: l.status, title: a.title, md: a.isManagingDirector })))))
+      .catch(() => setRows([]));
+  }, [me, companyId]);
+  const hasMd = rows?.some((r) => r.md);
+  return (
+    <div className="adm-company-leaders adm-field-wide">
+      <div className="adm-form-section"><h4>Leadership on this page</h4><p className="adm-muted">The Chairman is shown on every company page. Add the Managing Director and other leaders under Leadership, choosing this company in their role.</p></div>
+      {rows === null ? <p className="adm-muted">Loading…</p> : rows.length === 0 ? (
+        <p className="admin-message admin-error">No Managing Director yet. Until one is added, the page shows &ldquo;To be announced&rdquo;.</p>
+      ) : (
+        <ul className="adm-plain-cards">
+          {rows.map((r) => (
+            <li key={r.id + r.title}><strong>{r.name}</strong><span>{r.title}{r.md ? ", Managing Director" : ""}</span><span className={`admin-badge admin-badge-${r.status.toLowerCase()}`}>{label(r.status)}</span></li>
+          ))}
+        </ul>
+      )}
+      {rows && rows.length > 0 && !hasMd && <p className="adm-muted">None of these is ticked as Managing Director, so the page still shows &ldquo;To be announced&rdquo;.</p>}
+    </div>
+  );
+}
 
 export function BusinessesPanel({ me }: { me: Me }) {
   const { lookups, companies, sectors, reload, loading, loadError } = useLookups(me);
@@ -383,10 +411,11 @@ export function BusinessesPanel({ me }: { me: Me }) {
         <form className="admin-business-form" onSubmit={saveCompany}>
           <div className="admin-form-heading"><h3>{editing.id ? `Edit ${String(editing.values.name || "company")}` : "New company"}</h3><button type="button" className="admin-close-button" aria-label="Close" onClick={() => setEditing(null)}>×</button></div>
           <div className="admin-form-grid">
-            <FieldInputs fields={COMPANY_FIELDS} values={editing.values} onChange={(values) => setEditing({ ...editing, values })} lookups={lookups} altFrom={String(editing.values.name ?? "")} idPrefix="co" />
+            <FieldInputs fields={COMPANY_HEAD} values={editing.values} onChange={(values) => setEditing({ ...editing, values })} lookups={lookups} altFrom={String(editing.values.name ?? "")} idPrefix="co" />
             <FieldInputs fields={LOCATION_FIELDS} values={editing.locations} onChange={(locations) => setEditing({ ...editing, locations })} lookups={lookups} altFrom="" idPrefix="co-loc" />
+            <FieldInputs fields={COMPANY_TAIL} values={editing.values} onChange={(values) => setEditing({ ...editing, values })} lookups={lookups} altFrom={String(editing.values.name ?? "")} idPrefix="co-tail" />
           </div>
-          <p className="adm-muted">The leadership message on a company page comes from its Managing Director: add or edit them under Leadership.</p>
+          {editing.id && <CompanyLeaders me={me} companyId={editing.id} />}
           <div className="admin-form-actions"><button type="submit" className="admin-primary-button">Save</button><button type="button" className="admin-secondary-button" onClick={() => setEditing(null)}>Cancel</button></div>
         </form>
       )}

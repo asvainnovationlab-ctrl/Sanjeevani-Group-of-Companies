@@ -6,7 +6,6 @@ import { api, formatDate, hasPermission, type Me } from "@/components/admin/api"
 // The workflow API checks the publish permission again for every action.
 
 const TYPES: { type: string; label: string; permission: string; title: (i: Item) => string }[] = [
-  { type: "pages", label: "Page", permission: "content.publish", title: (i) => String(i.title) },
   { type: "news", label: "News", permission: "content.publish", title: (i) => String(i.title) },
   { type: "events", label: "Event", permission: "content.publish", title: (i) => String(i.title) },
   { type: "notices", label: "Notice", permission: "content.publish", title: (i) => String(i.title) },

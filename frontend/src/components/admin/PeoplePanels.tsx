@@ -6,20 +6,55 @@ import { roleAbilities, roleDescription, roleSections } from "@/components/admin
 
 // ------------------------------------------------------------------ enquiries
 
-type Message = { id: string; name: string; email: string; phone: string | null; subject: string | null; status: string; createdAt: string; company: { name: string } | null; message?: string };
+type Message = { id: string; name: string; email: string; phone: string | null; subject: string | null; status: string; createdAt: string; company: { name: string } | null; message?: string; preview?: string };
+
+const INBOX_TABS: [string, string][] = [["", "All"], ["NEW", "New"], ["IN_PROGRESS", "In progress"], ["RESOLVED", "Resolved"], ["SPAM", "Spam"]];
+const EMPTY_TEXT: Record<string, [string, string]> = {
+  "": ["No enquiries yet", "Messages people send from the Contact page appear here."],
+  NEW: ["You're all caught up", "There are no new enquiries waiting for a reply."],
+  IN_PROGRESS: ["Nothing in progress", "Enquiries you are working on appear here."],
+  RESOLVED: ["Nothing resolved yet", "Enquiries you mark as resolved are kept here."],
+  SPAM: ["No spam", "Messages you mark as spam are moved here."],
+};
+const mailIcon = (
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6" /></svg>
+);
 
 export function ContactPanel({ me, companyId = "" }: { me: Me; companyId?: string }) {
   const [status, setStatus] = useState("NEW");
+  const [q, setQ] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ total: number; items: Message[] }>({ total: 0, items: [] });
+  const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [open, setOpen] = useState<Message | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const scope = companyId ? `companyId=${companyId}&` : "";
+  const filter = `${status ? `status=${status}&` : ""}${search ? `q=${encodeURIComponent(search)}&` : ""}${scope}`;
 
   const load = useCallback(async () => {
-    try { setData(await api(`/api/admin/contact?${status ? `status=${status}&` : ""}${companyId ? `companyId=${companyId}&` : ""}page=${page}`)); } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
-  }, [status, page, companyId]);
+    setLoading(true);
+    try {
+      setData(await api(`/api/admin/contact?${filter}page=${page}`));
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, page]);
   useEffect(() => { void load(); }, [load]);
+
+  const loadCounts = useCallback(async () => {
+    try {
+      const pairs = await Promise.all(INBOX_TABS.map(async ([s]) => [s, (await api<{ total: number }>(`/api/admin/contact?${s ? `status=${s}&` : ""}${scope}pageSize=1`)).total] as const));
+      setCounts(Object.fromEntries(pairs));
+    } catch {
+      setCounts({});
+    }
+  }, [scope]);
+  useEffect(() => { void loadCounts(); }, [loadCounts]);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("contact");
@@ -30,54 +65,92 @@ export function ContactPanel({ me, companyId = "" }: { me: Me; companyId?: strin
     try { setOpen((await api<{ message: Message }>(`/api/admin/contact/${id}`)).message); } catch (e) { setError((e as Error).message); }
   }
   async function setMessageStatus(id: string, next: string) {
-    try { setOpen((await api<{ message: Message }>(`/api/admin/contact/${id}`, { method: "PATCH", body: { status: next } })).message); await load(); } catch (e) { setError((e as Error).message); }
+    try {
+      setOpen((await api<{ message: Message }>(`/api/admin/contact/${id}`, { method: "PATCH", body: { status: next } })).message);
+      await Promise.all([load(), loadCounts()]);
+    } catch (e) { setError((e as Error).message); }
   }
 
+  const [emptyTitle, emptyText] = EMPTY_TEXT[status] ?? EMPTY_TEXT[""];
   return (
     <>
-      <div className="admin-list-heading">
-        <div><h2>Website enquiries</h2><p>{data.total} {status ? label(status).toLowerCase() : "in total"}</p></div>
-        <a className="admin-secondary-button" href={`/api/admin/contact/export${status ? `?status=${status}` : ""}`}>Export CSV</a>
+      <div className="adm-inbox-bar">
+        <div className="adm-inbox-tabs" role="tablist" aria-label="Filter by status">
+          {INBOX_TABS.map(([s, l]) => (
+            <button key={s || "all"} type="button" role="tab" aria-selected={status === s} onClick={() => { setPage(1); setStatus(s); }}>
+              {l}
+              <span className="adm-inbox-count num">{counts[s] ?? "…"}</span>
+            </button>
+          ))}
+        </div>
+        <a className="admin-secondary-button" href={`/api/admin/contact/export?${filter}`}>Export CSV</a>
       </div>
-      <div className="admin-toolbar">
-        <select aria-label="Filter by status" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
-          <option value="">All</option>
-          {["NEW", "IN_PROGRESS", "RESOLVED", "SPAM"].map((s) => <option key={s} value={s}>{label(s)}</option>)}
-        </select>
-      </div>
-      {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-      {data.items.length === 0 ? <p className="admin-empty">{loading ? "Loading…" : "No enquiries here."}</p> : (
-        <table className="admin-table">
-          <thead><tr><th>From</th><th>Subject</th><th>Status</th><th>Received</th></tr></thead>
-          <tbody>
+
+      <form className="adm-inbox-search" role="search" onSubmit={(e: FormEvent) => { e.preventDefault(); setPage(1); setSearch(q.trim()); }}>
+        <input type="search" aria-label="Search enquiries" placeholder="Search by name, email or subject" value={q} onChange={(e) => { setQ(e.target.value); if (!e.target.value) { setPage(1); setSearch(""); } }} />
+        <button type="submit" className="admin-secondary-button">Search</button>
+      </form>
+
+      {error && <p className="admin-message admin-error" role="alert">{error} <button type="button" className="admin-link-button" onClick={() => void load()}>Try again</button></p>}
+
+      <section className="adm-card adm-inbox" aria-busy={loading}>
+        {data.items.length === 0 ? (
+          <div className="adm-empty-state">
+            <span className="adm-empty-icon">{mailIcon}</span>
+            <h3>{loading ? "Loading enquiries…" : search ? "No matches" : emptyTitle}</h3>
+            {!loading && <p className="adm-muted">{search ? `Nothing matches "${search}".` : emptyText}</p>}
+            {!loading && (status || search) && (
+              <button type="button" className="admin-secondary-button" onClick={() => { setStatus(""); setQ(""); setSearch(""); setPage(1); }}>Show all enquiries</button>
+            )}
+          </div>
+        ) : (
+          <ul className="adm-inbox-list">
             {data.items.map((m) => (
-              <tr key={m.id} onClick={() => openMessage(m.id)} className={open?.id === m.id ? "is-selected" : ""}>
-                <td><button type="button" className="admin-link-button" onClick={() => openMessage(m.id)}>{m.name}</button><small>{m.email}</small></td>
-                <td>{m.subject ?? "—"}<small>{m.company?.name ?? "Group"}</small></td>
-                <td><span className={`admin-badge admin-badge-${m.status.toLowerCase()}`}>{label(m.status)}</span></td>
-                <td>{formatDate(m.createdAt)}</td>
-              </tr>
+              <li key={m.id}>
+                <button type="button" className={`adm-inbox-row${open?.id === m.id ? " is-selected" : ""}`} onClick={() => openMessage(m.id)}>
+                  <span className="adm-inbox-avatar" aria-hidden="true">{m.name.trim().charAt(0).toUpperCase()}</span>
+                  <span className="adm-inbox-main">
+                    <span className="adm-inbox-top"><strong>{m.name}</strong><span className="adm-muted">{formatDate(m.createdAt)}</span></span>
+                    <span className="adm-inbox-subject">{m.subject ?? "Website enquiry"}</span>
+                    <span className="adm-inbox-meta">{m.email}{m.company ? `, for ${m.company.name}` : ""}</span>
+                  </span>
+                  <span className={`admin-badge admin-badge-${m.status.toLowerCase()}`}>{label(m.status)}</span>
+                </button>
+              </li>
             ))}
-          </tbody>
-        </table>
-      )}
+          </ul>
+        )}
+      </section>
       <Pager page={page} pageSize={25} total={data.total} onPage={setPage} />
+
+      {open && <button type="button" className="adm-drawer-scrim" aria-label="Close enquiry" onClick={() => setOpen(null)} />}
       {open && (
         <aside className="admin-drawer" aria-label="Enquiry">
-          <div className="admin-drawer-head"><h3>{open.name}</h3><button className="admin-close-button" type="button" onClick={() => setOpen(null)} aria-label="Close">×</button></div>
+          <div className="admin-drawer-head">
+            <div>
+              <h3>{open.subject ?? "Website enquiry"}</h3>
+              <p className="adm-muted">From {open.name}, {formatDate(open.createdAt)}</p>
+            </div>
+            <button className="admin-close-button" type="button" onClick={() => setOpen(null)} aria-label="Close">×</button>
+          </div>
+          <a className="admin-primary-button adm-reply" href={`mailto:${open.email}?subject=${encodeURIComponent(`Re: ${open.subject ?? "your enquiry"}`)}`}>Reply by email</a>
           <dl className="admin-facts">
-            <dt>Email</dt><dd><a href={`mailto:${open.email}?subject=${encodeURIComponent(`Re: ${open.subject ?? "your enquiry"}`)}`}>{open.email}</a></dd>
-            <dt>Phone</dt><dd>{open.phone ?? "—"}</dd>
-            <dt>Received</dt><dd>{formatDate(open.createdAt)}</dd>
-            <dt>Status</dt><dd>{label(open.status)}</dd>
+            <dt>Email</dt><dd><a href={`mailto:${open.email}`}>{open.email}</a></dd>
+            <dt>Phone</dt><dd>{open.phone ? <a href={`tel:${open.phone}`}>{open.phone}</a> : "Not given"}</dd>
+            <dt>For</dt><dd>{open.company?.name ?? "Sanjeevani Group"}</dd>
+            <dt>Status</dt><dd><span className={`admin-badge admin-badge-${open.status.toLowerCase()}`}>{label(open.status)}</span></dd>
           </dl>
+          <h4>Message</h4>
           <p className="admin-cover-letter">{open.message}</p>
           {hasPermission(me, "contact.update") && (
-            <div className="admin-button-row">
-              {["IN_PROGRESS", "RESOLVED", "SPAM", "NEW"].filter((s) => s !== open.status).map((s) => (
-                <button key={s} type="button" className="admin-secondary-button" onClick={() => setMessageStatus(open.id, s)}>Mark {label(s).toLowerCase()}</button>
-              ))}
-            </div>
+            <>
+              <h4>Update status</h4>
+              <div className="admin-button-row">
+                {["IN_PROGRESS", "RESOLVED", "SPAM", "NEW"].filter((s) => s !== open.status).map((s) => (
+                  <button key={s} type="button" className="admin-secondary-button" onClick={() => setMessageStatus(open.id, s)}>Mark {label(s).toLowerCase()}</button>
+                ))}
+              </div>
+            </>
           )}
         </aside>
       )}

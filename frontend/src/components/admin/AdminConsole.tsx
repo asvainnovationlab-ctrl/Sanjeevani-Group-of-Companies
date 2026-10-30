@@ -9,10 +9,10 @@ import { ContactPanel, UsersPanel } from "@/components/admin/PeoplePanels";
 import TrafficChart from "@/components/admin/TrafficChart";
 import { SECTIONS, roleAbilities } from "@/components/admin/sections";
 import { SYSTEM_ROLES } from "@/server/auth/permissions";
-import { BusinessesPanel, LeadershipPanel, NewsroomPanel, PagesPanel } from "@/components/admin/CmsPanels";
+import { BusinessesPanel, LeadershipPanel, NewsroomPanel } from "@/components/admin/CmsPanels";
 import ApprovalsPanel from "@/components/admin/ApprovalsPanel";
 
-type TabKey = "dashboard" | "applications" | "vacancies" | "businesses" | "leadership" | "pages" | "newsroom" | "approvals" | "contact" | "users" | "audit" | "settings" | "account";
+type TabKey = "dashboard" | "applications" | "vacancies" | "businesses" | "leadership" | "newsroom" | "approvals" | "contact" | "users" | "audit" | "settings" | "account";
 type Group = "Overview" | "Organization" | "Website" | "Recruitment" | "Communications" | "Administration";
 type Tab = { key: TabKey; label: string; title: string; context: string; permission?: string; anyOf?: string[]; group: Group; scoped?: boolean; icon: ReactNode };
 const GROUPS: Group[] = ["Overview", "Organization", "Website", "Recruitment", "Communications", "Administration"];
@@ -30,7 +30,6 @@ const TABS: Tab[] = [
   { key: "vacancies", label: "Vacancies", title: "Vacancies", context: "Drafts stay here until you publish them", permission: "vacancy.read", group: "Recruitment", scoped: true, icon: icon("M4 8h16v11H4zM9 8V5h6v3M4 13h16") },
   { key: "businesses", label: "Companies", title: "Companies", context: "Categories and every company's page", permission: "company.read", group: "Organization", icon: icon("M4 20V8l6-4v16M10 20V10h10v10M4 20h16M13 13h1M17 13h1M13 16h1M17 16h1") },
   { key: "leadership", label: "Leadership", title: "Leadership", context: "Chairman, board, managing directors and team", permission: "leader.update", group: "Organization", icon: icon("M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8 9.5 8z") },
-  { key: "pages", label: "Pages", title: "Website pages", context: "Pages you can edit without touching code", permission: "content.update", group: "Website", icon: icon("M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6") },
   { key: "newsroom", label: "Newsroom", title: "Newsroom", context: "Press releases, events, notices, videos and gallery", permission: "content.update", group: "Website", icon: icon("M5 5h12v14H6a1 1 0 0 1-1-1zM17 9h2v9a1 1 0 0 1-2 0M8 9h6M8 12h6M8 15h4") },
   { key: "contact", label: "Enquiries", title: "Enquiries", context: "Messages from the contact page", permission: "contact.read", group: "Communications", scoped: true, icon: icon("M4 6h16v12H4zM4 7l8 6 8-6") },
   { key: "approvals", label: "Approvals", title: "Publishing approvals", context: "Content waiting for a publisher", anyOf: ["content.publish", "leader.publish"], group: "Administration", icon: icon("M9 12l2 2 4-4M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z") },
@@ -159,7 +158,6 @@ export default function AdminConsole() {
           {current.key === "dashboard" && <Dashboard key={company} me={me} onOpen={go} companyId={company} />}
           {current.key === "applications" && <ApplicationsPanel key={company} me={me} companyId={company} />}
           {current.key === "vacancies" && <VacanciesPanel key={company} me={me} companyId={company} />}
-          {current.key === "pages" && <PagesPanel me={me} />}
           {current.key === "approvals" && <ApprovalsPanel me={me} />}
           {current.key === "businesses" && <BusinessesPanel me={me} />}
           {current.key === "leadership" && <LeadershipPanel me={me} />}
@@ -316,7 +314,7 @@ function Dashboard({ me, onOpen, companyId = "" }: { me: Me; onOpen: (tab: TabKe
       }));
     }
     if (wanted.some((f) => f.key === "approvals")) {
-      const types = [...(hasPermission(me, "content.publish") ? ["pages", "news", "events", "notices", "galleries", "videos"] : []), ...(hasPermission(me, "leader.publish") ? ["leaders"] : [])];
+      const types = [...(hasPermission(me, "content.publish") ? ["news", "events", "notices", "galleries", "videos"] : []), ...(hasPermission(me, "leader.publish") ? ["leaders"] : [])];
       tasks.push(Promise.all(types.map((t) => api<{ items: unknown[] }>(`/api/admin/content/${t}?status=PENDING_REVIEW`))).then((lists) => fill("approvals", lists.reduce((n, l) => n + l.items.length, 0))));
     }
     if (wanted.some((f) => f.key === "users")) {
